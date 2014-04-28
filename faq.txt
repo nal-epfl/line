@@ -1,0 +1,18 @@
+* After any change to remote-config.sh, rebuild line-gui, line-router, line-traffic and line-runner.
+
+* Debugging pf_ring kernel module:
+rmmod pf_ring; modprobe pf_ring enable_debug=1
+then see dmesg output
+
+* Debugging pf_ring userspace libs:
+uncomment #define RING_DEBUG
+Note: in vanilla pf_ring, this needs to be done in various *.c files. I moved it to pfring.h.
+
+* Debugging packets in the emulator:
+pconsumer.h:
+#define DEBUG_PACKETS 1
+
+* Debugging dropped packets in the kernel:
+	* install dropwatch
+	* run a kernel configured for recording packet drop points
+	* run: dropwatch -l kas

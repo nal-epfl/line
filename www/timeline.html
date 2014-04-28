@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Timeline</title>
+	<script src="jquery-1.10.2.min.js"></script>
+	<script src="dygraph-combined.js"></script>
+	<script src="dygraph-extra.js"></script>
+	<script src="url-object.js"></script>
+	<script src="util.js"></script>
+
+	<script src="flow-received-raw.js"></script>
+	<script src="flow-received-raw-annotations.js"></script>
+
+	<script src="flow-received-throughput-raw-100.js"></script>
+	<script src="flow-received-throughput-raw-annotations-100.js"></script>
+	<script src="flow-received-throughput-raw-500.js"></script>
+	<script src="flow-received-throughput-raw-annotations-500.js"></script>
+	<script src="flow-received-throughput-raw-1000.js"></script>
+	<script src="flow-received-throughput-raw-annotations-1000.js"></script>
+
+	<script src="flow-rtt.js"></script>
+	<script src="flow-rtt-annotations.js"></script>
+
+	<script src="flow-rwin.js"></script>
+	<script src="flow-rwin-annotations.js"></script>
+
+	<script src="flow-packets-in-flight.js"></script>
+	<script src="flow-packets-in-flight-annotations.js"></script>
+
+	<script src="flow-bytes-in-flight.js"></script>
+	<script src="flow-bytes-in-flight-annotations.js"></script>
+
+	<style type="text/css">
+	html, body {
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		font-family: sans-serif;
+		font-size: 1em;
+	}
+
+	#chart {
+		margin: 0;
+	}
+	#chart.filling {
+		margin-right: 20px;
+		min-height: 80%;
+		width: auto !important;
+		height: auto !important;
+	}
+
+	#legend,
+	#legend *,
+	#menu,
+	#menu * {
+		margin: 2px;
+	}
+	#legend,
+	#tooltip {
+		padding: 2px;
+	}
+	#menu {
+		padding: 2px;
+		border: 1px solid gray;
+	}
+	#bottomSpacer {
+		height: 8px;
+	}
+	</style>
+</head>
+<body>
+	<div id="chart" class="filling"></div>
+	<div id="tooltip"></div>
+	<div id="legend">
+		<b>Legend</b>
+	</div>
+	<div id="menu">
+		<div><b>Options</b>
+		</div>
+		<div>
+			<input type='checkbox' id='checkStack'>
+			<label for='checkStack'>Stacked graph</label>
+		</div>
+		<div>
+			<input type='checkbox' id='checkAnnotations' checked>
+			<label for='checkAnnotations'>Annotations</label>
+		</div>
+		<div>
+			<input type='checkbox' id='checkYAxisFixed' checked>
+			<label for='checkYAxisFixed'>Fixed Y axis scale</label>
+		</div>
+		<div>
+			<button type='button' id='btnExportImage'>Export image</button>
+			Drawing area size: <input type='text' id='txtExportImageWidth' value='800' style='width:5em'>
+			x <input type='text' id='txtExportImageHeight' value='400' style='width:5em'>
+		</div>
+	</div>
+	<div id="exporter">
+	</div>
+	<div id="bottomSpacer">
+	</div>
+
+	<script type="text/javascript">
+	var params = urlObject().parameters;
+	var sim = params.sim;
+	var xlabel = urlObject().parameters.xlabel;
+	var xunit = urlObject().parameters.xunit;
+	var ylabel = urlObject().parameters.ylabel;
+	var yunit = urlObject().parameters.yunit;
+	var csvfilename = urlObject().parameters.csvfilename;
+	var csvvar = urlObject().parameters.csvvar;
+	var annotationfilename = urlObject().parameters.annotationfilename;
+	var annotationvar = urlObject().parameters.annotationvar;
+	var annotations = 0;
+	document.title = params.title;
+	g = null;
+	graphOptions = {
+		title: params.title,
+		titleHeight: 32,
+		xlabel: params.xlabel + " (" + params.xunit + ")",
+		ylabel: params.ylabel + " (" + params.yunit + ")",
+		labelsKMB: true,
+		legend: 'always',
+		connectSeparatedPoints: true,
+		strokeWidth: 1.5,
+		drawPoints: true,
+		pointSize: 2.0,
+		showRangeSelector: true,
+		labelsSeparateLines: true,
+		showLabelsOnHighlight: false,
+		stackedGraph: false,
+		valueRange: [0, null],
+		rollPeriod: 1,
+		showRoller: true,
+		interactionModel: {
+			mousemove: function (event, g, context) {
+				Dygraph.defaultInteractionModel.mousemove(event, g, context);
+				var x = event.offsetX;
+				var y = event.offsetY;
+				var dataXY = g.toDataCoords(x, y);
+				var xval = Math.round(dataXY[0]);
+				var yval = Math.round(dataXY[1]);
+				$("#tooltip").html("<div>" + params.xlabel + " = " + withCommas(xval) + " " + params.xunit + ": " +
+					"value = " + withCommas(yval) + " " + params.yunit +
+					"</div>");
+			},
+		},
+		underlayCallback: function(canvas, area, g) {
+			// The drawing area doesn't start at (0, 0), it starts at (area.x, area.y).
+			// That's why we subtract them from splitX and splitY. This gives us the
+			// actual distance from the upper-left hand corder of the graph itself.
+
+			// fillRect(x, y, width, height)
+			canvas.fillStyle = 'white';
+			canvas.fillRect(area.x, area.y, area.w, area.h);
+		}
+	};
+	function createGraph(csvdata) {
+		g = new Dygraph(document.getElementById("chart"),
+						csvdata,
+						graphOptions);
+		var labels = g.getLabels();
+		labels.shift();
+		var colors = g.getColors();
+		var visibility = g.visibility();
+		var defaultVisibility = false;
+		if (!graphOptions.hasOwnProperty('visibility')) {
+			graphOptions.visibility = visibility;
+			defaultVisibility = true;
+		}
+		$("#legend").html("<div><b>Legend</b></div>");
+		// Hard-coded stuff for heavy flows
+		if (defaultVisibility) {
+			var hasHeavy = false;
+			for (var i = 0; i < labels.length; i++) {
+				if (labels[i].match(/heavy$/)) {
+					hasHeavy = true;
+					break;
+				}
+			}
+			if (hasHeavy) {
+				for (var i = 0; i < labels.length; i++) {
+					visibility[i] = labels[i].match(/heavy$/);
+					graphOptions.visibility[i] = visibility[i];
+				}
+			}
+		}
+		// End of hard-coded stuff
+		for (var i = 0; i < labels.length; i++) {
+			$("#legend").append("<div style='color:" + colors[i] + "'>" +
+								"<input type='checkbox' id='checkViewColumn" + i + "' " + (visibility[i] ? "checked" : "") + ">" +
+								"<label for='checkViewColumn" + i + "'>" + labels[i] + "</label>" +
+								"</div>");
+			$('#checkViewColumn' + i).click((function(i) {
+				return function() {
+					graphOptions.visibility[i] = $(this).is(':checked');
+					computeAxisRange();
+					g.updateOptions(graphOptions);
+				};
+			})(i));
+		}
+		computeAxisRange();
+		g.updateOptions(graphOptions);
+		loadAnnotations();
+	}
+	function computeAxisRange() {
+		graphOptions.valueRange[1] = null;
+		if (!$('#checkYAxisFixed')[0].checked)
+			return;
+		var ymax = 0;
+		if (graphOptions.stackedGraph) {
+			var ylast = new Array();
+			for (var col = 0; col < g.numColumns(); col++) {
+				ylast.push(0);
+			}
+			for (var row = 0; row < g.numRows(); row++) {
+				for (var col = 1; col < g.numColumns(); col++) {
+					if (graphOptions.visibility[col-1]) {
+						var yval = g.getValue(row, col);
+						if (!isNaN(yval) && yval != null) {
+							ylast[col] = yval;
+						}
+					}
+				}
+				for (var col = 1; col < g.numColumns(); col++) {
+					if (graphOptions.visibility[col-1]) {
+						for (var rowNext = row + 1; rowNext < g.numRows(); rowNext++) {
+							var yval = g.getValue(rowNext, col);
+							if (!isNaN(yval) && yval != null) {
+								if (yval > ylast[col]) {
+									ylast[col] = yval;
+								}
+								break;
+							}
+						}
+					}
+				}
+				var ysum = 0;
+				for (var col = 1; col < g.numColumns(); col++) {
+					ysum += ylast[col];
+				}
+				if (ysum > ymax) {
+					ymax = ysum;
+				}
+			}
+		} else {
+			for (var row = 0; row < g.numRows(); row++) {
+				for (var col = 1; col < g.numColumns(); col++) {
+					if (graphOptions.visibility[col-1]) {
+						var yval = g.getValue(row, col);
+						if (yval > ymax) {
+							ymax = yval;
+						}
+					}
+				}
+			}
+		}
+		var annotations = g.annotations();
+		var chartArea = g.getArea();
+		for (var i = 0; i < annotations.length; i++) {
+			var col = g.indexFromSetName(annotations[i].series);
+			if (graphOptions.visibility[col-1]) {
+				var xval = annotations[i].x;
+				var yval = annotations[i].valueHint;
+				if (yval >= 0) {
+					var delta = annotations[i].tickHeight;
+					if (delta > 0 && delta < chartArea.h * 0.95) {
+						yval *= chartArea.h / (chartArea.h - delta);
+						if (yval > ymax) {
+							ymax = yval;
+						}
+					}
+				}
+			}
+		}
+		if (ymax == 0) {
+			ymax = 100;
+		}
+		ymax *= 1.1;
+		graphOptions.valueRange[1] = ymax;
+	}
+	function createAnnotations() {
+		g.setAnnotations($('#checkAnnotations')[0].checked ? annotations : []);
+	}
+	function loadGraph(callback) {
+		var data = 0;
+		try {
+			data = eval(csvvar);
+		} catch (e) {}
+		if (typeof data == 'string' || data instanceof String) {
+			createGraph(data);
+			if (callback) {
+				callback();
+			}
+		} else {
+			var dataurl = "../" + sim + "/" + csvfilename + "?rand=" + Math.random();
+			console.log(dataurl);
+			$.ajax({
+				url: dataurl,
+				cache: false
+			}).done(function(data) {
+				createGraph(data);
+				if (callback) {
+					callback();
+				}
+			});
+		}
+	}
+	function loadAnnotations() {
+		annotations = 0;
+		try {
+			annotations = eval(annotationvar);
+		} catch (e) {}
+		if (annotations instanceof Array) {
+			createAnnotations();
+		} else {
+			var dataurl = "../" + sim + "/" + annotationfilename + "?rand=" + Math.random();
+			console.log(dataurl);
+			$.ajax({
+				url: dataurl,
+				cache: false,
+				dataType: "text"
+			}).done(function(data) {
+				annotations = JSON.parse(data);
+				createAnnotations();
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+				console.log(jqXHR);
+				console.log(textStatus);
+				console.log(errorThrown);
+			});
+		}
+	}
+	$('#checkStack').click(function() {
+		graphOptions.stackedGraph = !graphOptions.stackedGraph;
+		loadGraph();
+	});
+	$('#checkAnnotations').click(function() {
+		createAnnotations();
+	});
+	$('#checkYAxisFixed').click(function() {
+		computeAxisRange();
+		g.updateOptions(graphOptions);
+	});
+	$('#btnExportImage').click(function() {
+		// deep copy
+		var oldOptions = jQuery.extend(true, {}, graphOptions);
+		graphOptions.showRangeSelector = false;
+		graphOptions.showRoller = false;
+		graphOptions.width = $("#txtExportImageWidth")[0].value;
+		graphOptions.height = $("#txtExportImageHeight")[0].value;
+		graphOptions.pointSize = 1.0;
+		$("#chart").removeClass('filling');
+		$("#chart").width(graphOptions.width);
+		$("#chart").height(graphOptions.height);
+		var oldAnnotations = $('#checkAnnotations')[0].checked;
+		$('#checkAnnotations')[0].checked = false;
+		loadGraph(function() {
+			// export to image
+			$("#exporter").html("<img id='exportedImage'></img>");
+			var img = document.getElementById("exportedImage");
+			Dygraph.Export.asPNG(g, img);
+			// reset
+			graphOptions = oldOptions;
+			$("#chart").addClass('filling');
+			$('#checkAnnotations')[0].checked = oldAnnotations;
+			loadGraph();
+		});
+	});
+	loadGraph();
+	</script>
+</body>
+</html>
+

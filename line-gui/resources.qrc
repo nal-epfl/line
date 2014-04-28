@@ -1,0 +1,82 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>extra-resources/connection_24.png</file>
+        <file>extra-resources/connection.svg</file>
+        <file>extra-resources/connection_32.png</file>
+        <file>extra-resources/ftline_line_arrow_end.svg</file>
+        <file>extra-resources/ftline_line_arrow_end_24.png</file>
+        <file>extra-resources/ftline_line_arrow_end_32.png</file>
+        <file>extra-resources/juanjo_Router.svg</file>
+        <file>extra-resources/juanjo_Router_24.png</file>
+        <file>extra-resources/juanjo_Router_32.png</file>
+        <file>extra-resources/juanjo_Router_border.svg</file>
+        <file>extra-resources/juanjo_Router_border_24.png</file>
+        <file>extra-resources/juanjo_Router_border_32.png</file>
+        <file>extra-resources/juanjo_Router_gateway.svg</file>
+        <file>extra-resources/juanjo_Router_gateway_24.png</file>
+        <file>extra-resources/juanjo_Router_gateway_32.png</file>
+        <file>extra-resources/rgtaylor_csc_net_computer.svg</file>
+        <file>extra-resources/rgtaylor_csc_net_computer_24.png</file>
+        <file>extra-resources/rgtaylor_csc_net_computer_32.png</file>
+        <file>extra-resources/connection_delete.svg</file>
+        <file>extra-resources/connection_delete_32.png</file>
+        <file>extra-resources/connection_delete_24.png</file>
+        <file>extra-resources/move_24.png</file>
+        <file>extra-resources/link_edit_24.png</file>
+        <file>extra-resources/link_delete_24.png</file>
+        <file>extra-resources/delete_node_24.png</file>
+        <file>extra-resources/drag_24.png</file>
+        <file>extra-resources/stylesheet-branch-closed.png</file>
+        <file>extra-resources/stylesheet-branch-open.png</file>
+        <file>extra-resources/document-new.png</file>
+        <file>extra-resources/document-open.png</file>
+        <file>extra-resources/document-save.png</file>
+        <file>extra-resources/document-save-as.png</file>
+        <file>extra-resources/green_redo.png</file>
+        <file>extra-resources/stock_search.png</file>
+        <file>extra-resources/layout.png</file>
+        <file>extra-resources/format-justify-fill.png</file>
+        <file>extra-resources/format-justify-right.png</file>
+        <file>extra-resources/stronglycc.png</file>
+        <file>extra-resources/stylesheet-branch-left.png</file>
+        <file>extra-resources/gnome-view-restore.png</file>
+        <file>extra-resources/video-display.svg</file>
+        <file>extra-resources/video-display-24.png</file>
+        <file>extra-resources/video-display-32.png</file>
+        <file>extra-resources/delete_area.svg</file>
+        <file>extra-resources/delete_area_24.png</file>
+        <file>extra-resources/link-highlight.png</file>
+        <file>extra-resources/move_area_24.png</file>
+        <file>extra-resources/edit-host.svg</file>
+        <file>extra-resources/edit-host_24.png</file>
+        <file>extra-resources/edit-host_32.png</file>
+        <file>extra-resources/host-blue.svg</file>
+        <file>extra-resources/host-blue_32.png</file>
+        <file>extra-resources/host-green.svg</file>
+        <file>extra-resources/host-green_32.png</file>
+        <file>extra-resources/host-yellow.svg</file>
+        <file>extra-resources/host-yellow_32.png</file>
+        <file>extra-resources/host-purple.svg</file>
+        <file>extra-resources/host-purple_32.png</file>
+        <file>extra-resources/host-darkblue.svg</file>
+        <file>extra-resources/host-darkblue_32.png</file>
+        <file>extra-resources/host-darkgreen.svg</file>
+        <file>extra-resources/host-darkgreen_32.png</file>
+        <file>extra-resources/host-darkpurple.svg</file>
+        <file>extra-resources/host-darkyellow.svg</file>
+        <file>extra-resources/host-darkyellow_32.png</file>
+        <file>extra-resources/host-red.svg</file>
+        <file>extra-resources/host-red_32.png</file>
+    </qresource>
+    <qresource prefix="/css">
+        <file>style.css</file>
+    </qresource>
+    <qresource prefix="/scripts">
+        <file>clearall.pl</file>
+    </qresource>
+    <qresource prefix="/html"/>
+    <qresource prefix="/js">
+        <file>extra-resources/dynamic-table-of-contents.js</file>
+        <file>extra-resources/mootools-core-1.4.5-full-compat.js</file>
+    </qresource>
+</RCC>

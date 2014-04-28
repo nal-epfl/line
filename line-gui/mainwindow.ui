@@ -1,0 +1,2200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1595</width>
+    <height>805</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/icons/extra-resources/juanjo_Router_32.png</normaloff>:/icons/extra-resources/juanjo_Router_32.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QColoredTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabTopology">
+       <attribute name="title">
+        <string>Topology</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_46">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QWidget" name="widgetEditorParent" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <item>
+            <widget class="QWidget" name="widget_9" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_12">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QGroupBox" name="groupBoxQuickOpen">
+                <property name="title">
+                 <string>Quick open</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <item>
+                  <widget class="QLabel" name="label_5">
+                   <property name="text">
+                    <string>Topology</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="cmbTopologies">
+                   <property name="minimumSize">
+                    <size>
+                     <width>150</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btnListTopoBySize">
+                   <property name="text">
+                    <string>List topologies by size</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label">
+                   <property name="text">
+                    <string>Experiment</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="cmbSimulation">
+                   <property name="minimumSize">
+                    <size>
+                     <width>150</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="btnSelectNewSimulation">
+                   <property name="text">
+                    <string>Clear</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_5">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>1017</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="widgetEditorDummy" native="true"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabBRITE">
+       <attribute name="title">
+        <string>Import</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="QWidget" name="widget_3" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="btnBriteImport">
+             <property name="text">
+              <string>Import Brite</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnBRITEBatchImport">
+             <property name="text">
+              <string>Batch import Brite</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnGraphMLImport">
+             <property name="text">
+              <string>Import GraphML</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnGraphMLBatchImport">
+             <property name="text">
+              <string>Batch import GraphML</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnImportTraces">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Import traceroutes</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget_19" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_9">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="btnGraphMLImportMerge">
+             <property name="text">
+              <string>Merge GraphML</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkImportAddHosts">
+             <property name="text">
+              <string>Add hosts everywhere</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtBrite">
+          <property name="maximumBlockCount">
+           <number>1000</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabAuto">
+       <attribute name="title">
+        <string>Auto</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_19">
+        <item>
+         <widget class="QGroupBox" name="groupBox_6">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="title">
+           <string>QoS</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_20">
+           <item>
+            <widget class="QWidget" name="widget_24" native="true">
+             <layout class="QGridLayout" name="gridLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="2" column="9">
+               <widget class="QCheckBox" name="checkAutoNeutral">
+                <property name="text">
+                 <string>Neutral</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="8">
+               <widget class="QCheckBox" name="checkAutoDiffTcpCc">
+                <property name="text">
+                 <string>Diff TCP cc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QCheckBox" name="checkAutoDiffRTT">
+                <property name="text">
+                 <string>Diff RTT</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="8">
+               <widget class="QPushButton" name="btnAutoPolicingPlot7">
+                <property name="text">
+                 <string>Plot 7 (shaping -&gt; p.cong.)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="btnAutoPolicingPlot1">
+                <property name="text">
+                 <string>Plot 1 (policing -&gt; p.cong.)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="12">
+               <spacer name="horizontalSpacer_26">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="btnAutoPolicingPlot2b">
+                <property name="text">
+                 <string>Plot 2 shaping</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QSpinBox" name="spinAutoRTT">
+                <property name="suffix">
+                 <string> ms</string>
+                </property>
+                <property name="prefix">
+                 <string>RTT </string>
+                </property>
+                <property name="minimum">
+                 <number>12</number>
+                </property>
+                <property name="maximum">
+                 <number>9999</number>
+                </property>
+                <property name="singleStep">
+                 <number>50</number>
+                </property>
+                <property name="value">
+                 <number>50</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="btnAuto2All">
+                <property name="text">
+                 <string>2 all</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="btnAutoPolicingPlot2">
+                <property name="text">
+                 <string>Plot 2 (transfer size -&gt; p.cong)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="btnAutoPolicingPlot1b">
+                <property name="text">
+                 <string>Plot 1b (long flows)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QPushButton" name="btnAutoPolicingPlot1c">
+                <property name="text">
+                 <string>Plot 1c (short vs long)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QPushButton" name="btnAutoPolicingPlot3">
+                <property name="text">
+                 <string>Plot 3 (link -&gt; p.cong)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="8">
+               <widget class="QPushButton" name="btnAutoPolicingPlot4">
+                <property name="text">
+                 <string>Plot 4 (nflows -&gt; p.cong)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="9">
+               <widget class="QPushButton" name="btnAutoPolicingPlot7b">
+                <property name="text">
+                 <string>Plot 7b (long flows)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QCheckBox" name="checkAutoFast">
+                <property name="text">
+                 <string>Fast</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="btnCoverage">
+                <property name="text">
+                 <string>Coverage...</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="10">
+               <widget class="QCheckBox" name="checkAutoCustomTraffic">
+                <property name="text">
+                 <string>Custom traffic</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="11">
+               <widget class="QComboBox" name="cmbAutoTcp">
+                <item>
+                 <property name="text">
+                  <string>cubic</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>reno</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtAuto">
+          <property name="maximumBlockCount">
+           <number>1000</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabBenchmark">
+       <attribute name="title">
+        <string>Benchmark</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QGroupBox" name="groupBox_7">
+          <property name="title">
+           <string>Benchmark</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_21">
+           <item>
+            <widget class="QWidget" name="widget_25" native="true">
+             <layout class="QGridLayout" name="gridLayout_3">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="6">
+               <widget class="QLabel" name="label_51">
+                <property name="text">
+                 <string>Hops per path:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="4">
+               <widget class="QSpinBox" name="spinBenchmarkFlowsPerPath">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>100000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QSpinBox" name="spinBenchmarkPaths">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>100000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="11">
+               <widget class="QSpinBox" name="spinBenchmarkRTT">
+                <property name="suffix">
+                 <string> ms</string>
+                </property>
+                <property name="minimum">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <number>1000</number>
+                </property>
+                <property name="value">
+                 <number>50</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QLabel" name="label_50">
+                <property name="text">
+                 <string>Flows per path:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_49">
+                <property name="text">
+                 <string>Paths:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_53">
+                <property name="text">
+                 <string>Topology: </string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="8">
+               <widget class="QLabel" name="label_52">
+                <property name="text">
+                 <string>Total bandwidth:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="16">
+               <spacer name="horizontalSpacer_27">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="9">
+               <widget class="QSpinBox" name="spinBenchmarkBandwidth">
+                <property name="suffix">
+                 <string> Mbps</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QSpinBox" name="spinBenchmarkHopsPerPath">
+                <property name="minimum">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="10">
+               <widget class="QLabel" name="label_55">
+                <property name="text">
+                 <string>RTT:</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_26" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_27">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_54">
+                <property name="text">
+                 <string>Traffic:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cmbBenchmarkTraffic">
+                <property name="sizeAdjustPolicy">
+                 <enum>QComboBox::AdjustToContents</enum>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>TCP CUBIC (long flows)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>TCP CUBIC (medium flows)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>TCP CUBIC (short flows)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>TCP NewReno (long flows)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>TCP NewReno (medium flows)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>TCP NewReno (short flows)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>UDP (constant bitrate)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>UDP (average bitrate)</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_28">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>1327</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_27" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_28">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="btnBenchmarkGenerateGraph">
+                <property name="text">
+                 <string>Generate graph</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_29">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>1423</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtBenchmark">
+          <property name="maximumBlockCount">
+           <number>1000</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabDeploy">
+       <attribute name="title">
+        <string>Deploy</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QPushButton" name="btnDeploy">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Computes the routes, saves the topology and loads it to the remote machines.&lt;/p&gt;&lt;p&gt;If you use the &amp;quot;Run&amp;quot; tab, deployment is done automatically so you do not need to use this. The only case when manual deployment is useful is when you want to run experiments manually (for debugging or if you are running a custom application to generate traffic).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Deploy</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnDeployStop">
+            <property name="text">
+             <string>Stop</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtDeploy">
+          <property name="maximumBlockCount">
+           <number>10000</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabRun">
+       <attribute name="title">
+        <string>Run</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>250</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOn</enum>
+          </property>
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>1573</width>
+             <height>280</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_10">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QWidget" name="widgetRunButtons" native="true">
+              <layout class="QHBoxLayout" name="horizontalLayout_33">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="btnEnqueue">
+                 <property name="text">
+                  <string>Enqueue</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnEnqueueAndStart">
+                 <property name="text">
+                  <string>Enqueue and start</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_20">
+                 <property name="text">
+                  <string>Suffix</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="txtBatchExpSuffix">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Append this text to the experiment name. The name includes automatically the topology name and the experiment start time. A directory is created in line-topologies witht the experiment name, holding all the data.</string>
+                 </property>
+                 <property name="text">
+                  <string>test</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkGenericTimeout">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>Stop the emulation after a certain amount of time. If not sure, enable this.</string>
+                 </property>
+                 <property name="text">
+                  <string>Fixed duration:</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="txtGenericTimeout">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>60s</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_13">
+                 <property name="text">
+                  <string>Interval size:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="txtIntervalSize">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In order to compute the probability of congestion for paths/links, we divide time into intervals of this size, and we use packet counters for each interval.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;This is unrelated to the &amp;quot;Timelines&amp;quot; shown in the Results tab, for which data is sampled every second.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>5s</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkRemoteMultiplexer">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>Manage all the remote connections in a single process. If not sure, enable this.</string>
+                 </property>
+                 <property name="text">
+                  <string>Multiplexer</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkCapture">
+                 <property name="toolTip">
+                  <string>Capture traffic on all links.
+
+For performance reasons, the number of packets that can be captured is limited by two numbers:
+
+- the maximum number of unique packets (every packet that traverses several links in a path is counted only once)
+- the maximum number of packets (every packet that traverses several links in a path is counted once for each link)</string>
+                 </property>
+                 <property name="text">
+                  <string>Capture traffic</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinCapturePacketCount">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>The maximum number of unique packets</string>
+                 </property>
+                 <property name="suffix">
+                  <string> u.p.</string>
+                 </property>
+                 <property name="maximum">
+                  <number>999999</number>
+                 </property>
+                 <property name="singleStep">
+                  <number>1000</number>
+                 </property>
+                 <property name="value">
+                  <number>50000</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinCaptureEventCount">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>The maximum number of packets</string>
+                 </property>
+                 <property name="suffix">
+                  <string> p.</string>
+                 </property>
+                 <property name="maximum">
+                  <number>999999</number>
+                 </property>
+                 <property name="singleStep">
+                  <number>1000</number>
+                 </property>
+                 <property name="value">
+                  <number>500000</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnGenericStop">
+                 <property name="toolTip">
+                  <string>Stop the experiment immediately.</string>
+                 </property>
+                 <property name="text">
+                  <string>Stop</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_23">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_5">
+              <property name="title">
+               <string>Advanced parameters</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_22">
+               <item>
+                <widget class="QWidget" name="widget_28" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_32">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_25">
+                    <property name="text">
+                     <string>Repeats</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinRepeats">
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>999</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_31">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="widget" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QCheckBox" name="checkSampleTimelinesEverywhere">
+                    <property name="text">
+                     <string>Take samples for all links every 1s</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkFlowTracking">
+                    <property name="toolTip">
+                     <string>Uncheck to reduce latency</string>
+                    </property>
+                    <property name="text">
+                     <string>Flow tracking</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_4">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="widget_29" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_34">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_24">
+                    <property name="text">
+                     <string>Queue scaling factor</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinBufferBloadFactor">
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The size of all the queues in the network are scaled by this number. For example, 1.0 means no scaling, 2.0 means double the queue size etc. Useful to test buffer bloat or small buffers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="minimum">
+                     <double>0.010000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>1.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkReadjustQueues">
+                    <property name="toolTip">
+                     <string>Check to readjust the queue sizes when the simulation starts. The size is computed based on the network diameter (end-to-end RTT).</string>
+                    </property>
+                    <property name="text">
+                     <string>Readjust queues</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_57">
+                    <property name="text">
+                     <string>Buffer size</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="cmbBufferSize">
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The algorithm used to compute the queue buffer size:&lt;/p&gt;&lt;p&gt;* large: 1 path RTT of traffic;&lt;/p&gt;&lt;p&gt;* small: 1 path RTT of traffic divided by the square root of the number of flows (experimental)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="sizeAdjustPolicy">
+                     <enum>QComboBox::AdjustToContents</enum>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>large</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>small</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QToolButton" name="btnReadjustQueuesNow">
+                    <property name="toolTip">
+                     <string>Force the readjustment of queues immediately.</string>
+                    </property>
+                    <property name="text">
+                     <string>Now</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_56">
+                    <property name="text">
+                     <string>QoS buffer scaling</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="cmbQoSBufferScaling">
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For QoS, whether to scale the size of the token bucket by the bandwidth weight.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="sizeAdjustPolicy">
+                     <enum>QComboBox::AdjustToContents</enum>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>none</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>down</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>up</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_58">
+                    <property name="text">
+                     <string>Queue discipline</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="cmbQueueingDiscipline">
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: drop-head and drop-rand have not been tested throroughly.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="sizeAdjustPolicy">
+                     <enum>QComboBox::AdjustToContents</enum>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>drop-tail</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>drop-head</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>drop-rand</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_30">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="widget_30" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_35">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QCheckBox" name="checkTcpReceiveWin">
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set a custom TCP receive window size. Otherwise, the OS defaults apply. Under normal circumstances, Linux adjusts the advertised receive window such that traffic is not throttled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="text">
+                     <string>Set TCP receive window</string>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkTcpReceiveWinFixed">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="text">
+                     <string>Fixed</string>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinTcpReceiveWinFixed">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="suffix">
+                     <string> kB</string>
+                    </property>
+                    <property name="minimum">
+                     <number>2</number>
+                    </property>
+                    <property name="maximum">
+                     <number>4000000</number>
+                    </property>
+                    <property name="singleStep">
+                     <number>16</number>
+                    </property>
+                    <property name="value">
+                     <number>64000</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkTcpReceiveWinAuto">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="text">
+                     <string>Auto</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinTcpReceiveWinScaleFactor">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="prefix">
+                     <string>x </string>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.001000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>999.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.100000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>1.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_18">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_17">
+              <property name="title">
+               <string>Fake emulation parameters</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_17">
+               <item>
+                <widget class="QWidget" name="widget_17" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_22">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QCheckBox" name="checkFakeEmulation">
+                    <property name="text">
+                     <string>Fake</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkRealRouting">
+                    <property name="text">
+                     <string>Real</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="Line" name="line_5">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_29">
+                    <property name="text">
+                     <string>Cong. link fraction</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeCLFraction">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>5.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="Line" name="line_2">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_35">
+                    <property name="text">
+                     <string>Cong. prob. CL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeCLProbMin">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>5.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>20.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_36">
+                    <property name="text">
+                     <string>to</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeCLProbMax">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>5.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>50.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="Line" name="line_3">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_30">
+                    <property name="text">
+                     <string>Cong. prob. GL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeGLProbMin">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>5.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_37">
+                    <property name="text">
+                     <string>to</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeGLProbMax">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>5.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>5.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_19">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="widget_18" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_21">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_31">
+                    <property name="text">
+                     <string>Loss rate CL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeCLLossMin">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>2.500000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_38">
+                    <property name="text">
+                     <string>to</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeCLLossMax">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>7.500000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_39">
+                    <property name="text">
+                     <string>+</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeCLLossNoise">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="Line" name="line_4">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_33">
+                    <property name="text">
+                     <string>Loss rate GL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeGLLossMin">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_41">
+                    <property name="text">
+                     <string>to</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeGLLossMax">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.250000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_40">
+                    <property name="text">
+                     <string>+</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="spinFakeGLLossNoise">
+                    <property name="suffix">
+                     <string> %</string>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.500000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_20">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget_16" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_15">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtBatch">
+          <property name="maximumBlockCount">
+           <number>10000</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabResults">
+       <attribute name="title">
+        <string>Results</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_14">
+        <item>
+         <widget class="QWidget" name="widget_15" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="labelCurrentSimulation">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Plain</enum>
+             </property>
+             <property name="text">
+              <string>(select a simulation)</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::PlainText</enum>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnResultsRename">
+             <property name="text">
+              <string>Rename</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_48">
+             <property name="text">
+              <string>Interesting links:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="txtResultsInterestingLinks">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a comma separated list of edge indices (numbers) and press Enter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>1</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_17">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QScrollArea" name="scrollPlots">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollPlotsWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>1571</width>
+             <height>699</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_13"/>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabQueue">
+       <attribute name="title">
+        <string>Queue</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_16">
+        <item>
+         <widget class="QWidget" name="widget_8" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_14">
+           <item>
+            <widget class="QPushButton" name="btnQueueStartAll">
+             <property name="text">
+              <string>Start all</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnQueueClear">
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnQueueSave">
+             <property name="text">
+              <string>Save</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnQueueStop">
+             <property name="text">
+              <string>Stop</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnQueueRemove">
+             <property name="text">
+              <string>Remove selected</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkQueuePaused">
+             <property name="toolTip">
+              <string>When enabled, the application will let the current experiment finish, but will not start new experiments.</string>
+             </property>
+             <property name="text">
+              <string>Paused</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_11">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>1183</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="tableExperimentQueue">
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <column>
+           <property name="text">
+            <string>Graph</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Experiment suffix</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Duration (s)</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Interval size (s)</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtExperimentQueue"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabCapture">
+       <attribute name="title">
+        <string>Capture</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <widget class="QWidget" name="widget_6" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="btnCaptureProcess">
+             <property name="text">
+              <string>Process capture</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnOpenCapturePlots">
+             <property name="text">
+              <string>Open plots</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>1054</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtCapture"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/extra-resources/document-save-as.png</normaloff>:/icons/extra-resources/document-save-as.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/extra-resources/document-save.png</normaloff>:/icons/extra-resources/document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/extra-resources/document-open.png</normaloff>:/icons/extra-resources/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QColoredTabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>qcoloredtabwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

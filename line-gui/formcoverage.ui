@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FormCoverage</class>
+ <widget class="QWidget" name="FormCoverage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1040</width>
+    <height>661</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QScrollArea" name="scrollArea_2">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1020</width>
+        <height>641</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QWidget" name="widget" native="true">
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="12" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>numLinksFull</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="4">
+           <widget class="QLabel" name="label_47">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QRadioButton" name="checkXextraPairProbability">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>numVantagePoints</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QRadioButton" name="checkXnumVantagePoints">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="5">
+           <widget class="QLineEdit" name="txtFilternumRouters"/>
+          </item>
+          <item row="4" column="4">
+           <widget class="QLabel" name="label_46">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="6">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>fractionVantagePoints</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="3">
+           <widget class="QLabel" name="txtValuesnumPaths">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="3">
+           <widget class="QLabel" name="txtValuesnumPathPairs">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="3">
+           <widget class="QLabel" name="txtValuesnumLinkSequences">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="3">
+           <widget class="QLabel" name="txtValuesmetricCoverage">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="3">
+           <widget class="QLabel" name="txtValuesmetricGranularity">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="3">
+           <widget class="QLabel" name="txtValuesnumLinksFull">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="3">
+           <widget class="QLabel" name="txtValuesmetricFalseNegativesFullAlg3">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="3">
+           <widget class="QLabel" name="txtValuesmetricFalseNegativesFullBasic">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>numLinkSequences</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>numLinks</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>numPaths</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QRadioButton" name="checkXfractionVantagePoints">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QRadioButton" name="checkXfractionFullMesh">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="2">
+           <widget class="QRadioButton" name="checkYmetricCoverage">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="2">
+           <widget class="QRadioButton" name="checkYmetricGranularity">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="2">
+           <widget class="QRadioButton" name="checkYmetricGranularityFullBasic">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="2">
+           <widget class="QRadioButton" name="checkYmetricGranularityFullAlg3">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="2">
+           <widget class="QRadioButton" name="checkYmetricFalseNegativesFullAlg3">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="2">
+           <widget class="QRadioButton" name="checkYnumLinksFull">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="2">
+           <widget class="QRadioButton" name="checkYmetricFalseNegativesFullBasic">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>metricFalseNegativesFullAlg3</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>numPathPairs</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="0">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>metricCoverage</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QRadioButton" name="checkYfractionVantagePoints">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="5">
+           <widget class="QLineEdit" name="txtFilternumVantagePoints"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>numRouters</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QRadioButton" name="checkYnumVantagePoints">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="4">
+           <widget class="QLabel" name="label_35">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="4">
+           <widget class="QLabel" name="label_36">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="4">
+           <widget class="QLabel" name="label_37">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="4">
+           <widget class="QLabel" name="label_38">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="4">
+           <widget class="QLabel" name="label_39">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="4">
+           <widget class="QLabel" name="label_40">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="4">
+           <widget class="QLabel" name="label_41">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="4">
+           <widget class="QLabel" name="label_42">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="4">
+           <widget class="QLabel" name="label_43">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="4">
+           <widget class="QLabel" name="label_44">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="4">
+           <widget class="QLabel" name="label_45">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="0">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>metricGranularityFullAlg3</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>metricFalseNegativesFullBasic</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="1">
+           <widget class="QRadioButton" name="checkXnumLinkSequences">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>metricGranularityFullBasic</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>fractionFullMesh</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="1">
+           <widget class="QRadioButton" name="checkXmetricCoverage">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="1">
+           <widget class="QRadioButton" name="checkXmetricGranularity">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="1">
+           <widget class="QRadioButton" name="checkXnumLinksFull">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="1">
+           <widget class="QRadioButton" name="checkXmetricFalseNegativesFullBasic">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="1">
+           <widget class="QRadioButton" name="checkXmetricFalseNegativesFullAlg3">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="1">
+           <widget class="QRadioButton" name="checkXmetricGranularityFullBasic">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="1">
+           <widget class="QRadioButton" name="checkXmetricGranularityFullAlg3">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>fractionNonNeutralLinks</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QRadioButton" name="checkXnumLinks">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QLabel" name="txtValuesfractionNonNeutralLinks">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="3">
+           <widget class="QLabel" name="txtValuesnumRouters">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QLabel" name="txtValuesnumLinks">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLabel" name="txtValuesfractionFullMesh">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_32">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QRadioButton" name="checkXfractionNonNeutralLinks">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLabel" name="txtValuesfractionVantagePoints">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QRadioButton" name="checkXnumRouters">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QRadioButton" name="checkXnumPaths">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QRadioButton" name="checkXnumPathPairs">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>metricGranularity</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>extraPairProbability</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="QRadioButton" name="checkYnumRouters">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="2">
+           <widget class="QRadioButton" name="checkYnumPaths">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="2">
+           <widget class="QRadioButton" name="checkYnumPathPairs">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="2">
+           <widget class="QRadioButton" name="checkYnumLinkSequences">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="QRadioButton" name="checkYnumLinks">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QRadioButton" name="checkYfractionNonNeutralLinks">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QRadioButton" name="checkYfractionFullMesh">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_31">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="3">
+           <widget class="QLabel" name="txtValuesmetricGranularityFullBasic">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="3">
+           <widget class="QLabel" name="txtValuesmetricGranularityFullAlg3">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QLabel" name="label_33">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="4">
+           <widget class="QLabel" name="label_34">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="5">
+           <widget class="QLineEdit" name="txtFilternumLinks"/>
+          </item>
+          <item row="7" column="5">
+           <widget class="QLineEdit" name="txtFilternumPaths"/>
+          </item>
+          <item row="8" column="5">
+           <widget class="QLineEdit" name="txtFilternumPathPairs"/>
+          </item>
+          <item row="9" column="5">
+           <widget class="QLineEdit" name="txtFilternumLinkSequences"/>
+          </item>
+          <item row="10" column="5">
+           <widget class="QLineEdit" name="txtFiltermetricCoverage"/>
+          </item>
+          <item row="11" column="5">
+           <widget class="QLineEdit" name="txtFiltermetricGranularity"/>
+          </item>
+          <item row="12" column="5">
+           <widget class="QLineEdit" name="txtFilternumLinksFull"/>
+          </item>
+          <item row="13" column="5">
+           <widget class="QLineEdit" name="txtFiltermetricFalseNegativesFullBasic"/>
+          </item>
+          <item row="14" column="5">
+           <widget class="QLineEdit" name="txtFiltermetricFalseNegativesFullAlg3"/>
+          </item>
+          <item row="15" column="5">
+           <widget class="QLineEdit" name="txtFiltermetricGranularityFullBasic"/>
+          </item>
+          <item row="16" column="5">
+           <widget class="QLineEdit" name="txtFiltermetricGranularityFullAlg3"/>
+          </item>
+          <item row="3" column="3">
+           <widget class="QLabel" name="txtValuesextraPairProbability">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="txtFilterfractionVantagePoints"/>
+          </item>
+          <item row="2" column="5">
+           <widget class="QLineEdit" name="txtFilterfractionNonNeutralLinks"/>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="txtFilterfractionFullMesh"/>
+          </item>
+          <item row="4" column="3">
+           <widget class="QLabel" name="txtValuesnumVantagePoints">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>values</string>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QRadioButton" name="checkYextraPairProbability">
+            <property name="text">
+             <string>Y</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="5">
+           <widget class="QLineEdit" name="txtFilterextraPairProbability"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_2" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="btnLoad">
+            <property name="text">
+             <string>Load</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnApply">
+            <property name="text">
+             <string>Apply</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnAuto">
+            <property name="text">
+             <string>Auto</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widgetPlots" native="true"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

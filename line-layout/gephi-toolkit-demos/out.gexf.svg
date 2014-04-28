@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
+<svg contentScriptType="text/ecmascript" width="595px"
+     xmlns:xlink="http://www.w3.org/1999/xlink" zoomAndPan="magnify"
+     contentStyleType="text/css" viewBox="-171 -297 294 489" height="989px"
+     preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"
+     version="1.1">
+    <g id="edges">
+        <path stroke-width="0.1"
+              d="M -136.052032,-262.987671 L -83.809937,-154.985260"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -83.809937,-154.985260 L -136.052032,-262.987671"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -83.809937,-154.985260 L -18.897617,-19.977425"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -18.897617,-19.977425 L -83.809937,-154.985260"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -18.897617,-19.977425 L -23.619482,105.808838"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -18.897617,-19.977425 L 88.124062,46.136971" stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -23.619482,105.808838 L -18.897617,-19.977425"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M -23.619482,105.808838 L 76.235962,156.325241"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M 76.235962,156.325241 L -23.619482,105.808838"
+              stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M 76.235962,156.325241 L 88.124062,46.136971" stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M 88.124062,46.136971 L -18.897617,-19.977425" stroke="#808080"/>
+        <path stroke-width="0.1"
+              d="M 88.124062,46.136971 L 76.235962,156.325241" stroke="#808080"/>
+    </g>
+    <g id="nodes">
+        <circle fill="#000000" stroke-width="1.0" r="10.0" cx="-136.05203"
+                cy="-262.98767" stroke="#000000"/>
+        <circle fill="#000000" stroke-width="1.0" r="10.0" cx="-83.80994"
+                cy="-154.98526" stroke="#000000"/>
+        <circle fill="#000000" stroke-width="1.0" r="10.0" cx="-18.897617"
+                cy="-19.977425" stroke="#000000"/>
+        <circle fill="#000000" stroke-width="1.0" r="10.0" cx="-23.619482"
+                cy="105.80884" stroke="#000000"/>
+        <circle fill="#000000" stroke-width="1.0" r="10.0" cx="76.23596"
+                cy="156.32524" stroke="#000000"/>
+        <circle fill="#000000" stroke-width="1.0" r="10.0" cx="88.12406"
+                cy="46.13697" stroke="#000000"/>
+    </g>
+    <g id="label borders"/>
+    <g id="labels">
+        <text fill="#000000" x="-136.05203" font-size="12" y="-262.98767"
+              style="text-anchor: middle" font-family="Arial">
+        </text>
+        <text fill="#000000" x="-83.80994" font-size="12" y="-154.98526"
+              style="text-anchor: middle" font-family="Arial">
+        </text>
+        <text fill="#000000" x="-18.897617" font-size="12" y="-19.977425"
+              style="text-anchor: middle" font-family="Arial">
+        </text>
+        <text fill="#000000" x="-23.619482" font-size="12" y="105.80884"
+              style="text-anchor: middle" font-family="Arial">
+        </text>
+        <text fill="#000000" x="76.23596" font-size="12" y="156.32524"
+              style="text-anchor: middle" font-family="Arial">
+        </text>
+        <text fill="#000000" x="88.12406" font-size="12" y="46.13697"
+              style="text-anchor: middle" font-family="Arial">
+        </text>
+    </g>
+</svg>

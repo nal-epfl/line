@@ -1,0 +1,43 @@
+* Qt
+LINE makes heavy usage of the Qt libraries, a rich set of application building blocks that are intuitive, easy to use, produce highly readable/maintainable source code and have a high runtime performance and small footprint.
+Website: http://qt.nokia.com/
+License: GNU Lesser General Public License (LGPL) version 2.1
+
+* libipaddr.c:
+An LD_PRELOAD shared library to transparently set source and destitation IP addresses used by applications. By
+Kevin Walsh, Copyright (c) 2003, Duke University. (BSD license)
+
+* PF_RING:
+A network socket that dramatically improves the packet capture speed.
+(C) 2005-11 - Luca Deri. (GPLv2 license)
+Source code/binary not included.
+
+* BRITE - Boston university Representative Internet Topology gEnerator
+http://www.cs.bu.edu/brite/
+BRITE is not included nor directly used in LINE; however, LINE is able to import BRITE files.
+
+* The Gephi Toolkit - offers nice graph layout algorithms
+http://gephi.org
+License: The majority of the Gephi Plateform code is available under the dual license CDDL 1.0 and GNU General Public License (GPL) v3.
+Gephi and the layout program are included separately from LINE in source and binary forms, and the binary can be executed automatically by LINE.
+
+* OpenOrd Layout Gephi Plugin
+http://gephi.org/plugins/openord-layout/
+Force-Directed layout algorithm for real-world large-scale undirected graphs.
+License: GPLv3.
+Gephi and the layout program are included separately from LINE in source and binary forms, and the binary can be executed automatically by LINE.
+
+* Plot labeling algorithm:
+- nicelabel.cpp, adapted from label.c by by Paul Heckbert from "Graphics Gems", Academic Press, 1990 (public domain).
+
+* IP/TCP/UDP checksum code from the Linux kernel
+
+* 3rd party images:
+http://www.openclipart.org/detail/17668/rgtaylor_csc_net_computer
+http://www.openclipart.org/detail/1918/router-by-juanjo
+http://www.openclipart.org/detail/5012/laptop-by-metalmarious
+http://www.openclipart.org/detail/113191/ftline-line-arrow-end-by-anonymous
+http://www.openclipart.org/detail/143629/edit-pencil-icon-by-darth_schmoo
+All images from openclipart.org are licensed under CC0 1.0 Universal (CC0 1.0) - Public Domain Dedication.
+Icons from the nuoveXT.2.2 theme, license: LGPL. http://gnome-look.org/content/show.php/nuoveXT+2?content=56625
+

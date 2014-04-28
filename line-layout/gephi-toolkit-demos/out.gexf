@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gexf xmlns="http://www.gexf.net/1.1draft" version="1.1" xmlns:viz="http://www.gexf.net/1.1draft/viz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.1draft http://www.gexf.net/1.1draft/gexf.xsd">
+  <meta lastmodifieddate="2011-05-20">
+    <creator>Gephi 0.7</creator>
+    <description></description>
+  </meta>
+  <graph defaultedgetype="directed" timeformat="double" mode="dynamic">
+    <attributes class="node" mode="static">
+      <attribute id="eccentricity" title="Eccentricity" type="double">
+        <default>0.0</default>
+      </attribute>
+      <attribute id="closnesscentrality" title="Closeness Centrality" type="double">
+        <default>0.0</default>
+      </attribute>
+      <attribute id="betweenesscentrality" title="Betweenness Centrality" type="double">
+        <default>0.0</default>
+      </attribute>
+    </attributes>
+    <nodes>
+      <node id="0">
+        <attvalues>
+          <attvalue for="eccentricity" value="4.0"></attvalue>
+          <attvalue for="closnesscentrality" value="2.6"></attvalue>
+          <attvalue for="betweenesscentrality" value="0.0"></attvalue>
+        </attvalues>
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-136.05203" y="262.98767"></viz:position>
+      </node>
+      <node id="1">
+        <attvalues>
+          <attvalue for="eccentricity" value="3.0"></attvalue>
+          <attvalue for="closnesscentrality" value="1.8"></attvalue>
+          <attvalue for="betweenesscentrality" value="8.0"></attvalue>
+        </attvalues>
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-83.80994" y="154.98526"></viz:position>
+      </node>
+      <node id="2">
+        <attvalues>
+          <attvalue for="eccentricity" value="2.0"></attvalue>
+          <attvalue for="closnesscentrality" value="1.4"></attvalue>
+          <attvalue for="betweenesscentrality" value="13.0"></attvalue>
+        </attvalues>
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-18.897617" y="19.977425"></viz:position>
+      </node>
+      <node id="3">
+        <attvalues>
+          <attvalue for="eccentricity" value="3.0"></attvalue>
+          <attvalue for="closnesscentrality" value="1.8"></attvalue>
+          <attvalue for="betweenesscentrality" value="3.0"></attvalue>
+        </attvalues>
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-23.619482" y="-105.80884"></viz:position>
+      </node>
+      <node id="4">
+        <attvalues>
+          <attvalue for="eccentricity" value="4.0"></attvalue>
+          <attvalue for="closnesscentrality" value="2.2"></attvalue>
+          <attvalue for="betweenesscentrality" value="1.0"></attvalue>
+        </attvalues>
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="76.23596" y="-156.32524"></viz:position>
+      </node>
+      <node id="5">
+        <attvalues>
+          <attvalue for="eccentricity" value="3.0"></attvalue>
+          <attvalue for="closnesscentrality" value="1.8"></attvalue>
+          <attvalue for="betweenesscentrality" value="3.0"></attvalue>
+        </attvalues>
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="88.12406" y="-46.13697"></viz:position>
+      </node>
+    </nodes>
+    <edges>
+      <edge id="0" source="0" target="1">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="1" source="1" target="0">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="2" source="1" target="2">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="3" source="2" target="1">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="4" source="2" target="3">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="10" source="2" target="5">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="5" source="3" target="2">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="6" source="3" target="4">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="7" source="4" target="3">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="8" source="4" target="5">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="11" source="5" target="2">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+      <edge id="9" source="5" target="4">
+        <attvalues>
+          <attvalue for="weight" value="1.0"></attvalue>
+        </attvalues>
+      </edge>
+    </edges>
+  </graph>
+</gexf>

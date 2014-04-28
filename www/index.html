@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html style="width:100%; height:100%; font-family: sans-serif; font-size: 1em;">
+<head>
+	<title>chart index</title>
+	<style type="text/css">
+	</style>
+	<script src="jquery-1.10.2.min.js"></script>
+	<script src="url-object.js"></script>
+</head>
+<body>
+	<h2>Plots</h2>
+	<div class="template">
+		<p><a href="timeline.html?sim=_sim_&amp;title=Received%20raw%20data%20per%20flow&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Total%20data%20received&amp;yunit=bits&amp;csvfilename=flow-received-raw.csv&amp;annotationfilename=flow-received-raw-annotations.json&amp;csvvar=flowReceivedRawCsv&amp;annotationvar=flowReceivedRawAnnotations">Data received</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=Raw%20throughput%20per%20flow%20(avg.%20over%20100ms)&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Throughput&amp;yunit=bps&amp;csvfilename=flow-received-throughput-raw-100.csv&amp;annotationfilename=flow-received-throughput-raw-100-annotations.json&amp;csvvar=flowReceivedThroughputRaw100Csv&amp;annotationvar=flowReceivedThroughputAnnotations100">Throughput (averaged over 100ms)</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=Raw%20throughput%20per%20flow%20(avg.%20over%20500ms)&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Throughput&amp;yunit=bps&amp;csvfilename=flow-received-throughput-raw-500.csv&amp;annotationfilename=flow-received-throughput-raw-500-annotations.json&amp;csvvar=flowReceivedThroughputRaw500Csv&amp;annotationvar=flowReceivedThroughputAnnotations500">Throughput (averaged over 500ms)</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=Raw%20throughput%20per%20flow%20(avg.%20over%201000ms)&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Throughput&amp;yunit=bps&amp;csvfilename=flow-received-throughput-raw-1000.csv&amp;annotationfilename=flow-received-throughput-raw-1000-annotations.json&amp;csvvar=flowReceivedThroughputRaw1000Csv&amp;annotationvar=flowReceivedThroughputAnnotations1000">Throughput (averaged over 1000ms)</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=RTT%20per%20flow&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=RTT&amp;yunit=ms&amp;csvfilename=flow-rtt.csv&amp;annotationfilename=flow-rtt-annotations.json&amp;csvvar=flowRttCsv&amp;annotationvar=flowRttAnnotations">RTT</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=Receive%20window%20size%20per%20flow&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Receive%20window%20size&amp;yunit=bits&amp;csvfilename=flow-rwin.csv&amp;annotationfilename=flow-rwin-annotations.json&amp;csvvar=flowRwinCsv&amp;annotationvar=flowRwinAnnotations">Receive window size</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=Packets%20in%20flight%20per%20flow&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Number%20of%20packets%20in%20flight&amp;yunit=p&amp;csvfilename=flow-packets-in-flight.csv&amp;annotationfilename=flow-packets-in-flight-annotations.json&amp;csvvar=flowPacketsInFlightCsv&amp;annotationvar=flowPacketsInFlightAnnotations">Number of packets in flight</a></p>
+		<p><a href="timeline.html?sim=_sim_&amp;title=Bytes%20in%20flight%20per%20flow&amp;xlabel=Time%20&amp;xunit=ms&amp;ylabel=Number%20of%20bytes%20in%20flight&amp;yunit=bits&amp;csvfilename=flow-bytes-in-flight.csv&amp;annotationfilename=flow-bytes-in-flight-annotations.json&amp;csvvar=flowBytesInFlightCsv&amp;annotationvar=flowBytesInFlightAnnotations">Number of bytes in flight</a></p>
+		<p><a href="_graph_-matlab/">Matlab files</a></p>
+	</div>
+
+	<script type="text/javascript">
+	
+	var sim = urlObject().parameters.sim;
+	if (!sim) {
+		var path = urlObject().hostname ? urlObject().hostname : urlObject().pathname;
+		try {
+			sim = path.match(/\/[^\/]*\/index.html/i)[0].substring(1).match(/[^\/]*/i)[0];
+		} catch (e) {
+			sim = "";
+		}
+	}
+	var graphName = "";
+	try {
+		graphName = sim.match(/[^\.]*/i)[0];
+	} catch (e) {}
+
+	$('.template').html(function(index, html){
+		return html.replace(new RegExp("_sim_", "g"), sim);
+	});
+	$('.template').html(function(index, html){
+		return html.replace(new RegExp("_graph_", "g"), graphName);
+	});
+	
+	</script>
+</body>
+</html>
+

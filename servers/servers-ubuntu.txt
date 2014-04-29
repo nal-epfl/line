@@ -1,0 +1,194 @@
+## GCC & friends ##
+
+apt-get install build-essential
+
+## GCC & friends ##
+
+apt-get install zsh mc
+
+chsh -s /usr/bin/zsh
+
+## Fast SSH connections
+
+echo "UseDNS no" >> /etc/ssh/sshd_config
+sed -e '/pam_motd.so/ s/^#*/#/' -i /etc/pam.d/sshd
+sed -e '/pam_mail.so/ s/^#*/#/' -i /etc/pam.d/sshd
+restart ssh
+
+## Do not rename interfaces
+
+sed -e '/GRUB_CMDLINE_LINUX_DEFAULT/ s/="/="biosdevname=0 /' -i /etc/default/grub
+sed -e '/GRUB_CMDLINE_LINUX/ s/="/="biosdevname=0 /' -i /etc/default/grub
+update-grub
+
+mcedit /etc/network/interfaces
+
+# on router:
+auto eth7
+iface eth7 inet static
+    address 192.168.77.1
+    netmask 255.255.255.0
+    network 192.168.77.0
+    broadcast 192.168.77.255
+
+# on host:
+auto eth7
+iface eth7 inet static
+    address 192.168.77.2
+    netmask 255.255.255.0
+    network 192.168.77.0
+    broadcast 192.168.77.255
+
+
+reboot
+
+## Utilities
+
+apt-get install wget mc lm-sensors ipmitool htop stress zip
+apt-get install bc
+apt-get install traceroute ethtool irqbalance strace tcpdump bwm-ng netcat pciutils
+
+## iproute2 and ethtool for kernel 3.11
+
+apt-get install iptables-dev libdb4.8-dev
+
+wget https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-3.11.0.tar.xz
+tar -xJf iproute2-3.11.0.tar.xz
+cd iproute2-3.11.0
+./configure --prefix=/usr
+make -j7
+
+make install
+cd ..
+
+wget https://www.kernel.org/pub/software/network/ethtool/ethtool-3.11.tar.xz
+tar -xJf ethtool-3.11.tar.xz
+cd ethtool-3.11
+./configure --prefix=/usr
+make -j7
+
+make install
+rm -f /sbin/ethttool
+cp /usr/sbin/ethtool /sbin/ethttool
+cd ..
+
+## Fix strange IPMI problem
+
+rm /etc/modprobe.d/ipmi.conf
+
+## GCC 4.7.3 (for C++11 atomic ops)
+
+apt-get install software-properties-common python-software-properties
+add-apt-repository ppa:ubuntu-toolchain-r/test
+apt-get update
+apt-cache search "g\+\+"
+apt-get install gcc-4.7 g++-4.7
+
+ls -lh /usr/bin/g++
+update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.6
+update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.7 40 --slave /usr/bin/g++ g++ /usr/bin/g++-4.7
+update-alternatives --config gcc
+# Select 4.7, then check:
+g++ --version
+
+## Qt 4 (No GUI)
+
+apt-get install libssl-dev flex bison gperf libicu-dev libxslt-dev ruby libcups2-dev libglib2.0-dev
+
+pushd .
+cd /tmp
+rm -rf qt-everywhere-opensource-src-4.8.5
+wget http://master.qt-project.org/official_releases/qt/4.8/4.8.5/qt-everywhere-opensource-src-4.8.5.tar.gz
+tar xzf qt-everywhere-opensource-src-4.8.5.tar.gz
+cd qt-everywhere-opensource-src-4.8.5
+./configure --prefix=/usr/local --opensource --confirm-license --graphicssystem=raster --release -no-gui -nomake examples -nomake demos
+make -j4
+
+make install
+cd ..
+popd
+
+## For PF_RING
+
+apt-get install libnuma-dev flex bison
+
+## LINE dependencies ##
+
+## gperftools (for tcmalloc) ##
+
+apt-get install libunwind7-dev
+
+wget https://gperftools.googlecode.com/files/gperftools-2.1.tar.gz
+tar xzf gperftools-2.1.tar.gz
+cd gperftools-2.1
+./configure --prefix=/usr
+make -j4
+
+make install
+cd ..
+
+apt-get install libnl-dev libev-dev
+
+## Disable the firewall and in-kernel connection tracking
+## You need to do this after every kernel update
+
+service ufw stop
+echo "manual" > /etc/init/ufw.override
+echo "blacklist iptable_filter" >> /etc/modprobe.d/blacklist.conf
+echo "blacklist ip_tables" >> /etc/modprobe.d/blacklist.conf
+echo "blacklist x_tables" >> /etc/modprobe.d/blacklist.conf
+mv /lib/modules/$(uname -r)/kernel/net/ipv4/netfilter /lib/modules/$(uname -r)/kernel/net/ipv4/netfilter-old
+reboot
+
+## Update the system
+
+apt-get update && apt-get dist-upgrade
+for d in /lib/modules/* ; do mv $d/kernel/net/ipv4/netfilter $d/kernel/net/ipv4/netfilter-old || /bin/true ; done
+reboot
+# After a kernel update, you need to recompile line-router because of the PF_RING driver.
+
+## Compile a custom kernel
+
+su - ovi
+sudo apt-get install ncurses-dev kernel-package
+mkdir ~/src
+cd ~/src
+apt-get source linux-image-$(uname -r)
+cd linux-...
+make menuconfig
+export CONCURRENCY_LEVEL=4
+time fakeroot make-kpkg --initrd --append-to-version=-ovi kernel-image kernel-headers
+cd ..
+sudo dpkg -i linux-image-* linux-headers-*
+
+########################## Low latency settings for the line-router machine ###########################
+
+Custom kernel options:
+
+CONFIG_NO_HZ_FULL=y
+CONFIG_NO_HZ_FULL_ALL=y
+CONFIG_PREEMPT=y (select Preemptible Kernel (Low-Latency Desktop))
+Optional: select Core2 as CPU model instead of generic x86_64 (if you have a new Intel CPU)
+Optional: optimize for size
+
+On a quad-core Xeon E3-1290 V2 Ivy Bridge, 2012, HyperThreading disabled:
+PhyCPU PhyCore  VirtCores
+0      0        0
+0      1        1
+0      2        2
+0      3        3
+
+Reserve core 2 for the packet scheduler: add
+isolcpus=2
+to GRUB_CMDLINE_LINUX_DEFAULT GRUB_CMDLINE_LINUX in /etc/default/grub, run update-grub and reboot.
+
+Low latency optimizations for all machines: add
+nosoftlockup intel_idle.max_cstate=0 processor.max_cstate=1 idle=halt mce=ignore_ce
+to GRUB_CMDLINE_LINUX_DEFAULT GRUB_CMDLINE_LINUX in /etc/default/grub, run update-grub and reboot.
+
+Full kernel command line:
+isolcpus=1,2,3 nohz_full=1,2,3 rcu_nocbs=1,2,3 acpi=noirq nosoftlockup intel_idle.max_cstate=0 processor.max_cstate=1 idle=halt mce=ignore_ce memtest
+
+Disable irqbalance (we will map manually all IRQs except for our network card to CPU 0):
+set ENABLED=0 in /etc/default/irqbalance
+

@@ -108,19 +108,19 @@ bool TomoData::dumpAsText(QString fileName) const
 	}
 
 	QTextStream out(&file);
-	out << "Edges: " << n << "\n";
+    out << "Links: " << n << "\n";
 	out << "Paths: " << m << "\n";
 	for (int p = 0; p < m; p++) {
 		out << "Path " << p << " :" << "\n";
 		out << "Src-node: " << pathstarts[p] << "\n";
 		out << "Dst-node: " << pathends[p] << "\n";
-		out << "Edges:";
+        out << "Links:";
 		foreach (int e, pathedges[p]) {
 			out << " " << e;
 		}
 		out << "\n";
 	}
-	out << "Edge transmission rates (x):";
+    out << "Link transmission rates (x):";
 	foreach (qreal v, xmeasured) {
 		out << " " << v;
 	}
@@ -140,7 +140,7 @@ bool TomoData::dumpAsText(QString fileName) const
 	}
 
 	if (!T.isEmpty()) {
-		out << "Transmission rates per path, per edge:" << "\n";
+        out << "Transmission rates per path, per link:" << "\n";
 		for (int p = 0; p < m; p++) {
 			for (int e = 0; e < n; e++) {
 				out << T[p][e] << (e == n-1 ? "\n" : " ");
@@ -149,7 +149,7 @@ bool TomoData::dumpAsText(QString fileName) const
 	}
 
 	if (!packetCounters.isEmpty()) {
-		out << "Packet counters per path, per edge:" << "\n";
+        out << "Packet counters per path, per link:" << "\n";
 		for (int p = 0; p < m; p++) {
 			for (int e = 0; e < n; e++) {
 				out << packetCounters[p][e] << (e == n-1 ? "\n" : " ");
@@ -1421,7 +1421,7 @@ void dumpTomoData(TomoData &data, QString outputFile)
 	}
 	QTextStream out(&file);
 	out << "pathcount = " << data.m << "\n";
-	out << "edgecount = " << data.n << "\n";
+    out << "linkcount = " << data.n << "\n";
 
 	out << "pathstarts = ";
 	for (int p = 0; p < data.m; p++) {
@@ -1436,7 +1436,7 @@ void dumpTomoData(TomoData &data, QString outputFile)
 	out << "\n";
 
 	out << "\n";
-	out << "pathedges" << "\n";
+    out << "pathlinks" << "\n";
 	for (int p = 0; p < data.m; p++) {
 		foreach (int e, data.pathedges[p]) {
 			out << e << " ";

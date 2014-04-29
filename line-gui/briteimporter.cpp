@@ -74,7 +74,7 @@ bool BriteImporter::import(QString fromFile, QString toFile)
 		emit logError(QString("File %1:%2: expected 2 positive integers").arg(fromFile).arg(lineNumber));
 		return false;
 	}
-	emit logInfo(QString("Found a topology with %1 nodes and %2 edges").arg(nodeCount).arg(edgeCount));
+    emit logInfo(QString("Found a topology with %1 nodes and %2 links").arg(nodeCount).arg(edgeCount));
 
 	NetGraph g;
 
@@ -198,7 +198,7 @@ bool BriteImporter::import(QString fromFile, QString toFile)
 			}
 			int edgeCount2 = tokens.first().toInt(&ok);
 			if (!ok || edgeCount2 != edgeCount) {
-				emit logError(QString("File %1:%2: expected 1 positive integer that would match the previous edge count").arg(fromFile).arg(lineNumber));
+                emit logError(QString("File %1:%2: expected 1 positive integer that would match the previous edge count").arg(fromFile).arg(lineNumber));
 				return false;
 			}
 			state = "edges";

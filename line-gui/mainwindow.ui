@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>6</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -1930,7 +1930,7 @@ For performance reasons, the number of packets that can be captured is limited b
            <item>
             <widget class="QLineEdit" name="txtResultsInterestingLinks">
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a comma separated list of edge indices (numbers) and press Enter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a comma separated list of link indices (numbers) and press Enter. Alternatively, enter the text &amp;quot;all&amp;quot; to display the timelines for all links.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>1</string>

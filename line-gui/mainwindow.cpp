@@ -833,7 +833,7 @@ void MainWindow::on_btnListTopoBySize_clicked()
 	QTableWidget *table = new QTableWidget(window);
 	topoBySizeTable = table;
 	table->setColumnCount(6);
-	table->setHorizontalHeaderLabels(QStringList() << "Topology" << "Nodes" << "Routers" << "Edges" << "Internal edges" << "Size");
+    table->setHorizontalHeaderLabels(QStringList() << "Topology" << "Nodes" << "Routers" << "Links" << "Internal links" << "Size");
 	table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	QList<QPair<QString, qint64> > topologies;
 	for (int i = 0; i < ui->cmbTopologies->count(); i++) {

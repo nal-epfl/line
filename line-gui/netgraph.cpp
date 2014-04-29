@@ -1166,7 +1166,7 @@ QString NetGraph::toText()
 	QStringList result;
 	result << QString("Graph %1").arg(fileName);
 	result << QString("Nodes %1").arg(nodes.count());
-	result << QString("Edges %1").arg(edges.count());
+    result << QString("Links %1").arg(edges.count());
 	result << QString("Paths %1").arg(paths.count());
 	result << QString("Connections %1").arg(connections.count());
 	result << "";

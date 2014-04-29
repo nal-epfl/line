@@ -44,6 +44,81 @@
 
 #include <qrgb-line.h>
 
+class Packet;
+class NetGraph;
+
+class FlowIdentifier {
+public:
+    FlowIdentifier(Packet *p = 0);
+    quint32 ipSrc;
+    quint32 ipDst;
+    quint16 portSrc;
+    quint16 portDst;
+    quint32 protocol;
+    bool operator==(const FlowIdentifier &other) const;
+    bool operator!=(const FlowIdentifier &other) const;
+};
+
+uint qHash(const FlowIdentifier& object);
+
+QDataStream& operator>>(QDataStream& s, FlowIdentifier& d);
+
+QDataStream& operator<<(QDataStream& s, const FlowIdentifier& d);
+
+
+class EdgeTimelineItem {
+public:
+    void clear();
+    quint64      timestamp;
+    quint64      arrivals_p;    // number of packet arrivals
+    quint64      arrivals_B;    // ingress bytes
+    quint64      qdrops_p;      // number of packets dropped by queueing
+    quint64      qdrops_B;      // bytes dropped by queueing
+    quint64      rdrops_p;      // number of packets dropped randomly
+    quint64      rdrops_B;      // bytes dropped randomly
+    quint64      queue_sampled; // queue utilization sampled at timestamp
+    quint64      queue_avg;     // divide this by arrivals_p (if that is zero, this is zero) to get the average queue size, sampled at packet arrivals
+    quint64      queue_max;     // the maximum queue size over this time interval
+    quint64      numFlows;      // should be the same as flows.count() except for legacy experiments, which have flows empty but numFlows >= 0
+    QSet<FlowIdentifier> flows; // set of the flows from which packets have arrived on the link
+};
+
+bool compareEdgeTimelineItem(const EdgeTimelineItem &a, const EdgeTimelineItem &b);
+
+QDataStream& operator>>(QDataStream& s, EdgeTimelineItem& d);
+
+QDataStream& operator<<(QDataStream& s, const EdgeTimelineItem& d);
+
+
+class EdgeTimeline {
+public:
+    EdgeTimeline();
+    qint32 edgeIndex;
+    qint32 queueIndex; // -1 means this is the edge timeline, >= 0 means this is a queue timeline
+    quint64 tsMin;
+    quint64 tsMax;
+    quint64 timelineSamplingPeriod;
+    quint64 rate_Bps;
+    qint32 delay_ms;
+    quint64 qcapacity;  // queue size in bytes
+    QVector<EdgeTimelineItem> items;
+};
+
+QDataStream& operator>>(QDataStream& s, EdgeTimeline& d);
+
+QDataStream& operator<<(QDataStream& s, const EdgeTimeline& d);
+
+class EdgeTimelines {
+public:
+    QVector<QVector<EdgeTimeline> > timelines;
+};
+
+QDataStream& operator>>(QDataStream& s, EdgeTimelines& d);
+
+QDataStream& operator<<(QDataStream& s, const EdgeTimelines& d);
+
+bool readEdgeTimelines(EdgeTimelines &d, NetGraph *g, QString workingDir);
+
 #ifdef LINE_EMULATOR
 
 class Packet;
@@ -54,38 +129,6 @@ struct packetEvent {
 };
 
 bool comparePacketEvent(const packetEvent &a, const packetEvent &b);
-
-class FlowIdentifier {
-public:
-	FlowIdentifier(Packet *p = 0);
-	quint32 ipSrc;
-	quint32 ipDst;
-	quint16 portSrc;
-	quint16 portDst;
-	quint32 protocol;
-	bool operator==(const FlowIdentifier &other) const;
-	bool operator!=(const FlowIdentifier &other) const;
-};
-
-uint qHash(const FlowIdentifier& object);
-
-class edgeTimelineItem {
-public:
-	void clear();
-	quint64      timestamp;
-	quint64      arrivals_p;    // number of packet arrivals
-	quint64      arrivals_B;    // ingress bytes
-	quint64      qdrops_p;      // number of packets dropped by queueing
-	quint64      qdrops_B;      // bytes dropped by queueing
-	quint64      rdrops_p;      // number of packets dropped randomly
-	quint64      rdrops_B;      // bytes dropped randomly
-	quint64      queue_sampled; // queue utilization sampled at timestamp
-	quint64      queue_avg;     // divide this by arrivals_p (if that is zero, this is zero) to get the average queue size, sampled at packet arrivals
-	quint64      queue_max;     // the maximum queue size over this time interval
-	QSet<FlowIdentifier> flows; // set of the flows from which packets have arrived on the link
-};
-
-bool compareEdgeTimelineItem(const edgeTimelineItem &a, const edgeTimelineItem &b);
 
 class NetGraphEdge;
 
@@ -158,12 +201,9 @@ public:
 
     // Timeline
 	OVector<packetEvent> timelineFull;
-	OVector<edgeTimelineItem> timelineSampled;
+    OVector<EdgeTimelineItem> timelineSampled;
     quint64 tsMin;
     quint64 tsMax;
-
-    // Packet events
-    BitArray packetEvents;      // 0 = successful forwarding; 1 = drop
 
 	void drain(quint64 ts_now, OVector<Packet*> &result);
     bool enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit);
@@ -296,12 +336,9 @@ public:
 
 	// Timeline
 	OVector<packetEvent> timelineFull;
-	OVector<edgeTimelineItem> timelineSampled;
+    OVector<EdgeTimelineItem> timelineSampled;
     quint64 tsMin;
     quint64 tsMax;
-
-	// Packet events
-	BitArray packetEvents;      // 0 = successful forwarding; 1 = drop
 
 	// Token buckets are used for traffic policing. There is
 	// always at least one bucket.

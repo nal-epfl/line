@@ -266,7 +266,7 @@ void MainWindow::on_btnGraphMLImportMerge_clicked()
 			}
 		}
 		if (n1 < 0 || n2 < 0) {
-			emit logError(ui->txtBrite, QString("Could not add an interdomain edge (not enough routers)"));
+            emit logError(ui->txtBrite, QString("Could not add an interdomain link (not enough routers)"));
 			continue;
 		}
 		gBig.nodes[n1].nodeType = NETGRAPH_NODE_BORDER;

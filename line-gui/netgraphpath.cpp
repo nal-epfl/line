@@ -147,7 +147,7 @@ QString NetGraphPath::toText()
 	foreach (NetGraphEdge e, edgeList) {
 		tmp += QString(" %1").arg(e.index + 1);
 	}
-	result << QString("Edge-list %1").arg(tmp);
+    result << QString("Link-list %1").arg(tmp);
 	return result.join("\n");
 }
 

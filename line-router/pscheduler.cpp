@@ -87,66 +87,6 @@ qreal bufferBloatFactor;
 
 NetGraph *netGraph;
 
-FlowIdentifier::FlowIdentifier(Packet *p)
-{
-	if (p) {
-		ipSrc = p->src_ip;
-		ipDst = p->dst_ip;
-		protocol = p->l4_protocol;
-		portSrc = p->l4_src_port;
-		portDst = p->l4_dst_port;
-	}
-}
-
-bool FlowIdentifier::operator==(const FlowIdentifier &other) const
-{
-	return this->ipSrc == other.ipSrc &&
-			this->ipDst == other.ipDst &&
-			this->protocol == other.protocol &&
-			this->portSrc == other.portSrc &&
-			this->portDst == other.portDst;
-}
-
-bool FlowIdentifier::operator!=(const FlowIdentifier &other) const
-{
-	return !(*this == other);
-}
-
-uint qHash(const FlowIdentifier& object)
-{
-	// Note: hash combining algorithm from boost::hash_combine
-	// The magic number is supposed to be 32 random bits. A common way to find a
-	// string of such bits is to use the binary expansion of an irrational number;
-	// in this case, that number is the reciprocal of the golden ratio:
-	// phi = (1 + sqrt(5)) / 2
-	// 2^32 / phi = 0x9e3779b9
-	// See also http://stackoverflow.com/questions/4948780/
-	uint result = 0;
-	result ^= qHash(object.ipSrc) + 0x9e3779b9 + (result << 6) + (result >> 2);;
-	result ^= qHash(object.ipDst) + 0x9e3779b9 + (result << 6) + (result >> 2);;
-	result ^= qHash(object.protocol) + 0x9e3779b9 + (result << 6) + (result >> 2);;
-	result ^= qHash(object.portSrc) + 0x9e3779b9 + (result << 6) + (result >> 2);;
-	result ^= qHash(object.portDst) + 0x9e3779b9 + (result << 6) + (result >> 2);;
-	return result;
-}
-
-void edgeTimelineItem::clear()
-{
-	timestamp = 0;
-	arrivals_p = 0;
-	arrivals_B = 0;
-	qdrops_p = 0;
-	qdrops_B = 0;
-	rdrops_p = 0;
-	rdrops_B = 0;
-	queue_sampled = 0;
-	queue_avg = 0;
-	queue_max = 0;
-	if (flowTracking) {
-		flows.clear();
-	}
-}
-
 void NetGraphEdge::prepareEmulation(int npaths)
 {
     this->npaths = npaths;
@@ -171,7 +111,7 @@ void NetGraphEdge::prepareEmulation(int npaths)
 	qdelay_perpath.resize(npaths);
 
 	if (recordSampledTimeline) {
-		edgeTimelineItem &current = timelineSampled.append();
+        EdgeTimelineItem &current = timelineSampled.append();
 		current.clear();
 
 		quint64 ts_now = get_current_time();
@@ -321,7 +261,7 @@ NetGraphEdgeQueue::NetGraphEdgeQueue(const NetGraphEdge &edge, qint32 index)
     qdelay_perpath.resize(npaths);
 
     if (recordSampledTimeline) {
-        edgeTimelineItem current;
+        EdgeTimelineItem current;
 		current.clear();
 
         quint64 ts_now = get_current_time();
@@ -490,15 +430,6 @@ TokenBucket::TokenBucket(const NetGraphEdge &edge, qint32 index)
 	packets_in_perpath.resize(edge.npaths);
 	bytes_in_perpath.resize(edge.npaths);
 	drops_perpath.resize(edge.npaths);
-
-	qDebug() << __FILE__ << __LINE__ << __FUNCTION__ <<
-				QString("Edge %1: created policer %2: c=%3 B r=%4 B/ns (%5 Mbps) l=%6 B").
-				arg(edge.index + 1).
-				arg(policerIndex).
-				arg(withCommasStr(capacity)).
-				arg(fillRate).
-				arg(fillRate * 8.0 * SEC_TO_NSEC / 1.0e6).
-				arg(withCommasStr(currentLevel));
 }
 
 void TokenBucket::init(quint64 ts_now)
@@ -612,7 +543,7 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		}
 	}
 
-    //printf("%s: ts delta = + "TS_FORMAT"  Edge %d: qload = %llu (%llu%%)\n", p->trace.count() == 1 ? "ARRIVAL" : "EVENT  ", TS_FORMAT_PARAM(ts_now - qts_head), id, qload, (qload*100)/qcapacity);
+    //printf("%s: ts delta = + "TS_FORMAT"  Link %d: qload = %llu (%llu%%)\n", p->trace.count() == 1 ? "ARRIVAL" : "EVENT  ", TS_FORMAT_PARAM(ts_now - qts_head), id, qload, (qload*100)/qcapacity);
 
 	qts_head = ts_now;
 
@@ -622,7 +553,7 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		rdrops++;
 		rdrops_perpath[p->path_id]++;
 		if (DEBUG_PACKETS)
-			printf("Edge: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: lossRate_int = %d, randomVal = %d\n",
+            printf("Link: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: lossRate_int = %d, randomVal = %d\n",
 				   NIPQUAD(p->src_ip),
 				   NIPQUAD(p->dst_ip),
 				   lossRate_int,
@@ -646,7 +577,7 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 				qdrops++;
 				qdrops_perpath[p_front->path_id]++;
 				if (DEBUG_PACKETS)
-					printf("Edge: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: plen = %d, qload = %llu, qcap = %llu\n",
+                    printf("Link: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: plen = %d, qload = %llu, qcap = %llu\n",
 						   NIPQUAD(p_front->src_ip),
 						   NIPQUAD(p_front->dst_ip),
 						   p_front->length,
@@ -668,7 +599,7 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 				qdrops++;
 				qdrops_perpath[p_front->path_id]++;
 				if (DEBUG_PACKETS)
-					printf("Edge: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: plen = %d, qload = %llu, qcap = %llu\n",
+                    printf("Link: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: plen = %d, qload = %llu, qcap = %llu\n",
 						   NIPQUAD(p_front->src_ip),
 						   NIPQUAD(p_front->dst_ip),
 						   p_front->length,
@@ -684,7 +615,7 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 			qdrops++;
 			qdrops_perpath[p->path_id]++;
 			if (DEBUG_PACKETS)
-				printf("Edge: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: plen = %d, qload = %llu, qcap = %llu\n",
+                printf("Link: Drop: %d.%d.%d.%d -> %d.%d.%d.%d: plen = %d, qload = %llu, qcap = %llu\n",
 					   NIPQUAD(p->src_ip),
 					   NIPQUAD(p->dst_ip),
 					   p->length,
@@ -777,7 +708,7 @@ stats:
 	if (recordSampledTimeline) {
 		if (ts_now >= timelineSampled.last().timestamp + timelineSamplingPeriod) {
 			// new time bracket, insert new aggregate
-			edgeTimelineItem &current = timelineSampled.append();
+            EdgeTimelineItem &current = timelineSampled.append();
 			current.clear();
 
 			current.timestamp = (ts_now / timelineSamplingPeriod) * timelineSamplingPeriod;
@@ -874,7 +805,7 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		}
 		if (ts_now >= timelineSampled.last().timestamp + timelineSamplingPeriod) {
 			// new time bracket, insert new aggregate
-			edgeTimelineItem &current = timelineSampled.append();
+            EdgeTimelineItem &current = timelineSampled.append();
 			current.clear();
 
 			current.timestamp = (ts_now / timelineSamplingPeriod) * timelineSamplingPeriod;
@@ -1039,7 +970,7 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 		}
 		NetGraphEdge &e = netGraph->edgeByNodeIndex(p->trace.last(), nextHop);
 		if (DEBUG_PACKETS)
-			printf("Found route for packet %d.%d.%d.%d -> %d.%d.%d.%d, node=%d, next hop=%d, edge=%d\n",
+            printf("Found route for packet %d.%d.%d.%d -> %d.%d.%d.%d, node=%d, next hop=%d, link=%d\n",
 				   NIPQUAD(p->src_ip),
 				   NIPQUAD(p->dst_ip),
 				   p->trace.last(),
@@ -1064,227 +995,215 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 	}
 }
 
-void saveEdgeTimelinesBinary(NetGraphEdge e, int queue, quint64 tsMin, quint64 tsMax)
+EdgeTimeline computeEdgeTimelinesBinary(NetGraphEdge e, int queue, quint64 tsMin, quint64 tsMax)
 {
-	// now create arrays for everything
-	OVector<quint64> vector_timestamp;
-	OVector<quint64> vector_arrivals_p;
-	OVector<quint64> vector_arrivals_B;
-	OVector<quint64> vector_qdrops_p;
-	OVector<quint64> vector_qdrops_B;
-	OVector<quint64> vector_rdrops_p;
-	OVector<quint64> vector_rdrops_B;
-	OVector<quint64> vector_queue_sampled;
-	OVector<quint64> vector_queue_avg;
-	OVector<quint64> vector_queue_max;
-	OVector<quint64> vector_queue_numflows;
+    EdgeTimeline timeline;
 
-	{
-		QFile file(QString("timelines-edge-%1%2.dat").
-				   arg(e.index).
-				   arg(queue >= 0 ? QString("-queue-%1").arg(queue) : QString("")));
-		file.open(QIODevice::WriteOnly);
-		QDataStream out(&file);
-		out.setVersion(QDataStream::Qt_4_0);
+    // edge timeline range
+    if (!e.timelineSampled.isEmpty()) {
+        tsMin = qMin(tsMin, e.timelineSampled.first().timestamp);
+    }
 
-		// edge timeline range
-		if (!e.timelineSampled.isEmpty()) {
-			tsMin = qMin(tsMin, e.timelineSampled.first().timestamp);
-		}
+    tsMin = e.timelineSamplingPeriod ? (tsMin / e.timelineSamplingPeriod) * e.timelineSamplingPeriod : tsMin;
 
-		tsMin = e.timelineSamplingPeriod ? (tsMin / e.timelineSamplingPeriod) * e.timelineSamplingPeriod : tsMin;
-		out << tsMin;
-		out << tsMax;
+    timeline.tsMin = tsMin;
+    timeline.tsMax = tsMax;
 
-		// edge properties
-		out << e.timelineSamplingPeriod;
-		out << e.rate_Bps;
-		out << e.delay_ms;
-		out << e.qcapacity;
+    // edge properties
+    timeline.timelineSamplingPeriod = e.timelineSamplingPeriod;
+    timeline.rate_Bps = e.rate_Bps;
+    timeline.delay_ms = e.delay_ms;
+    timeline.qcapacity = e.qcapacity;
 
-		const OVector<edgeTimelineItem> &timelineSampled = queue < 0 ? e.timelineSampled :
-																	   e.queues[queue].timelineSampled;
+    const OVector<EdgeTimelineItem> &timelineSampled = queue < 0 ? e.timelineSampled :
+                                                                   e.queues[queue].timelineSampled;
 
-		// unroll RLE data
-		quint64 lastTs = 0;
-		quint64 samplingPeriod = e.timelineSamplingPeriod;
-		quint64 lastQueueSampled = 0;
-		quint64 lastQueueAvg = 0;
-		quint64 lastQueueMax = 0;
+    // unroll RLE data
+    quint64 lastTs = 0;
+    quint64 samplingPeriod = e.timelineSamplingPeriod;
+    quint64 lastQueueSampled = 0;
+    quint64 lastQueueAvg = 0;
+    quint64 lastQueueMax = 0;
 
-		foreach (edgeTimelineItem item, timelineSampled) {
-			// "extrapolate"
-			while (item.timestamp > tsMin + lastTs + samplingPeriod) {
-				quint64 delta = ((e.rate_Bps * samplingPeriod) / SEC_TO_NSEC);
-				lastQueueSampled = (delta < lastQueueSampled) ? lastQueueSampled-delta : 0;
-				lastQueueAvg = (delta < lastQueueAvg) ? lastQueueAvg-delta : 0;
-				lastQueueMax = (delta < lastQueueMax) ? lastQueueMax-delta : 0;
+    foreach (EdgeTimelineItem item, timelineSampled) {
+        // "extrapolate"
+        while (item.timestamp > tsMin + lastTs + samplingPeriod) {
+            quint64 delta = ((e.rate_Bps * samplingPeriod) / SEC_TO_NSEC);
+            lastQueueSampled = (delta < lastQueueSampled) ? lastQueueSampled-delta : 0;
+            lastQueueAvg = (delta < lastQueueAvg) ? lastQueueAvg-delta : 0;
+            lastQueueMax = (delta < lastQueueMax) ? lastQueueMax-delta : 0;
 
-				lastTs += samplingPeriod;
-				vector_timestamp << lastTs;
-				vector_arrivals_p << 0;
-				vector_arrivals_B << 0;
-				vector_qdrops_p << 0;
-				vector_qdrops_B << 0;
-				vector_rdrops_p << 0;
-				vector_rdrops_B << 0;
-				vector_queue_sampled << lastQueueSampled;
-				vector_queue_avg << lastQueueAvg;
-				vector_queue_max << lastQueueMax;
-				vector_queue_numflows << 0;
-			}
+            lastTs += samplingPeriod;
+            EdgeTimelineItem newItem;
+            newItem.clear();
+            newItem.timestamp = lastTs;
+            newItem.queue_sampled = lastQueueSampled;
+            newItem.queue_avg = lastQueueAvg;
+            newItem.queue_max = lastQueueMax;
+            timeline.items.append(newItem);
+        }
 
-			lastTs = item.timestamp - tsMin;
-			lastQueueSampled = item.queue_sampled;
-			lastQueueAvg = item.arrivals_p ? item.queue_avg / item.arrivals_p : 0;
-			lastQueueMax = item.queue_max;
+        lastTs = item.timestamp - tsMin;
+        lastQueueSampled = item.queue_sampled;
+        lastQueueAvg = item.arrivals_p ? item.queue_avg / item.arrivals_p : 0;
+        lastQueueMax = item.queue_max;
 
-			vector_timestamp << lastTs;
-			vector_arrivals_p << item.arrivals_p;
-			vector_arrivals_B << item.arrivals_B;
-			vector_qdrops_p << item.qdrops_p;
-			vector_qdrops_B << item.qdrops_B;
-			vector_rdrops_p << item.rdrops_p;
-			vector_rdrops_B << item.rdrops_B;
-			vector_queue_sampled << lastQueueSampled;
-			vector_queue_avg << lastQueueAvg;
-			vector_queue_max << lastQueueMax;
-			vector_queue_numflows << (flowTracking ? item.flows.count() : 0);
-		}
+        EdgeTimelineItem newItem;
+        newItem.clear();
 
-		// write the data
-		out << vector_timestamp;
-		out << vector_arrivals_p;
-		out << vector_arrivals_B;
-		out << vector_qdrops_p;
-		out << vector_qdrops_B;
-		out << vector_rdrops_p;
-		out << vector_rdrops_B;
-		out << vector_queue_sampled;
-		out << vector_queue_avg;
-		out << vector_queue_max;
-		out << vector_queue_numflows;
-	}
+        newItem.timestamp = lastTs;
+        newItem.arrivals_p = item.arrivals_p;
+        newItem.arrivals_B = item.arrivals_B;
+        newItem.qdrops_p = item.qdrops_p;
+        newItem.qdrops_B = item.qdrops_B;
+        newItem.rdrops_p = item.rdrops_p;
+        newItem.rdrops_B = item.rdrops_B;
+        newItem.queue_sampled = lastQueueSampled;
+        newItem.queue_avg = lastQueueAvg;
+        newItem.queue_max = lastQueueMax;
+        newItem.flows = item.flows;
+        timeline.items.append(newItem);
+    }
 
-	{
-		QFile file(QString("packetevents-edge-%1.dat").arg(e.index));
-		file.open(QIODevice::WriteOnly);
-		QDataStream out(&file);
-		out.setVersion(QDataStream::Qt_4_0);
+    return timeline;
+}
 
-		out << e.packetEvents.toVector();
-	}
+void saveEdgeTimelinesBinary(quint64 tsMin, quint64 tsMax)
+{
+    QFile file(QString("edge-timelines.dat"));
+    file.open(QIODevice::WriteOnly);
+    QDataStream out(&file);
+    out.setVersion(QDataStream::Qt_4_0);
+
+    foreach (NetGraphEdge e, netGraph->edges) {
+        if (!e.timelineSampled.isEmpty()) {
+            tsMin = qMin(tsMin, e.timelineSampled.first().timestamp);
+        }
+    }
+
+    EdgeTimelines edgeTmelines;
+
+    foreach (NetGraphEdge e, netGraph->edges) {
+        QVector<EdgeTimeline> edgeQueueTimelines;
+        for (int queue = -1; queue < e.queueCount; queue++) {
+            edgeQueueTimelines << computeEdgeTimelinesBinary(e, queue, tsMin, tsMax);
+        }
+        edgeTmelines.timelines << edgeQueueTimelines;
+    }
+
+    out << edgeTmelines;
+}
+
+void saveEdgeStats() {
+    QFile edgeStatsFile("edgestats.txt");
+    if (edgeStatsFile.open(QFile::WriteOnly | QFile::Truncate | QFile::Text)) {
+        QTextStream edgeStats(&edgeStatsFile);
+
+        foreach (NetGraphEdge e, netGraph->edges) {
+            if (e.packets_in == 0) {
+                edgeStats << QString("===== Link %1: no traffic").arg(e.index + 1) << endl;
+                continue;
+            }
+
+            edgeStats << QString("===== Link %1").arg(e.index + 1) << endl;
+            edgeStats << QString("  === Global stats") << endl;
+            edgeStats << QString("    = Bandwidth: %1 KB/s (%2 Mbps)").
+                         arg(e.bandwidth).
+                         arg(e.bandwidth * 8.0 / 1000.0) << endl;
+            edgeStats << QString("    = Propagation delay: %1 ms").arg(e.delay_ms) << endl;
+            edgeStats << QString("    = Queue length: %1 frames").arg(e.queueLength) << endl;
+            edgeStats << QString("    =") << endl;
+            edgeStats << QString("    = Bernoulli loss: %1").arg(e.lossBernoulli) << endl;
+            edgeStats << QString("    = Bernoulli loss (int): %1").arg(e.lossRate_int) << endl;
+            edgeStats << QString("    =") << endl;
+            edgeStats << QString("    = Bandwidth: %1 B/s").arg(e.rate_Bps) << endl;
+            edgeStats << QString("    = Queue length: %1 bytes").arg(e.qcapacity) << endl;
+            edgeStats << QString("    = Queue length: %1 bits").arg(e.qcapacity * 8) << endl;
+            edgeStats << QString("    = Queue length: %1 Mb").arg(e.qcapacity * 8 / 1.0e6) << endl;
+            edgeStats << QString("    = Queue length: %1 ms").arg(e.qcapacity * 1.0e3 / qreal(e.rate_Bps)) << endl;
+            edgeStats << QString("    = Queue load (end): %1 bytes").arg(e.qload) << endl;
+            edgeStats << QString("    =") << endl;
+            edgeStats << QString("    = Packets received: %1 (%2 p/s)").arg(e.packets_in).arg(e.packets_in ? qreal(SEC_TO_NSEC) * qreal(e.packets_in) / (e.tsMax - e.tsMin) : 0) << endl;
+            edgeStats << QString("    = Bytes received: %1 (%2 KB/s, %3 Mbps)").
+                         arg(e.bytes).
+                         arg(e.packets_in ? e.bytes / 1.0e3 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0).
+                         arg(e.packets_in ? e.bytes * 8.0 / 1.0e6 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0) << endl;
+            edgeStats << QString("    = Queue drops: %1 (%2)").arg(e.qdrops).arg(e.packets_in ? e.qdrops / qreal(e.packets_in) : 0) << endl;
+            edgeStats << QString("    = Bernoulli drops: %1 (%2)").arg(e.rdrops).arg(e.packets_in ? e.rdrops / qreal(e.packets_in) : 0) << endl;
+            edgeStats << QString("    = Average queuing delay: %1 ms").arg(e.packets_in ? e.total_qdelay * 1.0e3 / qreal(SEC_TO_NSEC) / qreal(e.packets_in) : 0) << endl;
+            edgeStats << QString("    =") << endl;
+            edgeStats << QString("    = Event span: %1 s").arg(e.tsMin < e.tsMax ? (e.tsMax - e.tsMin) / qreal(SEC_TO_NSEC) : 0) << endl;
+
+            for (int q = 0; q < e.queueCount; q++) {
+                edgeStats << QString("    === Queue %1").arg(q) << endl;
+                edgeStats << QString("      = Bandwidth: %1 KB/s (%2 Mbps)").
+                             arg(e.queues[q].bandwidth).
+                             arg(e.queues[q].bandwidth / 1000.0 * 8.0)
+                          << endl;
+                edgeStats << QString("      = Propagation delay: %1 ms").arg(e.queues[q].delay_ms) << endl;
+                edgeStats << QString("      = Queue length: %1 frames").arg(e.queues[q].queueLength) << endl;
+                edgeStats << QString("      =") << endl;
+                edgeStats << QString("      = Bernoulli loss: %1").arg(e.queues[q].lossBernoulli) << endl;
+                edgeStats << QString("      = Bernoulli loss (int): %1").arg(e.queues[q].lossRate_int) << endl;
+                edgeStats << QString("      =") << endl;
+                edgeStats << QString("      = Bandwidth: %1 B/s").arg(e.queues[q].rate_Bps) << endl;
+                edgeStats << QString("      = Queue length: %1 bytes").arg(e.queues[q].qcapacity) << endl;
+                edgeStats << QString("      = Queue length: %1 bits").arg(e.queues[q].qcapacity * 8) << endl;
+                edgeStats << QString("      = Queue length: %1 Mb").arg(e.queues[q].qcapacity * 8 / 1.0e6) << endl;
+                edgeStats << QString("      = Queue length: %1 ms").arg(e.queues[q].qcapacity * 1.0e3 / qreal(e.queues[q].rate_Bps)) << endl;
+                edgeStats << QString("      = Queue discipline: %1").arg(e.queues[q].queuingDiscipline == QueuingDisciplineDropTail
+                                                                         ? "drop-tail"
+                                                                         : e.queues[q].queuingDiscipline == QueuingDisciplineDropHead
+                                                                           ? "drop-head"
+                                                                           : e.queues[q].queuingDiscipline == QueuingDisciplineDropRand
+                                                                             ? "drop-rand"
+                                                                             : QString::number(e.queues[q].queuingDiscipline)) << endl;
+                edgeStats << QString("      = Queue load (end): %1 bytes").arg(e.queues[q].qload) << endl;
+                edgeStats << QString("      =") << endl;
+                edgeStats << QString("      = Packets received: %1 (%2 p/s)").arg(e.queues[q].packets_in).arg(e.queues[q].packets_in ? qreal(SEC_TO_NSEC) * qreal(e.queues[q].packets_in) / (e.tsMax - e.tsMin) : 0) << endl;
+                edgeStats << QString("      = Bytes received: %1 (%2 KB/s, %3 Mbps)").
+                             arg(e.queues[q].bytes).
+                             arg(e.queues[q].packets_in ? e.queues[q].bytes / 1.0e3 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0).
+                             arg(e.queues[q].packets_in ? e.queues[q].bytes * 8.0 / 1.0e6 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0) << endl;
+                edgeStats << QString("      = Queue drops: %1 (%2)").arg(e.queues[q].qdrops).arg(e.queues[q].packets_in ? e.queues[q].qdrops / qreal(e.queues[q].packets_in) : 0) << endl;
+                edgeStats << QString("      = Bernoulli drops: %1 (%2)").arg(e.queues[q].rdrops).arg(e.queues[q].packets_in ? e.queues[q].rdrops / qreal(e.queues[q].packets_in) : 0) << endl;
+                edgeStats << QString("      = Average queuing delay: %1 ms").arg(e.queues[q].packets_in ? e.queues[q].total_qdelay * 1.0e3 / qreal(SEC_TO_NSEC) / qreal(e.queues[q].packets_in) : 0) << endl;
+                edgeStats << QString("      =") << endl;
+                edgeStats << QString("      = Event span: %1 s").arg(e.queues[q].tsMin < e.queues[q].tsMax ? (e.queues[q].tsMax - e.queues[q].tsMin) / qreal(SEC_TO_NSEC) : 0) << endl;
+            }
+            for (int p = 0; p < e.policerCount; p++) {
+                edgeStats << QString("    === Policer %1").arg(p) << endl;
+                edgeStats << QString("      = Bandwidth: %1 KB/s (%2 Mbps)").
+                             arg(e.policers[p].fillRate * 1.0e6).
+                             arg(e.policers[p].fillRate * 1.0e3 * 8.0)
+                          << endl;
+                edgeStats << QString("      = Capacity: %1 frames").arg(e.policers[p].capacity / qreal(ETH_FRAME_LEN)) << endl;
+                edgeStats << QString("      = Capacity: %1 bytes").arg(e.policers[p].capacity) << endl;
+                edgeStats << QString("      = Capacity: %1 ms").arg(e.policers[p].capacity / qreal(e.policers[p].fillRate) / MSEC_TO_NSEC) << endl;
+                edgeStats << QString("      =") << endl;
+                edgeStats << QString("      = Load (end): %1 bytes (%2 frames)").
+                             arg(e.policers[p].currentLevel).
+                             arg(e.policers[p].currentLevel / ETH_FRAME_LEN) << endl;
+                edgeStats << QString("      =") << endl;
+                edgeStats << QString("      = Packets received: %1 (%2 p/s)").arg(e.policers[p].packets_in).arg(e.policers[p].packets_in ? qreal(SEC_TO_NSEC) * qreal(e.policers[p].packets_in) / (e.tsMax - e.tsMin) : 0) << endl;
+                edgeStats << QString("      = Bytes received: %1 (%2 KB/s, %3 Mbps)").
+                             arg(e.policers[p].bytes).
+                             arg(e.policers[p].packets_in ? e.policers[p].bytes / 1.0e3 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0).
+                             arg(e.policers[p].packets_in ? e.policers[p].bytes * 8.0 / 1.0e6 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0) << endl;
+                edgeStats << QString("      = Drops: %1 (%2)").arg(e.policers[p].drops).arg(e.policers[p].packets_in ? e.policers[p].drops / qreal(e.policers[p].packets_in) : 0) << endl;
+                edgeStats << QString("      =") << endl;
+            }
+        }
+        edgeStats.flush();
+    }
+    edgeStatsFile.close();
 }
 
 void saveRecordedData()
 {
 	saveFile("simulation.txt", QString("graph=%1").arg(netGraph->fileName.replace(".graph", "").split('/', QString::SkipEmptyParts).last()));
 
-    {
-        QFile edgeStatsFile("edgestats.txt");
-        if (edgeStatsFile.open(QFile::WriteOnly | QFile::Truncate | QFile::Text)) {
-            QTextStream edgeStats(&edgeStatsFile);
-
-            foreach (NetGraphEdge e, netGraph->edges) {
-				if (e.packets_in == 0) {
-					edgeStats << QString("===== Edge %1: no traffic").arg(e.index + 1) << endl;
-					continue;
-				}
-
-				edgeStats << QString("===== Edge %1").arg(e.index + 1) << endl;
-                edgeStats << QString("  === Global stats") << endl;
-				edgeStats << QString("    = Bandwidth: %1 KB/s (%2 Mbps)").
-							 arg(e.bandwidth).
-							 arg(e.bandwidth * 8.0 / 1000.0) << endl;
-                edgeStats << QString("    = Propagation delay: %1 ms").arg(e.delay_ms) << endl;
-                edgeStats << QString("    = Queue length: %1 frames").arg(e.queueLength) << endl;
-                edgeStats << QString("    =") << endl;
-                edgeStats << QString("    = Bernoulli loss: %1").arg(e.lossBernoulli) << endl;
-                edgeStats << QString("    = Bernoulli loss (int): %1").arg(e.lossRate_int) << endl;
-                edgeStats << QString("    =") << endl;
-                edgeStats << QString("    = Bandwidth: %1 B/s").arg(e.rate_Bps) << endl;
-                edgeStats << QString("    = Queue length: %1 bytes").arg(e.qcapacity) << endl;
-                edgeStats << QString("    = Queue length: %1 bits").arg(e.qcapacity * 8) << endl;
-                edgeStats << QString("    = Queue length: %1 Mb").arg(e.qcapacity * 8 / 1.0e6) << endl;
-				edgeStats << QString("    = Queue length: %1 ms").arg(e.qcapacity * 1.0e3 / qreal(e.rate_Bps)) << endl;
-                edgeStats << QString("    = Queue load (end): %1 bytes").arg(e.qload) << endl;
-                edgeStats << QString("    =") << endl;
-                edgeStats << QString("    = Packets received: %1 (%2 p/s)").arg(e.packets_in).arg(e.packets_in ? qreal(SEC_TO_NSEC) * qreal(e.packets_in) / (e.tsMax - e.tsMin) : 0) << endl;
-				edgeStats << QString("    = Bytes received: %1 (%2 KB/s, %3 Mbps)").
-							 arg(e.bytes).
-							 arg(e.packets_in ? e.bytes / 1.0e3 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0).
-							 arg(e.packets_in ? e.bytes * 8.0 / 1.0e6 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0) << endl;
-                edgeStats << QString("    = Queue drops: %1 (%2)").arg(e.qdrops).arg(e.packets_in ? e.qdrops / qreal(e.packets_in) : 0) << endl;
-                edgeStats << QString("    = Bernoulli drops: %1 (%2)").arg(e.rdrops).arg(e.packets_in ? e.rdrops / qreal(e.packets_in) : 0) << endl;
-				edgeStats << QString("    = Average queuing delay: %1 ms").arg(e.packets_in ? e.total_qdelay * 1.0e3 / qreal(SEC_TO_NSEC) / qreal(e.packets_in) : 0) << endl;
-                edgeStats << QString("    =") << endl;
-                edgeStats << QString("    = Event span: %1 s").arg(e.tsMin < e.tsMax ? (e.tsMax - e.tsMin) / qreal(SEC_TO_NSEC) : 0) << endl;
-
-				for (int q = 0; q < e.queueCount; q++) {
-					edgeStats << QString("    === Queue %1").arg(q) << endl;
-					edgeStats << QString("      = Bandwidth: %1 KB/s (%2 Mbps)").
-								 arg(e.queues[q].bandwidth).
-								 arg(e.queues[q].bandwidth / 1000.0 * 8.0)
-							  << endl;
-					edgeStats << QString("      = Propagation delay: %1 ms").arg(e.queues[q].delay_ms) << endl;
-					edgeStats << QString("      = Queue length: %1 frames").arg(e.queues[q].queueLength) << endl;
-					edgeStats << QString("      =") << endl;
-					edgeStats << QString("      = Bernoulli loss: %1").arg(e.queues[q].lossBernoulli) << endl;
-					edgeStats << QString("      = Bernoulli loss (int): %1").arg(e.queues[q].lossRate_int) << endl;
-					edgeStats << QString("      =") << endl;
-					edgeStats << QString("      = Bandwidth: %1 B/s").arg(e.queues[q].rate_Bps) << endl;
-					edgeStats << QString("      = Queue length: %1 bytes").arg(e.queues[q].qcapacity) << endl;
-                    edgeStats << QString("      = Queue length: %1 bits").arg(e.queues[q].qcapacity * 8) << endl;
-                    edgeStats << QString("      = Queue length: %1 Mb").arg(e.queues[q].qcapacity * 8 / 1.0e6) << endl;
-					edgeStats << QString("      = Queue length: %1 ms").arg(e.queues[q].qcapacity * 1.0e3 / qreal(e.queues[q].rate_Bps)) << endl;
-					edgeStats << QString("      = Queue discipline: %1").arg(e.queues[q].queuingDiscipline == QueuingDisciplineDropTail
-																			 ? "drop-tail"
-																			 : e.queues[q].queuingDiscipline == QueuingDisciplineDropHead
-																			   ? "drop-head"
-																			   : e.queues[q].queuingDiscipline == QueuingDisciplineDropRand
-																				 ? "drop-rand"
-																				 : QString::number(e.queues[q].queuingDiscipline)) << endl;
-					edgeStats << QString("      = Queue load (end): %1 bytes").arg(e.queues[q].qload) << endl;
-					edgeStats << QString("      =") << endl;
-					edgeStats << QString("      = Packets received: %1 (%2 p/s)").arg(e.queues[q].packets_in).arg(e.queues[q].packets_in ? qreal(SEC_TO_NSEC) * qreal(e.queues[q].packets_in) / (e.tsMax - e.tsMin) : 0) << endl;
-					edgeStats << QString("      = Bytes received: %1 (%2 KB/s, %3 Mbps)").
-								 arg(e.queues[q].bytes).
-								 arg(e.queues[q].packets_in ? e.queues[q].bytes / 1.0e3 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0).
-								 arg(e.queues[q].packets_in ? e.queues[q].bytes * 8.0 / 1.0e6 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0) << endl;
-					edgeStats << QString("      = Queue drops: %1 (%2)").arg(e.queues[q].qdrops).arg(e.queues[q].packets_in ? e.queues[q].qdrops / qreal(e.queues[q].packets_in) : 0) << endl;
-					edgeStats << QString("      = Bernoulli drops: %1 (%2)").arg(e.queues[q].rdrops).arg(e.queues[q].packets_in ? e.queues[q].rdrops / qreal(e.queues[q].packets_in) : 0) << endl;
-					edgeStats << QString("      = Average queuing delay: %1 ms").arg(e.queues[q].packets_in ? e.queues[q].total_qdelay * 1.0e3 / qreal(SEC_TO_NSEC) / qreal(e.queues[q].packets_in) : 0) << endl;
-					edgeStats << QString("      =") << endl;
-					edgeStats << QString("      = Event span: %1 s").arg(e.queues[q].tsMin < e.queues[q].tsMax ? (e.queues[q].tsMax - e.queues[q].tsMin) / qreal(SEC_TO_NSEC) : 0) << endl;
-				}
-				for (int p = 0; p < e.policerCount; p++) {
-					edgeStats << QString("    === Policer %1").arg(p) << endl;
-					edgeStats << QString("      = Bandwidth: %1 KB/s (%2 Mbps)").
-								 arg(e.policers[p].fillRate * 1.0e6).
-								 arg(e.policers[p].fillRate * 1.0e3 * 8.0)
-							  << endl;
-					edgeStats << QString("      = Capacity: %1 frames").arg(e.policers[p].capacity / qreal(ETH_FRAME_LEN)) << endl;
-					edgeStats << QString("      = Capacity: %1 bytes").arg(e.policers[p].capacity) << endl;
-					edgeStats << QString("      = Capacity: %1 ms").arg(e.policers[p].capacity / qreal(e.policers[p].fillRate) / MSEC_TO_NSEC) << endl;
-					edgeStats << QString("      =") << endl;
-					edgeStats << QString("      = Load (end): %1 bytes (%2 frames)").
-								 arg(e.policers[p].currentLevel).
-								 arg(e.policers[p].currentLevel / ETH_FRAME_LEN) << endl;
-					edgeStats << QString("      =") << endl;
-					edgeStats << QString("      = Packets received: %1 (%2 p/s)").arg(e.policers[p].packets_in).arg(e.policers[p].packets_in ? qreal(SEC_TO_NSEC) * qreal(e.policers[p].packets_in) / (e.tsMax - e.tsMin) : 0) << endl;
-					edgeStats << QString("      = Bytes received: %1 (%2 KB/s, %3 Mbps)").
-								 arg(e.policers[p].bytes).
-								 arg(e.policers[p].packets_in ? e.policers[p].bytes / 1.0e3 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0).
-								 arg(e.policers[p].packets_in ? e.policers[p].bytes * 8.0 / 1.0e6 * qreal(SEC_TO_NSEC) / (e.tsMax - e.tsMin) : 0) << endl;
-					edgeStats << QString("      = Drops: %1 (%2)").arg(e.policers[p].drops).arg(e.policers[p].packets_in ? e.policers[p].drops / qreal(e.policers[p].packets_in) : 0) << endl;
-					edgeStats << QString("      =") << endl;
-				}
-            }
-            edgeStats.flush();
-        }
-        edgeStatsFile.close();
-    }
-
+    saveEdgeStats();
 
 	TomoData tomoData;
 
@@ -1386,11 +1305,7 @@ void saveRecordedData()
 	tomoData.save("tomo-records.dat");
 
 	// edge timeline aggregates/samples
-	foreach (NetGraphEdge e, netGraph->edges) {
-		for (int queue = -1; queue < e.queueCount; queue++) {
-			saveEdgeTimelinesBinary(e, queue, tomoData.tsMin, tomoData.tsMax);
-		}
-	}
+    saveEdgeTimelinesBinary(tomoData.tsMin, tomoData.tsMax);
 }
 
 static quint64 max_loop_delay;

@@ -180,8 +180,6 @@ private slots:
 
 	void on_checkUDPCBRPoisson_toggled(bool checked);
 
-	void on_spinTCPxNumFlows_valueChanged(int arg1);
-
 	void on_spinUDPVCBRRate_valueChanged(double arg1);
 
 	void on_spinTestTCPPoissonParetoConBw_valueChanged(double arg1);

@@ -379,7 +379,7 @@ void printLinkPathMeasurementValues(QTextStream &out,
 
 	out << "<table>";
 	out << "<tr>";
-	out << "<th>Path\Edge</th>";
+    out << "<th>Path\\Link</th>";
 	for (int iEdge = 0; iEdge < nEdges; iEdge++) {
 		out << "<th>" << (iEdge + 1) << "</th>";
 	}
@@ -429,11 +429,11 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 	}
 	out << endl;
 
-	out << "<h2> Edge transmission rates </h2>" << endl;
+    out << "<h2> Link transmission rates </h2>" << endl;
 	printLinkMeasurementValues(out, globalMeasurements.edgeMeasurements);
 	out << endl;
 
-	out << "<h2> Edge transmission rates -- sorted </h2>" << endl;
+    out << "<h2> Link transmission rates -- sorted </h2>" << endl;
 	{
 		QVector<LinkIntervalMeasurement> measurements = globalMeasurements.edgeMeasurements;
 		qSort(measurements);
@@ -441,7 +441,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 	}
 	out << endl;
 
-	out << "<h2> Per path edge transmission rates (rows = paths) </h2>" << endl;
+    out << "<h2> Per path link transmission rates (rows = paths) </h2>" << endl;
 	printLinkPathMeasurementValues(out, numEdges, numPaths, globalMeasurements.perPathEdgeMeasurements);
 	out << endl;
 
@@ -463,11 +463,11 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 		}
 		out << endl;
 
-		out << "<h2> Edge transmission rates </h2>" << endl;
+        out << "<h2> Link transmission rates </h2>" << endl;
 		printLinkMeasurementValues(out, intervalMeasurements[iInterval].edgeMeasurements);
 		out << endl;
 
-		out << "<h2> Edge transmission rates -- sorted </h2>" << endl;
+        out << "<h2> Link transmission rates -- sorted </h2>" << endl;
 		{
 			QVector<LinkIntervalMeasurement> measurements = intervalMeasurements[iInterval].edgeMeasurements;
 			qSort(measurements);
@@ -475,7 +475,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 		}
 		out << endl;
 
-		out << "<h2> Per path edge transmission rates (rows = paths) </h2>" << endl;
+        out << "<h2> Per path link transmission rates (rows = paths) </h2>" << endl;
 		printLinkPathMeasurementValues(out, numEdges, numPaths, intervalMeasurements[iInterval].perPathEdgeMeasurements);
 		out << endl;
 	}
@@ -495,14 +495,14 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 			out << "</p>" << endl;
 			out << endl;
 		}
-		out << "<p>" << QString("Neutral edges: ");
+        out << "<p>" << QString("Neutral links: ");
 		for (int e = 0; e < trueEdgeNeutrality.count(); e++) {
 			if (trueEdgeNeutrality[e]) {
 				out << QString("%1 ").arg(e + 1);
 			}
 		}
 		out << "</p>" << endl;
-		out << "<p>" << QString("Non-neutral edges: ");
+        out << "<p>" << QString("Non-neutral links: ");
 		for (int e = 0; e < trueEdgeNeutrality.count(); e++) {
 			if (!trueEdgeNeutrality[e]) {
 				out << QString("%1 ").arg(e + 1);
@@ -638,7 +638,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
         out << endl;
         out << endl;
 
-        out << "Per interval edge transmission statistics:" << endl;
+        out << "Per interval link transmission statistics:" << endl;
         {
             QList<qreal> transmissionThresholds = QList<qreal>() << 0.0 << 0.85 << 0.90 << 0.95 << 0.97 << 0.98 << 0.99 << 1.0;
             // first index: interval, second index: histogram bin
@@ -692,7 +692,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
         }
         out << endl;
 
-        out << "Neutral edges (by policy): Per interval edge transmission statistics:" << endl;
+        out << "Neutral links (by policy): Per interval edge transmission statistics:" << endl;
         {
             QList<qreal> transmissionThresholds = QList<qreal>() << 0.0 << 0.85 << 0.90 << 0.95 << 0.97 << 0.98 << 0.99 << 1.0;
             // first index: interval, second index: histogram bin
@@ -748,7 +748,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
         }
         out << endl;
 
-        out << "Non-neutral edges (by policy): Per interval edge transmission statistics:" << endl;
+        out << "Non-neutral links (by policy): Per interval edge transmission statistics:" << endl;
         {
             QList<qreal> transmissionThresholds = QList<qreal>() << 0.0 << 0.85 << 0.90 << 0.95 << 0.97 << 0.98 << 0.99 << 1.0;
             // first index: interval, second index: histogram bin
@@ -806,7 +806,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
         out << endl;
         out << endl;
 
-        out << "Per interval edge non-neutrality statistics (rates are absolute deltas):" << endl;
+        out << "Per interval link non-neutrality statistics (rates are absolute deltas):" << endl;
         {
             QList<qreal> nonNeutralityThresholds = QList<qreal>() << 0.0 << 0.01 << 0.02 << 0.03 << 0.05 << 0.10 << 0.15 << 1.0;
             // first index: interval, second index: histogram bin
@@ -882,7 +882,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
         out << endl;
 
 		if (trueEdgeNeutrality.count() == numEdges) {
-			out << "Neutral edges (by policy): per interval edge non-neutrality statistics (rates are absolute deltas):" << endl;
+            out << "Neutral links (by policy): per interval link non-neutrality statistics (rates are absolute deltas):" << endl;
 			{
 				QList<qreal> nonNeutralityThresholds = QList<qreal>() << 0.0 << 0.01 << 0.02 << 0.03 << 0.05 << 0.10 << 0.15 << 1.0;
 				// first index: interval, second index: histogram bin
@@ -959,7 +959,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 			}
 			out << endl;
 
-			out << "Non-neutral edges (by policy): per interval edge non-neutrality statistics (rates are absolute deltas):" << endl;
+            out << "Non-neutral links (by policy): per interval link non-neutrality statistics (rates are absolute deltas):" << endl;
 			{
 				QList<qreal> nonNeutralityThresholds = QList<qreal>() << 0.0 << 0.01 << 0.02 << 0.03 << 0.05 << 0.10 << 0.15 << 1.0;
 				// first index: interval, second index: histogram bin

@@ -93,7 +93,7 @@ bool exportMatlab(QString resultsDir, QString graphName) {
 						if (experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].successRate() < 0.99 &&
 							experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight > 0) {
 							actuallyNeutral = false;
-							qDebug() << "Edge" << (e+1) << "Confirmed non-neutral" << "Path:" << (p+1) << "rate:" <<
+                            qDebug() << "Link" << (e+1) << "Confirmed non-neutral" << "Path:" << (p+1) << "rate:" <<
 										experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].successRate();
 							break;
 						}
@@ -102,7 +102,7 @@ bool exportMatlab(QString resultsDir, QString graphName) {
 						break;
 				}
 				if (actuallyNeutral) {
-					qDebug() << "Edge" << (e+1) << "is actually neutral (maybe not used)";
+                    qDebug() << "Link" << (e+1) << "is actually neutral (maybe not used)";
 					trueEdgeNeutrality[e] = true;
 				}
 			}
@@ -120,7 +120,7 @@ bool exportMatlab(QString resultsDir, QString graphName) {
 					if (experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].successRate() < 0.985 &&
 						experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight > 0) {
 						congested = true;
-						qDebug() << "Edge" << (e+1) << "Confirmed congested" << "Path:" << (p+1) << "rate:" <<
+                        qDebug() << "Link" << (e+1) << "Confirmed congested" << "Path:" << (p+1) << "rate:" <<
 									experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].successRate();
 						break;
 					}

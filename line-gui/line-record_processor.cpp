@@ -121,9 +121,9 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 			}
 		}
 
-		saveFile(expPath + "/" + QString("edge-%1-in.pcap").arg(e.index + 1), pcapBytesIn);
-		saveFile(expPath + "/" + QString("edge-%1-out.pcap").arg(e.index + 1), pcapBytesOut);
-		saveFile(expPath + "/" + QString("edge-%1-drop.pcap").arg(e.index + 1), pcapBytesDrop);
+        saveFile(expPath + "/" + QString("edge-%1-in.pcap").arg(e.index + 1), pcapBytesIn);
+        saveFile(expPath + "/" + QString("edge-%1-out.pcap").arg(e.index + 1), pcapBytesOut);
+        saveFile(expPath + "/" + QString("edge-%1-drop.pcap").arg(e.index + 1), pcapBytesDrop);
 	}
 
 	// Create one global pcap file with everything that entered the emulator

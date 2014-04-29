@@ -730,7 +730,8 @@ void computeFinalRoutes(QHash<int, RoutingTable> &routes, const NetGraph &g, int
 void Bgp::computeRoutes(NetGraph &g)
 {
 	QTime t;
-	if (PROFILE_BGP) {qDebug() << QString("Starting BGP computation (%1 nodes, %2 edges, %3 connections)...").arg(g.nodes.count()).arg(g.edges.count()).arg(g.connections.count()); t.start();}
+    if (PROFILE_BGP) {qDebug() << QString("Starting BGP computation (%1 nodes, %2 links, %3 connections)...")
+                                  .arg(g.nodes.count()).arg(g.edges.count()).arg(g.connections.count()); t.start();}
 
 	// Maps an ASN to the set of nodes (all routers and hosts) in that AS
 	QHash<int, QSet<int> > asNodes;

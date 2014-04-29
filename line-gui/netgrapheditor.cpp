@@ -1406,7 +1406,7 @@ void NetGraphEditor::updateStats()
     qreal pathsPerEdgeRatio = graph()->edges.count() ? numPaths / qreal(numLinks) : 0.0;
     int fullMeshSize = numHosts * numHosts;
     qreal pathsPerFullMeshRatio = fullMeshSize ? numPaths / qreal(fullMeshSize) : 0.0;
-    ui->txtStatsNumPaths->setText(QString("%1 paths, %2% (max. %3), %4 paths/edge")
+    ui->txtStatsNumPaths->setText(QString("%1 paths, %2% (max. %3), %4 paths/link")
                                   .arg(numPaths).arg(int(100 * pathsPerFullMeshRatio)).arg(fullMeshSize)
                                   .arg(pathsPerEdgeRatio, 0, 'f', 1));
 
@@ -1414,7 +1414,7 @@ void NetGraphEditor::updateStats()
     int numFlows = graph()->connections.count();
     qreal flowsPerEdgeRatio = graph()->edges.count() ? numFlows / qreal(numLinks) : 0.0;
     qreal flowsPerFullMeshRatio = fullMeshSize ? numFlows / qreal(fullMeshSize) : 0.0;
-    ui->txtStatsNumConnections->setText(QString("%1 flows, %2% (f.m. %3), %4 flows/edge")
+    ui->txtStatsNumConnections->setText(QString("%1 flows, %2% (f.m. %3), %4 flows/link")
                                         .arg(numFlows).arg(int(100 * flowsPerFullMeshRatio)).arg(fullMeshSize)
                                         .arg(flowsPerEdgeRatio, 0, 'f', 1));
 }
@@ -1813,11 +1813,6 @@ void NetGraphEditor::on_spinUDPCBRRate_valueChanged(double )
 }
 
 void NetGraphEditor::on_checkUDPCBRPoisson_toggled(bool )
-{
-	updateTxtConnectionType();
-}
-
-void NetGraphEditor::on_spinTCPxNumFlows_valueChanged(int )
 {
 	updateTxtConnectionType();
 }

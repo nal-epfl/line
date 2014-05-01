@@ -152,6 +152,13 @@ FORMS    += mainwindow.ui \
     netgrapheditor.ui \
     formcoverage.ui
 
+exists(customcontrols.h) {
+    HEADERS += customcontrols.h
+    SOURCES += customcontrols.cpp customcontrols_*.cpp
+    FORMS += customcontrols.ui
+    DEFINES += HAVE_CUSTOM_CONTROLS
+}
+
 INCLUDEPATH += ../util/
 INCLUDEPATH += ../line-runner/
 INCLUDEPATH += /usr/include/glpk

@@ -44,6 +44,11 @@
 #include "run_experiment_params.h"
 #include "../remote_config.h"
 
+#ifdef HAVE_CUSTOM_CONTROLS
+#include "customcontrols.h"
+class CustomControls;
+#endif
+
 #define UDPPING_OVERHEAD 42
 
 #define SEC_TO_NSEC  1000000000
@@ -143,6 +148,10 @@ protected:
 
 private:
 	Ui::MainWindow *ui;
+#ifdef HAVE_CUSTOM_CONTROLS
+	CustomControls *customControls;
+	friend class CustomControls;
+#endif
 
 	int maxLogLines;
 
@@ -316,23 +325,9 @@ private slots:
 
 	void on_btnResultsRename_clicked();
 
-    void autoPolicingSetupDefaults(bool shaping);
-    void autoPolicingGenerateSuffix();
-	void on_btnAutoPolicingPlot1_clicked();
-	void on_btnAutoPolicingPlot1b_clicked();
-	void on_btnAutoPolicingPlot1c_clicked();
-	void on_btnAutoPolicingPlot2_clicked();
-	void on_btnAutoPolicingPlot2b_clicked();
-	void on_btnAutoPolicingPlot3_clicked();
-	void on_btnAutoPolicingPlot4_clicked();
-	void on_btnAutoPolicingPlot7_clicked();
-	void on_btnAutoPolicingPlot7b_clicked();
-
 	void on_btnSelectNewSimulation_clicked();
 
 	void on_btnBenchmarkGenerateGraph_clicked();
-
-	void on_btnAuto2All_clicked();
 
 	void on_btnQueueRemove_clicked();
 

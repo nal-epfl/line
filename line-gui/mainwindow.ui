@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>5</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -282,211 +282,6 @@
         </item>
         <item>
          <widget class="QPlainTextEdit" name="txtBrite">
-          <property name="maximumBlockCount">
-           <number>1000</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tabAuto">
-       <attribute name="title">
-        <string>Auto</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_19">
-        <item>
-         <widget class="QGroupBox" name="groupBox_6">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="title">
-           <string>QoS</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_20">
-           <item>
-            <widget class="QWidget" name="widget_24" native="true">
-             <layout class="QGridLayout" name="gridLayout_2">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item row="2" column="9">
-               <widget class="QCheckBox" name="checkAutoNeutral">
-                <property name="text">
-                 <string>Neutral</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="8">
-               <widget class="QCheckBox" name="checkAutoDiffTcpCc">
-                <property name="text">
-                 <string>Diff TCP cc</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="2">
-               <widget class="QCheckBox" name="checkAutoDiffRTT">
-                <property name="text">
-                 <string>Diff RTT</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="8">
-               <widget class="QPushButton" name="btnAutoPolicingPlot7">
-                <property name="text">
-                 <string>Plot 7 (shaping -&gt; p.cong.)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QPushButton" name="btnAutoPolicingPlot1">
-                <property name="text">
-                 <string>Plot 1 (policing -&gt; p.cong.)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="12">
-               <spacer name="horizontalSpacer_26">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="btnAutoPolicingPlot2b">
-                <property name="text">
-                 <string>Plot 2 shaping</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="3">
-               <widget class="QSpinBox" name="spinAutoRTT">
-                <property name="suffix">
-                 <string> ms</string>
-                </property>
-                <property name="prefix">
-                 <string>RTT </string>
-                </property>
-                <property name="minimum">
-                 <number>12</number>
-                </property>
-                <property name="maximum">
-                 <number>9999</number>
-                </property>
-                <property name="singleStep">
-                 <number>50</number>
-                </property>
-                <property name="value">
-                 <number>50</number>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="2">
-               <widget class="QPushButton" name="btnAuto2All">
-                <property name="text">
-                 <string>2 all</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="btnAutoPolicingPlot2">
-                <property name="text">
-                 <string>Plot 2 (transfer size -&gt; p.cong)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="btnAutoPolicingPlot1b">
-                <property name="text">
-                 <string>Plot 1b (long flows)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3">
-               <widget class="QPushButton" name="btnAutoPolicingPlot1c">
-                <property name="text">
-                 <string>Plot 1c (short vs long)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QPushButton" name="btnAutoPolicingPlot3">
-                <property name="text">
-                 <string>Plot 3 (link -&gt; p.cong)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="8">
-               <widget class="QPushButton" name="btnAutoPolicingPlot4">
-                <property name="text">
-                 <string>Plot 4 (nflows -&gt; p.cong)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="9">
-               <widget class="QPushButton" name="btnAutoPolicingPlot7b">
-                <property name="text">
-                 <string>Plot 7b (long flows)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QCheckBox" name="checkAutoFast">
-                <property name="text">
-                 <string>Fast</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="btnCoverage">
-                <property name="text">
-                 <string>Coverage...</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="10">
-               <widget class="QCheckBox" name="checkAutoCustomTraffic">
-                <property name="text">
-                 <string>Custom traffic</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="11">
-               <widget class="QComboBox" name="cmbAutoTcp">
-                <item>
-                 <property name="text">
-                  <string>cubic</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>reno</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPlainTextEdit" name="txtAuto">
           <property name="maximumBlockCount">
            <number>1000</number>
           </property>
@@ -850,7 +645,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1573</width>
+             <width>1531</width>
              <height>280</height>
             </rect>
            </property>
@@ -1987,8 +1782,8 @@ For performance reasons, the number of packets that can be captured is limited b
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1571</width>
-             <height>699</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13"/>

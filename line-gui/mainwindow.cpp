@@ -127,6 +127,14 @@ MainWindow::MainWindow(QWidget *parent) :
 	emit reloadTopologyList(QString());
 	updateWindowTitle();
 	loadExperimentQueue();
+
+	showMaximized();
+
+#ifdef HAVE_CUSTOM_CONTROLS
+	customControls = new CustomControls();
+	customControls->mainWindow = this;
+	customControls->show();
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -509,9 +517,7 @@ void MainWindow::doLogTabChanged(QPlainTextEdit *log, QColor color)
 {
 	if (log == ui->txtBrite) {
 		emit tabChanged(ui->tabBRITE, color);
-	} else if (log == ui->txtAuto) {
-		emit tabChanged(ui->tabAuto, color);
-    } else if (log == ui->txtBenchmark) {
+	} else if (log == ui->txtBenchmark) {
         emit tabChanged(ui->tabBenchmark, color);
     } else if (log == ui->txtDeploy) {
 		emit tabChanged(ui->tabDeploy, color);

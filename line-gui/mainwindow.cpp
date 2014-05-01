@@ -119,6 +119,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	}
 
 	on_checkGenericTimeout_toggled(ui->checkGenericTimeout->isChecked());
+    on_cmbExpType_currentIndexChanged(ui->cmbExpType->currentText());
 
 	initPlots();
 

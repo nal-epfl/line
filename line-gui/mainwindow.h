@@ -306,8 +306,6 @@ private slots:
 
 	void on_btnQueueStartAll_clicked();
 
-	void on_checkFakeEmulation_toggled(bool checked);
-
 	void on_btnQueueSave_clicked();
 
 	void on_btnDeployStop_clicked();
@@ -339,6 +337,8 @@ private slots:
 	void on_btnQueueRemove_clicked();
 
     void on_txtResultsInterestingLinks_returnPressed();
+
+    void on_cmbExpType_currentIndexChanged(const QString &arg1);
 
 signals:
 	void logInformation(QPlainTextEdit *log, QString message);

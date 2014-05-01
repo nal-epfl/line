@@ -61,8 +61,8 @@ bool MainWindow::getRunParams(RunParams &params, QPlainTextEdit *log)
 					   ui->spinRepeats->value(),
                        ui->checkSampleTimelinesEverywhere->isChecked(),
                        ui->checkFlowTracking->isChecked(),
-					   ui->checkFakeEmulation->isChecked(),
-					   ui->checkRealRouting->isChecked(),
+                       ui->cmbExpType->currentText() == "simulation",
+                       ui->cmbExpType->currentText() == "real network",
 					   getClientHostname(),
 					   getClientPort(),
 					   getCoreHostname(),
@@ -81,6 +81,14 @@ bool MainWindow::getRunParams(RunParams &params, QPlainTextEdit *log)
 					   ui->spinFakeCLLossNoise->value() / 100.0,
 					   ui->spinFakeGLLossNoise->value() / 100.0);
 	return true;
+}
+
+void MainWindow::on_cmbExpType_currentIndexChanged(const QString &)
+{
+    ui->boxSimParams->setVisible(ui->cmbExpType->currentText() == "simulation");
+    ui->scrollAreaWidgetContents->adjustSize();
+    QApplication::processEvents();
+    ui->scrollArea->setMaximumHeight(ui->scrollAreaWidgetContents->height() + 24);
 }
 
 void MainWindow::setUIToRunParams(const RunParams &params)
@@ -103,7 +111,11 @@ void MainWindow::setUIToRunParams(const RunParams &params)
 	ui->checkTcpReceiveWinAuto->setChecked(params.setAutoTcpReceiveWindowSize);
 	ui->spinTcpReceiveWinScaleFactor->setValue(params.scaleAutoTcpReceiveWindowSize);
 	ui->spinRepeats->setValue(params.repeats);
-	ui->checkFakeEmulation->setChecked(params.fakeEmulation);
+    setCurrentItem(ui->cmbExpType, params.fakeEmulation ?
+                       "simulation" :
+                       params.realRouting ?
+                           "real netowrk" :
+                           "emulation");
 	ui->spinFakeCLFraction->setValue(params.congestedLinkFraction * 100.0);
 	ui->spinFakeCLProbMin->setValue(params.minProbCongestedLinkIsCongested * 100.0);
 	ui->spinFakeCLProbMax->setValue(params.maxProbCongestedLinkIsCongested * 100.0);

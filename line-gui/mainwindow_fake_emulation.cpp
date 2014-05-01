@@ -22,12 +22,6 @@
 #include "intervalmeasurements.h"
 #include "chronometer.h"
 
-void MainWindow::on_checkFakeEmulation_toggled(bool)
-{
-	if (ui->checkFakeEmulation->isChecked()) {
-		ui->txtGenericTimeout->setText("200s");
-		ui->txtIntervalSize->setText("1s");
-	}
-}
+
 
 

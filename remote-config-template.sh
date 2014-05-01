@@ -7,9 +7,11 @@ SRC_DIR="$( cd -P "$( dirname "$0" )" && pwd )"
 ### BEGIN Editable part
 
 REMOTE_USER_ROUTER='root'
-REMOTE_HOST_ROUTER='TODO TO BE FILLED IN!!!'
+# IP address of the machine running line-router
+# For a hostname, you can use "$(host the.host.name | cut -d ' ' -f 4)"
+REMOTE_HOST_ROUTER="TODO TO BE FILLED IN!!!"
 REMOTE_PORT_ROUTER='22'
-REMOTE_DEDICATED_IP_ROUTER='TODO TO BE FILLED IN!!!'
+REMOTE_DEDICATED_IP_ROUTER='192.168.77.1'
 REMOTE_DEDICATED_IF_ROUTER='TODO TO BE FILLED IN!!!'
 
 # For a debug build of line-router:
@@ -17,15 +19,17 @@ REMOTE_DEDICATED_IF_ROUTER='TODO TO BE FILLED IN!!!'
 # For a release build:
 BUILD_CONFIG_ROUTER='CONFIG+=release\ CONFIG-=debug'
 
-# This needs to be done only once (unless you change the PF_RING sources or upgrade kernel).
+# This needs to be done only once (unless you change the PF_RING sources or upgrade the kernel).
 # Set INSTALL_PF_RING to false to speed up the installation of line-router
 INSTALL_PF_RING=true
 #INSTALL_PF_RING=false
 
 REMOTE_USER_HOSTS='root'
-REMOTE_HOST_HOSTS='TODO TO BE FILLED IN!!!'
+# IP address of the machine running line-traffic
+# For a hostname, you can use "$(host the.host.name | cut -d ' ' -f 4)"
+REMOTE_HOST_HOSTS="TODO TO BE FILLED IN!!!"
 REMOTE_PORT_HOSTS='22'
-REMOTE_DEDICATED_IP_HOSTS='TODO TO BE FILLED IN!!!'
+REMOTE_DEDICATED_IP_HOSTS='192.168.77.2'
 REMOTE_DEDICATED_IF_HOSTS='TODO TO BE FILLED IN!!!'
 
 # For a debug build of line-traffic:

@@ -3,14 +3,14 @@ LINE makes heavy usage of the Qt libraries, a rich set of application building b
 Website: http://qt.nokia.com/
 License: GNU Lesser General Public License (LGPL) version 2.1
 
-* libipaddr.c:
-An LD_PRELOAD shared library to transparently set source and destitation IP addresses used by applications. By
-Kevin Walsh, Copyright (c) 2003, Duke University. (BSD license)
-
 * PF_RING:
 A network socket that dramatically improves the packet capture speed.
 (C) 2005-11 - Luca Deri. (GPLv2 license)
 Source code/binary not included.
+
+* libev
+http://software.schmorp.de/pkg/libev.html
+License: BSD license
 
 * BRITE - Boston university Representative Internet Topology gEnerator
 http://www.cs.bu.edu/brite/
@@ -31,6 +31,34 @@ Gephi and the layout program are included separately from LINE in source and bin
 - nicelabel.cpp, adapted from label.c by by Paul Heckbert from "Graphics Gems", Academic Press, 1990 (public domain).
 
 * IP/TCP/UDP checksum code from the Linux kernel
+
+* TCMalloc
+https://code.google.com/p/gperftools/
+A fast malloc library with thread-caching.
+License: New BSD License
+
+* ProducerConsumerQueue from Facebook's Folly
+https://github.com/facebook/folly/blob/master/folly/ProducerConsumerQueue.h
+License: Apache License, Version 2.0
+ProducerConsumerQueue is a one producer and one consumer queue without locks.
+
+* ReaderWriterQueue
+https://github.com/cameron314/readerwriterqueue
+http://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++
+License: Simplified BSD license
+
+* single-producer-single-consumer-queue
+http://software.intel.com/en-us/articles/single-producer-single-consumer-queue
+http://www.1024cores.net/home/lock-free-algorithms/queues/unbounded-spsc-queue
+License: Simplified BSD license
+
+* Dygraphs
+http://dygraphs.com
+License: MIT license
+
+* Mootools
+http://mootools.net/
+License: MIT license
 
 * 3rd party images:
 http://www.openclipart.org/detail/17668/rgtaylor_csc_net_computer

@@ -89,7 +89,6 @@ SOURCES += main.cpp\
     mainwindow_fake_emulation.cpp \
     ../line-runner/run_experiment_params.cpp \
     flowevent.cpp \
-    mainwindow_autopolicing.cpp \
     ../util/ovector.cpp
 
 HEADERS  += mainwindow.h \

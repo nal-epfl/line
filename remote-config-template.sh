@@ -7,7 +7,7 @@ SRC_DIR="$( cd -P "$( dirname "$0" )" && pwd )"
 ### BEGIN Editable part
 
 REMOTE_USER_ROUTER='root'
-# IP address of the machine running line-router
+# IP address of the network emulator (the machine running line-router)
 # For a hostname, you can use "$(host the.host.name | cut -d ' ' -f 4)"
 REMOTE_HOST_ROUTER="TODO TO BE FILLED IN!!!"
 REMOTE_PORT_ROUTER='22'
@@ -25,7 +25,7 @@ INSTALL_PF_RING=true
 #INSTALL_PF_RING=false
 
 REMOTE_USER_HOSTS='root'
-# IP address of the machine running line-traffic
+# IP address of the traffic generator (the machine running line-traffic)
 # For a hostname, you can use "$(host the.host.name | cut -d ' ' -f 4)"
 REMOTE_HOST_HOSTS="TODO TO BE FILLED IN!!!"
 REMOTE_PORT_HOSTS='22'

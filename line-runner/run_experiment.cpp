@@ -135,14 +135,14 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 
 	QList<QSharedPointer<RemoteProcessSsh> > sshHosts;
 	if (!runParams.realRouting) {
-		sshHosts << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh("hosts"));
+		sshHosts << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh("traffic-generator"));
 		if (!sshHosts.last()->connect("root", runParams.clientHostName, runParams.clientPort)) {
 			qError() << "Connect to client failed";
 			return false;
 		}
 	} else {
 		foreach (QString host, runParams.clientHostNames) {
-			sshHosts << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh(QString("hosts-%1").arg(host)));
+			sshHosts << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh(QString("traffic-generator-%1").arg(host)));
 			if (!sshHosts.last()->connect("root", host, runParams.clientPort)) {
 				qError() << "Connect to client failed";
 				return false;
@@ -152,14 +152,14 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 
 	QList<QSharedPointer<RemoteProcessSsh> > sshCores;
 	if (!runParams.realRouting) {
-		sshCores << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh("router"));
+		sshCores << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh("network-emulator"));
 		if (!sshCores.last()->connect("root", runParams.coreHostName, runParams.corePort)) {
 			qError() << "Connect to core failed";
 			return false;
 		}
 	} else {
 		foreach (QString host, runParams.routerHostNames) {
-			sshCores << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh(QString("routers-%1").arg(host)));
+			sshCores << QSharedPointer<RemoteProcessSsh>(new RemoteProcessSsh(QString("network-emulator-%1").arg(host)));
 			if (!sshCores.last()->connect("root", host, runParams.corePort)) {
 				qError() << "Connect to router failed";
 				return false;

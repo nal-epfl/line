@@ -103,7 +103,7 @@ QString RemoteProcessSsh::startProcess(QString program, QStringList args)
 QString RemoteProcessSsh::startProcess(QString command)
 {
 	if (DBG_SSH) qDebug() << __FILE__ << __FUNCTION__;
-	qDebug() << getHostname() << ":" << command;
+	qDebug() << keyPrefix << ":" << command;
 	QString key = QString("%1_subproc_%2").arg(keyPrefix).arg(childCount);
 
 	QString fullcommand = QString("rm -f %1.* ; (%2 1>%1.out 2>%1.err & pid=$! ; echo $pid >%1.pid ; wait $pid ; echo $? > %1.done ) &").arg(key, command);

@@ -6,7 +6,6 @@ then see dmesg output
 
 * Debugging pf_ring userspace libs:
 uncomment #define RING_DEBUG
-Note: in vanilla pf_ring, this needs to be done in various *.c files. I moved it to pfring.h.
 
 * Debugging packets in the emulator:
 pconsumer.h:

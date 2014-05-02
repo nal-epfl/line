@@ -28,6 +28,10 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/
         padding-left: 1rem;
         margin-left: 0;
     }
+    div#toc li {
+        margin-top: 0.1rem;
+        margin-bottom: 0.1rem;
+    }
     a, a:visited {
         color: #249;
         text-decoration: none;
@@ -41,6 +45,10 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/
     }
     ul {
         list-style-type: disc;
+    }
+    li {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
     }
     h1, .h1 {
         font-weight: bold;
@@ -131,6 +139,8 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/
         background-color: #dadada;
         color: #000;
         padding: 0.5rem;
+        font-family: monospace;
+        font-size: 1rem;
     }
   </style>
 </head>
@@ -536,6 +546,139 @@ cd ..</pre>
 ./line-gui</pre>
       </div>
     </div>
+  </div>
+  <div class="section">
+    <h2>Using LINE</h2>
+    <div class="section">
+      <h3>Running the first experiment</h3>
+      Under construction $todo
+    </div>
+    <div class="section">
+      <h3>Editing the topology</h3>
+      Under construction $todo
+    </div>
+    <div class="section">
+      <h3>Generating traffic</h3>
+      Under construction $todo
+    </div>
+    <div class="section">
+      <h3>Visualizing the experiment results</h3>
+      Under construction $todo
+    </div>
+    <div class="section">
+      <h3>Traffic generators in depth</h3>
+      Under construction $todo
+    </div>
+    <div class="section">
+      <h3>QoS</h3>
+      Under construction $todo
+    </div>
+    <div class="section">
+      <h3>Benchmarking the setup</h3>
+      Under construction $todo
+    </div>
+  </div>
+  <div class="section">
+    <h2>Credits</h2>
+    <p>LINE uses the following third party libraries/components/applications:</p>
+    <ul>
+      <li><b>Qt 4</b><br/>
+        A cross-platform application and UI framework using C++ or QML.<br/>
+        <a href="http://qt.nokia.com">http://qt.nokia.com</a><br/>
+        License: LGPLv2.1
+      </li>
+
+      <li><b>PF_RING</b><br/>
+        A network socket that dramatically improves the packet capture speed.<br/>
+        <a href="http://www.ntop.org/products/pf_ring">http://www.ntop.org/products/pf_ring</a><br/>
+        License: GPLv2
+      </li>
+
+      <li><b>libev</b><br/>
+        A full-featured and high-performance event loop that is loosely modelled after libevent.<br/>
+        <a href="http://software.schmorp.de/pkg/libev.html">http://software.schmorp.de/pkg/libev.html</a><br/>
+        License: BSD license
+      </li>
+
+      <li><b>The Internet Topology Zoo</b><br/>
+        A project to collect data network topologies from around the world.<br/>
+        <a href="http://www.topology-zoo.org">http://www.topology-zoo.org</a>
+      </li>
+
+      <li><b>BRITE - Boston university Representative Internet Topology gEnerator</b><br/>
+        A network topology generator.<br/>
+        <a href="http://www.cs.bu.edu/brite">http://www.cs.bu.edu/brite</a><br/>
+        BRITE is not included nor directly used in LINE; however, LINE is able to import BRITE files.
+      </li>
+
+      <li><b>The Gephi Toolkit - offers nice graph layout algorithms</b><br/>
+        <a href="http://gephi.org">http://gephi.org</a><br/>
+        License: The majority of the Gephi Plateform code is available under the dual license CDDL 1.0 and GNU General Public License (GPL) v3.<br/>
+        Gephi and the layout program are included separately from LINE in source and binary forms, and the binary can be executed automatically by LINE.
+      </li>
+
+      <li><b>OpenOrd Layout Gephi Plugin</b><br/>
+        Force-Directed layout algorithm for real-world large-scale undirected graphs.<br/>
+        <a href="http://gephi.org/plugins/openord-layout">http://gephi.org/plugins/openord-layout</a><br/>
+        License: GPLv3<br/>
+        Gephi and the layout program are included separately from LINE in source and binary forms, and the binary can be executed automatically by LINE.
+      </li>
+
+      <li><b>Plot labeling algorithm</b><br/>
+        nicelabel.cpp, adapted from label.c by by Paul Heckbert from "Graphics Gems", Academic Press, 1990.<br/>
+        License: public domain
+      </li>
+
+      <li><b>IP/TCP/UDP checksum code from the Linux kernel</b><br/>
+        <a href="https://www.kernel.org">https://www.kernel.org</a><br/>
+        License: GPLv2
+      </li>
+
+      <li><b>TCMalloc from Google's gperftools</b><br/>
+        A fast malloc library with thread-caching.<br/>
+        <a href="https://code.google.com/p/gperftools">https://code.google.com/p/gperftools</a><br/>
+        License: New BSD License
+      </li>
+
+      <li><b>ProducerConsumerQueue from Facebook's Folly</b><br/>
+        ProducerConsumerQueue is a one producer and one consumer queue without locks.<br/>
+        <a href="https://github.com/facebook/folly/blob/master/folly/ProducerConsumerQueue.h">https://github.com/facebook/folly/blob/master/folly/ProducerConsumerQueue.h</a><br/>
+        License: Apache License, Version 2.0
+      </li>
+
+      <li><b>ReaderWriterQueue</b><br/>
+        <a href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a><br/>
+        <a href="http://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">http://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++</a><br/>
+        License: Simplified BSD license
+      </li>
+
+      <li><b>single-producer-single-consumer-queue</b><br/>
+        <a href="http://software.intel.com/en-us/articles/single-producer-single-consumer-queue">http://software.intel.com/en-us/articles/single-producer-single-consumer-queue</a><br/>
+        <a href="http://www.1024cores.net/home/lock-free-algorithms/queues/unbounded-spsc-queue">http://www.1024cores.net/home/lock-free-algorithms/queues/unbounded-spsc-queue</a><br/>
+        License: Simplified BSD license
+      </li>
+
+      <li><b>Dygraphs</b><br/>
+        <a href="http://dygraphs.com">http://dygraphs.com</a><br/>
+        License: MIT license
+      </li>
+
+      <li><b>Mootools</b><br/>
+        <a href="http://mootools.net">http://mootools.net</a><br/>
+        License: MIT license
+      </li>
+
+      <li><b>3rd party images</b><br/>
+        <a href="http://www.openclipart.org/detail/17668/rgtaylor_csc_net_computer">http://www.openclipart.org/detail/17668/rgtaylor_csc_net_computer</a><br/>
+        <a href="http://www.openclipart.org/detail/1918/router-by-juanjo">http://www.openclipart.org/detail/1918/router-by-juanjo</a><br/>
+        <a href="http://www.openclipart.org/detail/5012/laptop-by-metalmarious">http://www.openclipart.org/detail/5012/laptop-by-metalmarious</a><br/>
+        <a href="http://www.openclipart.org/detail/113191/ftline-line-arrow-end-by-anonymous">http://www.openclipart.org/detail/113191/ftline-line-arrow-end-by-anonymous</a><br/>
+        <a href="http://www.openclipart.org/detail/143629/edit-pencil-icon-by-darth_schmoo">http://www.openclipart.org/detail/143629/edit-pencil-icon-by-darth_schmoo</a><br/>
+        All images from openclipart.org are licensed under CC0 1.0 Universal (CC0 1.0) - Public Domain Dedication.<br/>
+        <a href="http://gnome-look.org/content/show.php/nuoveXT+2?content=56625">http://gnome-look.org/content/show.php/nuoveXT+2?content=56625</a><br/>
+        The icons from the nuoveXT.2.2 theme are licensed under LGPL.
+      </li>
+    </ul>
   </div>
 </div>
 <script>

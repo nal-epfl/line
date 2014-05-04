@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html style="">
+<head>
+  <meta charset="UTF-8">
+  <title>LINE</title>
+  <link rel="shortcut icon" type="image/png" href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAN1wAADdcBQiibeAAAAAd0SU1FB94FAQ80AVPNu7YAAAIPSURBVDjL1ZM9aFNhFIbfc7+/2+Qm6fUnbYpIWogi1Qo6FBwUshhwFBwdG3B0im4uLh2cg5MgjhahIK5S7VJQbNUhrUWDiW2aNP/33tyfz0GqFDo46pnO9L485+EA//3QwTJ///EEi+RNQF8HcB6ABUCAoKHRJqAeQb8igy29fXh741DAlXtP7kLrB+OWaV29kMXQ9bHb7uPD9g5yU8dxbS6LVs/B8zefACAC8Ex7sYXVR7ccNrtQPm2OsZcApDsKUKk14QUBZiaPQUmO6Ukbm7UW1irf4fnhQekcM6Otb6+X3hvd6qZw+oOPADQAZNM2bsyfheAMW7UWVj9XETMF8hdncPnMFIgAJvh2JpdLAgAHgGa1PhsbT3YSdvLHl3ozWV5uZQ4YPT/AysZXENE+k2InlU5byfSJaSmV/zsAAHzHS/WiTkooBWFKCFOBSwkuJaRSEGPKFkrZQknQn9vD8IToH6VH61+4RAQQHeFPdwHAuHNJsrRlLBL08K/Ea0QicF6ca7xbAQCWz+ezp8ZG7Yxy18MgCBiF3DBIGASDDEaCoojrwJHhoBEbNtbsZuXpxO76Mty+WygUXB5FUTUeN0E08hNytOv7vZOeV7fDQWjpvuZEFHBuDIQQ+0KYDdMUO1KpulKqWiqVOofgyuVybG/PSfi+Ewe0GYYBY4yHSpHLGBumUqlusVgc/lvP9BNYu8h7Iyl+nAAAAABJRU5ErkJggg==">
+  <style type="text/css">
+    html {
+        width:100%;
+        height:100%;
+        font-family: sans-serif;
+        font-size: 10pt;
+    }
+    div#toc {
+        zdisplay: inline-block;
+        padding: 1rem 0 0 0;
+        font-weight: bold;
+    }
+    div#toc > ul {
+        list-style-type: none;
+        padding-left: 0;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    div#toc ul ul {
+        list-style-type: none;
+        padding-left: 1rem;
+        margin-left: 0;
+    }
+    div#toc li {
+        margin-top: 0.1rem;
+        margin-bottom: 0.1rem;
+    }
+    a, a:visited {
+        color: #249;
+        text-decoration: none;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+    a.clonehandle {
+        color: #aaa;
+        font-size: 1rem;
+    }
+    ul {
+        list-style-type: disc;
+    }
+    li {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    h1, .h1 {
+        font-weight: bold;
+        font-size: 2.2rem;
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #777;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    h2, .h2 {
+        font-weight: bold;
+        font-size: 1.7rem;
+        padding-top: 1rem;
+        margin-top: 0;
+        border-bottom: 1px solid #999;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0;
+    }
+    h3, .h3 {
+        font-weight: bold;
+        font-size: 1.6rem;
+        margin-top: 1rem;
+        border-bottom: 1px dashed #999;
+        margin-bottom: 0.5rem;
+    }
+    h4, .h4 {
+        font-weight: bold;
+        font-size: 1.4rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    h5, .h5 {
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    h6, .h6 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .h7 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .h8 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .h9 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .h10 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    table, td, th {
+        border: 1px solid black;
+        border-collapse: collapse;
+        text-align: left;
+        padding: 0.35rem;
+    }
+    .vcenter {
+        text-align: center;
+    }
+    .big {
+        font-size: 1.3em;
+    }
+    div.section div.section div.section {
+        margin-left: 2rem;
+        padding-left: 0.2rem;
+        border-left: 1px solid #eee;
+    }
+    pre {
+        border: 1px solid #bbb;
+        background-color: #dadada;
+        color: #000;
+        padding: 0.5rem;
+        font-family: monospace;
+        font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+<video id="player" controls autoplay>
+</video>
+<script>
+// Parse the URL params
+var params = {};
+
+if (location.search) {
+  var parts = location.search.substring(1).split('&');
+
+  for (var i = 0; i < parts.length; i++) {
+    var nv = parts[i].split('=');
+    if (!nv[0])
+      continue;
+    if (nv.length == 1) {
+      params[nv[0]] = true;
+    } else {
+      params[nv[0]] = unescape(parts[i].substr(nv[0].length + 1))
+    }
+  }
+}
+
+if (location.hash) {
+  var parts = location.hash.substring(1).split('&');
+
+  for (var i = 0; i < parts.length; i++) {
+    var nv = parts[i].split('=');
+    if (!nv[0])
+      continue;
+    if (nv.length == 1) {
+      params[nv[0]] = true;
+    } else {
+      params[nv[0]] = unescape(parts[i].substr(nv[0].length + 1))
+    }
+  }
+}
+
+if ('video' in params) {
+  var player = document.getElementById("player");
+  player.src = params.video;
+  player.innerHTML = 'Video: <a href="' + params.video + '">' + params.video + '</a>';
+}
+
+</script>
+</body>
+</html>

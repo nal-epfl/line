@@ -94,8 +94,8 @@ void MainWindow::on_cmbExpType_currentIndexChanged(const QString &)
 void MainWindow::setUIToRunParams(const RunParams &params)
 {
 	ui->checkGenericTimeout->setChecked(true);
-	ui->txtGenericTimeout->setText(QString("%1s").arg(params.estimatedDuration / 1000000000ULL));
-	ui->txtIntervalSize->setText(QString("%1s").arg(params.intervalSize / 1000000000ULL));
+	ui->txtGenericTimeout->setText(timeToString(params.estimatedDuration));
+	ui->txtIntervalSize->setText(timeToString(params.intervalSize));
 	ui->txtBatchExpSuffix->setText(params.experimentSuffix);
 	ui->checkCapture->setChecked(params.capture);
 	ui->spinCapturePacketCount->setValue(params.capturePacketLimit);

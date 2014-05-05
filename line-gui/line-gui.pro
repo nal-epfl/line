@@ -7,7 +7,7 @@
 !exists(../remote_config.h) {
 	system(cd $$PWD/..; /bin/sh remote-config.sh)
 }
-system(cd $$PWD/..; test remote-config.sh -nt remote_config.h):system(cd $$PWD/..; /bin/sh remote-config.sh ; touch line-gui/line-gui.pro)
+system(cd $$PWD/..; [ ! -f remote_config.h ] || test remote-config.sh -nt remote_config.h):system(cd $$PWD/..; /bin/sh remote-config.sh ; touch line-gui/line-gui.pro)
 
 QT += core gui xml svg opengl network testlib
 

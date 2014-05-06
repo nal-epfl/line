@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -645,7 +645,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1531</width>
+             <width>1573</width>
              <height>280</height>
             </rect>
            </property>
@@ -804,7 +804,7 @@
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In order to compute the probability of congestion for paths/links, we divide time into intervals of this size, and we use packet counters for each interval.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;This is unrelated to the &amp;quot;Timelines&amp;quot; shown in the Results tab, for which data is sampled every second.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
-                  <string>5s</string>
+                  <string>100ms</string>
                  </property>
                 </widget>
                </item>

@@ -27,7 +27,7 @@ public:
     LinkIntervalMeasurement();
 	qint64 numPacketsInFlight;
 	qint64 numPacketsDropped;
-	qreal successRate() const;
+	qreal successRate(bool *ok = NULL) const;
 
 	friend bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 	friend bool operator !=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);

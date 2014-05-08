@@ -26,10 +26,17 @@ LinkIntervalMeasurement::LinkIntervalMeasurement()
 	numPacketsDropped = 0;
 }
 
-qreal LinkIntervalMeasurement::successRate() const
+qreal LinkIntervalMeasurement::successRate(bool *ok) const
 {
-	if (numPacketsInFlight == 0)
+	if (numPacketsInFlight == 0) {
+		if (ok) {
+			*ok = false;
+		}
 		return 0.0;
+	}
+	if (ok) {
+		*ok = true;
+	}
 	return 1.0 - qreal(numPacketsDropped) / qreal(numPacketsInFlight);
 }
 

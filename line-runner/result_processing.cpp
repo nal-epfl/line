@@ -104,7 +104,24 @@ bool computePathCongestionProbabilities(QString workingDir, QString graphName, Q
 
     QVector<int> pathTrafficClass = g.getPathTrafficClassStrict(true);
 
-    QList<qreal> thresholds = QList<qreal>() << 0.100 << 0.050 << 0.040 << 0.030 << 0.025 << 0.020 << 0.015 << 0.010 << 0.005 << 0.0025 << 0.0010 << 0.0005 << 0.00025 << 0.00020 << 0.00015 << 0.000010 << 0.000001;
+    QList<qreal> thresholds = QList<qreal>()
+                              << 0.100  // 10 % = 1/10
+                              << 0.050
+                              << 0.040
+                              << 0.030
+                              << 0.025
+                              << 0.020
+                              << 0.015
+                              << 0.010  // 1 % = 1/100
+                              << 0.005
+                              << 0.0025
+                              << 0.0010  // 0.1 % = 1/1k
+                              << 0.0005
+                              << 0.00025
+                              << 0.00020
+                              << 0.00015
+                              << 0.000010  // 0.001 % = 1/100k
+                              << 0.000001;  // 0.0001 % = 1/M
 
     // 1st index: threshold
     // 2nd index: path
@@ -121,13 +138,22 @@ bool computePathCongestionProbabilities(QString workingDir, QString graphName, Q
         QVector<qreal> pathCongestionProbByThreshold;
         for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
             qreal congestionProbability = 0;
-            for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
-                qreal loss = 1.0 - experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].successRate();
+            int numIntervals = 0;
+            const qreal firstTransientCutSec = 10;
+            const qreal lastTransientCutSec = 10;
+            const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+            const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+            for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                bool ok;
+                qreal loss = 1.0 - experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].successRate(&ok);
+                if (!ok)
+                    continue;
+                numIntervals++;
                 if (loss >= threshold) {
                     congestionProbability += 1.0;
                 }
             }
-            congestionProbability /= qMax(1, experimentIntervalMeasurements.numIntervals());
+            congestionProbability /= qMax(1, numIntervals);
             pathCongestionProbByThreshold.append(congestionProbability);
         }
         pathCongestionProbabilities.append(pathCongestionProbByThreshold);

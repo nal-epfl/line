@@ -36,6 +36,13 @@ QString shiftCmdLineArg(int &argc, char **&argv, QString preceding = QString()) 
 	return arg;
 }
 
+QString peekCmdLineArg(int argc, char **argv) {
+	if (argc <= 0) {
+		return QString();
+	}
+	return QString(argv[0]);
+}
+
 void flushLogs() {
 	OutputStream::flushCopies();
 }
@@ -57,6 +64,7 @@ int main(int argc, char **argv) {
 
 	QString command;
 	QString paramsFileName;
+	QStringList extraParams;
 	QStringList processedParams;
 
 	while (argc > 0) {
@@ -78,6 +86,14 @@ int main(int argc, char **argv) {
             } else if (arg == "--process-results") {
 				command = arg;
 				paramsFileName = shiftCmdLineArg(argc, argv, command);
+				extraParams.clear();
+				while (true) {
+					QString param = peekCmdLineArg(argc, argv);
+					if (param.isEmpty() || param.startsWith("--"))
+						break;
+					param = shiftCmdLineArg(argc, argv);
+					extraParams << param;
+				}
 			} else if (arg == "--path-pairs-coverage-master") {
 				command = arg;
 			} else if (arg == "--path-pairs-coverage") {
@@ -112,7 +128,28 @@ int main(int argc, char **argv) {
 		}
 
         if (command == "--process-results") {
-			if (!processResults(paramsFileName)) {
+            quint64 resamplePeriod = 0;
+            while (!extraParams.isEmpty()) {
+                if (extraParams.first() == "resample") {
+                    extraParams.removeFirst();
+                    if (!extraParams.isEmpty()) {
+                        bool ok;
+                        resamplePeriod = timeFromString(extraParams.first(), &ok);
+                        if (!ok) {
+                            qDebug() << "Bad argument for resample:" << extraParams;
+                            exit(-1);
+                        }
+                        extraParams.removeFirst();
+                        continue;
+                    } else {
+                        qDebug() << "Missing argument for resample:" << extraParams;
+                        exit(-1);
+                    }
+                }
+                qDebug() << "Bad argument for --process-results:" << extraParams;
+                exit(-1);
+            }
+            if (!processResults(paramsFileName, resamplePeriod)) {
 				exit(-1);
 			}
 			processedParams << paramsFileName;

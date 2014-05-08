@@ -21,7 +21,7 @@
 
 #include <QtCore>
 
-bool processResults(QString paramsFileName);
-bool processResults(QString workingDir, QString graphName, QString experimentSuffix);
+bool processResults(QString paramsFileName, quint64 resamplePeriod = 0);
+bool processResults(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod = 0);
 
 #endif // RESULT_PROCESSING_H

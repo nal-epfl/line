@@ -40,6 +40,13 @@ qreal LinkIntervalMeasurement::successRate(bool *ok) const
 	return 1.0 - qreal(numPacketsDropped) / qreal(numPacketsInFlight);
 }
 
+LinkIntervalMeasurement& LinkIntervalMeasurement::operator+=(LinkIntervalMeasurement other)
+{
+	this->numPacketsInFlight += other.numPacketsInFlight;
+	this->numPacketsDropped += other.numPacketsDropped;
+	return *this;
+}
+
 bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b)
 {
 	return a.successRate() == b.successRate();
@@ -128,6 +135,22 @@ void GraphIntervalMeasurements::initialize(int numEdges, int numPaths,
 	foreach (QInt32Pair ep, sparseRoutingMatrixTransposed) {
 		perPathEdgeMeasurements[ep] = LinkIntervalMeasurement();
 	}
+}
+
+GraphIntervalMeasurements& GraphIntervalMeasurements::operator+=(GraphIntervalMeasurements other)
+{
+	for (int i = 0; i < qMin(this->edgeMeasurements.count(), other.edgeMeasurements.count()); i++) {
+		this->edgeMeasurements[i] += other.edgeMeasurements[i];
+	}
+	for (int i = 0; i < qMin(this->pathMeasurements.count(), other.pathMeasurements.count()); i++) {
+		this->pathMeasurements[i] += other.pathMeasurements[i];
+	}
+	foreach (QInt32Pair edgePath, this->perPathEdgeMeasurements.uniqueKeys()) {
+		if (other.perPathEdgeMeasurements.contains(edgePath)) {
+			this->perPathEdgeMeasurements[edgePath] += other.perPathEdgeMeasurements[edgePath];
+		}
+	}
+	return *this;
 }
 
 QDataStream& operator<<(QDataStream& s, const GraphIntervalMeasurements& d)
@@ -1047,6 +1070,35 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 
 	out.flush();
 	return true;
+}
+
+ExperimentIntervalMeasurements ExperimentIntervalMeasurements::resample(quint64 resamplePeriod)
+{
+	// Nothing to do
+	if (resamplePeriod <= intervalSize) {
+		return *this;
+	}
+
+	// Round it up
+	if (resamplePeriod % intervalSize != 0) {
+		resamplePeriod = (resamplePeriod / intervalSize + 1) * intervalSize;
+	}
+	int factor = resamplePeriod / this->intervalSize;
+
+	ExperimentIntervalMeasurements result = *this;
+	result.intervalSize = resamplePeriod;
+
+	for (int i = 0; i < result.intervalMeasurements.count() - 1; i++) {
+		int numMerged = 0;
+		for (int j = i + 1; j < qMin(i + factor, result.intervalMeasurements.count()); j++) {
+			result.intervalMeasurements[i] += result.intervalMeasurements[j];
+			numMerged++;
+		}
+		result.intervalMeasurements.remove(i + 1, numMerged);
+	}
+	Q_ASSERT_FORCE(result.intervalMeasurements.count() ==
+				   (this->intervalMeasurements.count() / factor + ((this->intervalMeasurements.count() % factor) ? 1 : 0)));
+	return result;
 }
 
 QDataStream& operator<<(QDataStream& s, const ExperimentIntervalMeasurements& d)

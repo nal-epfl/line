@@ -595,21 +595,7 @@ void MainWindow::updateTimeBox(QLineEdit *txt, bool &accepted, quint64 &value)
 		QValidator::State state = validator->validate(text, pos);
 		if (state == QValidator::Acceptable) {
 			txt->setStyleSheet("color:black");
-			value = 0;
-			quint64 multiplier = 1;
-			if (text.endsWith("ns")) {
-				text = text.replace("ns", "");
-			} else if (text.endsWith("us")) {
-				text = text.replace("us", "");
-				multiplier = 1000;
-			} else if (text.endsWith("ms")) {
-				text = text.replace("ms", "");
-				multiplier = 1000000;
-			} else if (text.endsWith("s")) {
-				text = text.replace("s", "");
-				multiplier = 1000000000;
-			}
-			value = (quint64)text.toLongLong() * multiplier;
+			value = timeFromString(text);
 			accepted = true;
 		} else if (state == QValidator::Intermediate) {
 			txt->setStyleSheet("color:blue");

@@ -1662,3 +1662,26 @@ QStringList getAllInterfaceIPs()
 	freeifaddrs(ifaddr);
 	return result;
 }
+
+
+quint64 timeFromString(QString text, bool *ok)
+{
+	quint64 multiplier = 1;
+	if (text.endsWith("ns")) {
+		text = text.replace("ns", "");
+	} else if (text.endsWith("us")) {
+		text = text.replace("us", "");
+		multiplier = 1000;
+	} else if (text.endsWith("ms")) {
+		text = text.replace("ms", "");
+		multiplier = 1000000;
+	} else if (text.endsWith("s")) {
+		text = text.replace("s", "");
+		multiplier = 1000000000;
+	} else {
+		if (ok)
+			*ok = false;
+		return 0;
+	}
+	return text.toULongLong(ok) * multiplier;
+}

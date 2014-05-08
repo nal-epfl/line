@@ -35,6 +35,8 @@ public:
 	friend bool operator <=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 	friend bool operator >(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 	friend bool operator >=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
+
+	LinkIntervalMeasurement& operator+=(LinkIntervalMeasurement other);
 };
 
 bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
@@ -51,11 +53,15 @@ class GraphIntervalMeasurements
 {
 public:
 	void initialize(int numEdges, int numPaths, QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed);
+	// Index: edge
     QVector<LinkIntervalMeasurement> edgeMeasurements;
+    // Index: path
     QVector<LinkIntervalMeasurement> pathMeasurements;
     // first index: edge; second index: path
 	// QVector<QVector<LinkIntervalMeasurement> > perPathEdgeMeasurements;
 	QHash<QPair<qint32, qint32>, LinkIntervalMeasurement> perPathEdgeMeasurements;
+	// The object other must have been initialized with the same routing matrix.
+	GraphIntervalMeasurements& operator+=(GraphIntervalMeasurements other);
 };
 
 QDataStream& operator>>(QDataStream& s, GraphIntervalMeasurements& d);
@@ -96,6 +102,14 @@ public:
 					QVector<bool> trueEdgeNeutrality,
 					QVector<int> pathTrafficClass);
 
+	// Returns a new ExperimentIntervalMeasurements object resampled at this period.
+	// If resamplePeriod is smaller than intervalSize (including zero), no resampling is performed
+	// and a copy of this object is returned.
+	// If resamplePeriod is higher than intervalSize, but not an exact multiple, it is adjusted by
+	// rounding up to the next multiple.
+	ExperimentIntervalMeasurements resample(quint64 resamplePeriod);
+
+    // Index: interval
     QVector<GraphIntervalMeasurements> intervalMeasurements;
     GraphIntervalMeasurements globalMeasurements;
 

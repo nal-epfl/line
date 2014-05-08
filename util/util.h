@@ -635,6 +635,7 @@ void shuffle(QVector<T> &list) {
 }
 
 QString timeToString(quint64 value);
+quint64 timeFromString(QString text, bool *ok = NULL);
 
 template<typename T>
 T pickRandomElement(QList<T> list)

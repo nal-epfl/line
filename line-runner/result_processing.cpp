@@ -51,7 +51,7 @@ QString guessExperimentSuffix(QString workingDir) {
     return "";
 }
 
-bool processResults(QString paramsFileName) {
+bool processResults(QString paramsFileName, quint64 resamplePeriod) {
     QString workingDir;
     QString graphName;
     QString experimentSuffix;
@@ -76,7 +76,7 @@ bool processResults(QString paramsFileName) {
                 .arg(workingDir)
                 .arg(experimentSuffix);
 
-    return processResults(workingDir, graphName, experimentSuffix);
+    return processResults(workingDir, graphName, experimentSuffix, resamplePeriod);
 }
 
 bool loadGraph(QString workingDir, QString graphName, NetGraph &g)
@@ -96,7 +96,7 @@ bool loadGraph(QString workingDir, QString graphName, NetGraph &g)
     return true;
 }
 
-bool computePathCongestionProbabilities(QString workingDir, QString graphName, QString experimentSuffix)
+bool computePathCongestionProbabilities(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
 {
     NetGraph g;
     if (!loadGraph(workingDir, graphName, g))
@@ -131,6 +131,8 @@ bool computePathCongestionProbabilities(QString workingDir, QString graphName, Q
     if (!experimentIntervalMeasurements.load(workingDir + "/" + "interval-measurements.data")) {
         return false;
     }
+
+    experimentIntervalMeasurements = experimentIntervalMeasurements.resample(resamplePeriod);
 
     Q_ASSERT_FORCE(experimentIntervalMeasurements.numPaths == g.paths.count());
 
@@ -190,7 +192,7 @@ bool computePathCongestionProbabilities(QString workingDir, QString graphName, Q
     return true;
 }
 
-bool dumpPathIntervalData(QString workingDir, QString graphName, QString experimentSuffix)
+bool dumpPathIntervalData(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
 {
     NetGraph g;
     if (!loadGraph(workingDir, graphName, g))
@@ -206,6 +208,8 @@ bool dumpPathIntervalData(QString workingDir, QString graphName, QString experim
     if (!experimentIntervalMeasurements.load(workingDir + "/" + "interval-measurements.data")) {
         return false;
     }
+
+    experimentIntervalMeasurements = experimentIntervalMeasurements.resample(resamplePeriod);
 
     Q_ASSERT_FORCE(experimentIntervalMeasurements.numPaths == g.paths.count());
 
@@ -249,7 +253,7 @@ bool dumpPathIntervalData(QString workingDir, QString graphName, QString experim
     return true;
 }
 
-bool processResults(QString workingDir, QString graphName, QString experimentSuffix)
+bool processResults(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
 {
     NetGraph g;
     if (!loadGraph(workingDir, graphName, g))
@@ -257,8 +261,8 @@ bool processResults(QString workingDir, QString graphName, QString experimentSuf
 
 	saveFile(workingDir + "/" + "graph.txt", g.toText());
     saveFile(workingDir + "/" + "experiment-suffix.txt", experimentSuffix);
-    computePathCongestionProbabilities(workingDir, graphName, experimentSuffix);
-    dumpPathIntervalData(workingDir, graphName, experimentSuffix);
+    computePathCongestionProbabilities(workingDir, graphName, experimentSuffix, resamplePeriod);
+    dumpPathIntervalData(workingDir, graphName, experimentSuffix, resamplePeriod);
 
 #if 0
 	const int compiledResultsLink = 0;

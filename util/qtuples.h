@@ -93,7 +93,7 @@ inline bool operator>=(const QTriple<T1, T2, T3> &p1, const QTriple<T1, T2, T3> 
 }
 
 template <class T1, class T2, class T3>
-QTriple<T1, T2, T3> qMakePair(const T1 &t1, const T2 &t2, const T3 &t3)
+QTriple<T1, T2, T3> qMakeTriple(const T1 &t1, const T2 &t2, const T3 &t3)
 {
     return QTriple<T1, T2, T3>(t1, t2, t3);
 }
@@ -193,9 +193,9 @@ inline bool operator>=(const QQuad<T1, T2, T3, T4> &p1, const QQuad<T1, T2, T3, 
 }
 
 template <class T1, class T2, class T3, class T4>
-QQuad<T1, T2, T3, T4> qMakePair(const T1 &t1, const T2 &t2, const T3 &t3)
+QQuad<T1, T2, T3, T4> qMakeQuad(const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4)
 {
-    return QQuad<T1, T2, T3, T4>(t1, t2, t3);
+    return QQuad<T1, T2, T3, T4>(t1, t2, t3, t4);
 }
 
 template <class T1, class T2, class T3, class T4>
@@ -209,6 +209,113 @@ template <class T1, class T2, class T3, class T4>
 inline QDataStream& operator<<(QDataStream& s, const QQuad<T1, T2, T3, T4>& p)
 {
     s << p.first << p.second << p.third << p.fourth;
+    return s;
+}
+
+///////// Quint
+
+template <class T1, class T2, class T3, class T4, class T5>
+struct QQuint
+{
+    typedef T1 first_type;
+    typedef T2 second_type;
+    typedef T3 third_type;
+    typedef T4 fourth_type;
+    typedef T5 fifth_type;
+
+    QQuint()
+        : first(T1()),
+          second(T2()),
+          third(T3()),
+          fourth(T4()),
+          fifth(T5())
+    {}
+
+    QQuint(const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5)
+        : first(t1),
+          second(t2),
+          third(t3),
+          fourth(t4),
+          fifth(t5)
+    {}
+
+    QQuint<T1, T2, T3, T4, T5> &operator=(const QQuint<T1, T2, T3, T4, T5> &other) {
+        first = other.first;
+        second = other.second;
+        third = other.third;
+        fourth = other.fourth;
+        fifth = other.fifth;
+        return *this;
+    }
+
+    T1 first;
+    T2 second;
+    T3 third;
+    T4 fourth;
+    T5 fifth;
+};
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline bool operator==(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
+{
+    return p1.first == p2.first &&
+            p1.second == p2.second &&
+            p1.third == p2.third &&
+            p1.fourth == p2.fourth &&
+            p1.fifth == p2.fifth;
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline bool operator!=(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
+{
+    return !(p1 == p2);
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline bool operator<(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
+{
+    return p1.first < p2.first ||
+            (!(p2.first < p1.first) && p1.second < p2.second ||
+             (!(p2.second < p1.second) && p1.third < p2.third ||
+              (!(p2.third < p1.third) && p1.fourth < p2.fourth) ||
+              (!(p2.fourth < p1.fourth) && p1.fifth < p2.fifth)));
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline bool operator>(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
+{
+    return p2 < p1;
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline bool operator<=(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
+{
+    return !(p2 < p1);
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline bool operator>=(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
+{
+    return !(p1 < p2);
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+QQuint<T1, T2, T3, T4, T5> qMakeQuint(const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5)
+{
+    return QQuint<T1, T2, T3, T4, T5>(t1, t2, t3, t4, t5);
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline QDataStream& operator>>(QDataStream& s, QQuint<T1, T2, T3, T4, T5>& p)
+{
+    s >> p.first >> p.second >> p.third >> p.fourth >> p.fifth;
+    return s;
+}
+
+template <class T1, class T2, class T3, class T4, class T5>
+inline QDataStream& operator<<(QDataStream& s, const QQuint<T1, T2, T3, T4, T5>& p)
+{
+    s << p.first << p.second << p.third << p.fourth << p.fifth;
     return s;
 }
 

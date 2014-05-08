@@ -1448,13 +1448,15 @@ QColor QColor::fromRgb(int r, int g, int b, int a) { return QColor(r, g, b, a); 
 #endif
 
 #ifdef QT_GUI_LIB
-void setCurrentItem(QComboBox *box, QString text)
+bool setCurrentItem(QComboBox *box, QString text)
 {
 	for (int i = 0; i < box->count(); i++) {
 		if (box->itemText(i) == text) {
 			box->setCurrentIndex(i);
+            return true;
 		}
 	}
+    return false;
 }
 #endif
 

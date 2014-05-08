@@ -25,10 +25,17 @@
 #include <limits.h>
 #include <unistd.h>
 #include <random>
+#include "qtuples.h"
 
 typedef QPair<qreal, qreal> RealRealPair;
+typedef QPair<qreal, qreal> QRealPair;
 typedef QPair<qint32, qint32> QInt32Pair;
 typedef QPair<QString, QString> QStringPair;
+
+typedef QTriple<qreal, qreal, qreal> QRealTriple;
+typedef QTriple<qint32, qint32, qint32> QInt32Triple;
+typedef QTriple<QString, QString, QString> QStringTriple;
+
 typedef QSet<qint32> QInt32Set;
 
 template <class T>
@@ -539,7 +546,7 @@ public:
 
 #ifdef QT_GUI_LIB
 class QComboBox;
-void setCurrentItem(QComboBox *box, QString text);
+bool setCurrentItem(QComboBox *box, QString text);
 #endif
 
 class HTMLWriter {

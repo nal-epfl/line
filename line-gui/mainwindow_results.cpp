@@ -412,37 +412,105 @@ void MainWindow::loadSimulation()
 							continue;
 					}
 
-					QOPlotCurveData *lossRateData = new QOPlotCurveData();
+					// overall
+					{
+						QOPlotCurveData *lossRateData = new QOPlotCurveData();
 
-					lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
-					lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
-					lossRateData->pointSymbol = "o";
-					for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
-						qreal loss;
-						if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
-							loss = qreal(experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsDropped) /
-								   qreal(experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight);
-						} else {
-							loss = 0;
+						lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData->pointSymbol = "o";
+						for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+							qreal loss;
+							if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
+								loss = qreal(experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsDropped) /
+									   qreal(experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight);
+							} else {
+								loss = 0;
+							}
+							qreal t = interval * intervalSize;
+							lossRateData->x << (t * 1.0e-9);
+							lossRateData->y << (loss * 100.0);
 						}
-						qreal t = interval * intervalSize;
-						lossRateData->x << (t * 1.0e-9);
-						lossRateData->y << (loss * 100.0);
+
+						QString title = QString("Loss for link %1").arg(e + 1);
+						QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+						plot_lossRate->plot.title = title;
+						plot_lossRate->plot.xlabel = "Time (s)";
+						plot_lossRate->plot.xSISuffix = true;
+						plot_lossRate->plot.ylabel = "Loss (%)";
+						plot_lossRate->plot.ySISuffix = false;
+						plot_lossRate->plot.addData(lossRateData);
+						plot_lossRate->plot.drag_y_enabled = false;
+						plot_lossRate->plot.zoom_y_enabled = false;
+						plot_lossRate->autoAdjustAxes();
+						plot_lossRate->drawPlot();
+						accordion->addWidget(title, plot_lossRate);
 					}
 
-                    QString title = QString("Loss for link %1").arg(e + 1);
-					QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-					plot_lossRate->plot.title = title;
-					plot_lossRate->plot.xlabel = "Time (s)";
-					plot_lossRate->plot.xSISuffix = true;
-					plot_lossRate->plot.ylabel = "Loss (%)";
-					plot_lossRate->plot.ySISuffix = false;
-					plot_lossRate->plot.addData(lossRateData);
-					plot_lossRate->plot.drag_y_enabled = false;
-					plot_lossRate->plot.zoom_y_enabled = false;
-					plot_lossRate->autoAdjustAxes();
-					plot_lossRate->drawPlot();
-					accordion->addWidget(title, plot_lossRate);
+					// class 0
+					QVector<int> pathClass = editor->graph()->getPathTrafficClass();
+					{
+						QOPlotCurveData *lossRateData1 = new QOPlotCurveData();
+						QOPlotCurveData *lossRateData2 = new QOPlotCurveData();
+
+						lossRateData1->x.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData1->y.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData1->pointSymbol = "o";
+
+						lossRateData2->x.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData2->y.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData2->pointSymbol = "o";
+
+                        const qreal firstTransientCutSec = 10;
+                        const qreal lastTransientCutSec = 10;
+                        const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+                        const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+                        for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                            LinkIntervalMeasurement data1, data2;
+                            for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+                                if (pathClass[p] == 0) {
+                                    data1 += experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
+                                } else {
+                                    data2 += experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
+                                }
+                            }
+                            qreal t = interval * experimentIntervalMeasurements.intervalSize;
+
+							lossRateData1->x << (t * 1.0e-9);
+							lossRateData1->y << ((1.0 - data1.successRate()) * 100.0);
+
+							lossRateData2->x << (t * 1.0e-9);
+							lossRateData2->y << ((1.0 - data2.successRate()) * 100.0);
+						}
+
+						QString title = QString("Loss for link %1, class 1").arg(e + 1);
+						QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+						plot_lossRate->plot.title = title;
+						plot_lossRate->plot.xlabel = "Time (s)";
+						plot_lossRate->plot.xSISuffix = true;
+						plot_lossRate->plot.ylabel = "Loss (%)";
+						plot_lossRate->plot.ySISuffix = false;
+						plot_lossRate->plot.addData(lossRateData1);
+						plot_lossRate->plot.drag_y_enabled = false;
+						plot_lossRate->plot.zoom_y_enabled = false;
+						plot_lossRate->autoAdjustAxes();
+						plot_lossRate->drawPlot();
+						accordion->addWidget(title, plot_lossRate);
+
+						title = QString("Loss for link %1, class 2").arg(e + 1);
+						plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+						plot_lossRate->plot.title = title;
+						plot_lossRate->plot.xlabel = "Time (s)";
+						plot_lossRate->plot.xSISuffix = true;
+						plot_lossRate->plot.ylabel = "Loss (%)";
+						plot_lossRate->plot.ySISuffix = false;
+						plot_lossRate->plot.addData(lossRateData2);
+						plot_lossRate->plot.drag_y_enabled = false;
+						plot_lossRate->plot.zoom_y_enabled = false;
+						plot_lossRate->autoAdjustAxes();
+						plot_lossRate->drawPlot();
+						accordion->addWidget(title, plot_lossRate);
+					}
 				}
 			}
 

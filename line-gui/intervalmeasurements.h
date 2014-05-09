@@ -28,6 +28,7 @@ public:
 	qint64 numPacketsInFlight;
 	qint64 numPacketsDropped;
 	qreal successRate(bool *ok = NULL) const;
+	void clear();
 
 	friend bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 	friend bool operator !=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
@@ -53,6 +54,8 @@ class GraphIntervalMeasurements
 {
 public:
 	void initialize(int numEdges, int numPaths, QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed);
+	// Sets all the counters to zero
+	void clear();
 	// Index: edge
     QVector<LinkIntervalMeasurement> edgeMeasurements;
     // Index: path
@@ -107,7 +110,7 @@ public:
 	// and a copy of this object is returned.
 	// If resamplePeriod is higher than intervalSize, but not an exact multiple, it is adjusted by
 	// rounding up to the next multiple.
-	ExperimentIntervalMeasurements resample(quint64 resamplePeriod);
+	ExperimentIntervalMeasurements resample(quint64 resamplePeriod) const;
 
     // Index: interval
     QVector<GraphIntervalMeasurements> intervalMeasurements;

@@ -22,8 +22,7 @@
 
 LinkIntervalMeasurement::LinkIntervalMeasurement()
 {
-    numPacketsInFlight = 0;
-	numPacketsDropped = 0;
+	clear();
 }
 
 qreal LinkIntervalMeasurement::successRate(bool *ok) const
@@ -38,6 +37,12 @@ qreal LinkIntervalMeasurement::successRate(bool *ok) const
 		*ok = true;
 	}
 	return 1.0 - qreal(numPacketsDropped) / qreal(numPacketsInFlight);
+}
+
+void LinkIntervalMeasurement::clear()
+{
+	numPacketsInFlight = 0;
+	numPacketsDropped = 0;
 }
 
 LinkIntervalMeasurement& LinkIntervalMeasurement::operator+=(LinkIntervalMeasurement other)
@@ -134,6 +139,19 @@ void GraphIntervalMeasurements::initialize(int numEdges, int numPaths,
     pathMeasurements.resize(numPaths);
 	foreach (QInt32Pair ep, sparseRoutingMatrixTransposed) {
 		perPathEdgeMeasurements[ep] = LinkIntervalMeasurement();
+	}
+}
+
+void GraphIntervalMeasurements::clear()
+{
+	for (int i = 0; i < edgeMeasurements.count(); i++) {
+		edgeMeasurements[i].clear();
+	}
+	for (int i = 0; i < pathMeasurements.count(); i++) {
+		pathMeasurements[i].clear();
+	}
+	foreach (QInt32Pair edgePath, perPathEdgeMeasurements.uniqueKeys()) {
+		perPathEdgeMeasurements[edgePath].clear();
 	}
 }
 
@@ -1072,7 +1090,7 @@ bool ExperimentIntervalMeasurements::exportText(QIODevice *device,
 	return true;
 }
 
-ExperimentIntervalMeasurements ExperimentIntervalMeasurements::resample(quint64 resamplePeriod)
+ExperimentIntervalMeasurements ExperimentIntervalMeasurements::resample(quint64 resamplePeriod) const
 {
 	// Nothing to do
 	if (resamplePeriod <= intervalSize) {
@@ -1084,20 +1102,18 @@ ExperimentIntervalMeasurements ExperimentIntervalMeasurements::resample(quint64 
 		resamplePeriod = (resamplePeriod / intervalSize + 1) * intervalSize;
 	}
 	int factor = resamplePeriod / this->intervalSize;
+	// factor > 1
 
 	ExperimentIntervalMeasurements result = *this;
 	result.intervalSize = resamplePeriod;
+	result.intervalMeasurements.resize(this->intervalMeasurements.count() / factor + ((this->intervalMeasurements.count() % factor) ? 1 : 0));
 
-	for (int i = 0; i < result.intervalMeasurements.count() - 1; i++) {
-		int numMerged = 0;
-		for (int j = i + 1; j < qMin(i + factor, result.intervalMeasurements.count()); j++) {
-			result.intervalMeasurements[i] += result.intervalMeasurements[j];
-			numMerged++;
+	for (int i = 0; i < result.intervalMeasurements.count(); i++) {
+		result.intervalMeasurements[i].clear();
+		for (int j = i * factor; j < qMin(i * factor + factor, this->intervalMeasurements.count()); j++) {
+			result.intervalMeasurements[i] += this->intervalMeasurements[j];
 		}
-		result.intervalMeasurements.remove(i + 1, numMerged);
 	}
-	Q_ASSERT_FORCE(result.intervalMeasurements.count() ==
-				   (this->intervalMeasurements.count() / factor + ((this->intervalMeasurements.count() % factor) ? 1 : 0)));
 	return result;
 }
 

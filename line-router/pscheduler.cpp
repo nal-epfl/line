@@ -222,6 +222,7 @@ NetGraphEdgeQueue::NetGraphEdgeQueue(const NetGraphEdge &edge, qint32 index)
 		weight = 1.0 / edge.queueCount;
     }
 	queueLength = edge.queueLength;
+#if 0
 	if (qosBufferScaling == QosBufferScalingNone) {
 		// nothing to do
 	} else if (qosBufferScaling == QosBufferScalingDown) {
@@ -231,6 +232,10 @@ NetGraphEdgeQueue::NetGraphEdgeQueue(const NetGraphEdge &edge, qint32 index)
 	} else {
 		Q_ASSERT_FORCE(false);
 	}
+#else
+    queueLength *= weight;
+#endif
+
 	qcapacity = queueLength * ETH_FRAME_LEN;
 	bandwidth = edge.bandwidth * weight;
 	rate_Bps = edge.rate_Bps * weight;
@@ -412,6 +417,7 @@ TokenBucket::TokenBucket(const NetGraphEdge &edge, qint32 index)
 	}
 	capacity = ETH_FRAME_LEN * edge.queueLength;
 
+#if 0
 	// Scale buffers if configured
 	if (qosBufferScaling == QosBufferScalingNone) {
 		// nothing to do
@@ -422,6 +428,7 @@ TokenBucket::TokenBucket(const NetGraphEdge &edge, qint32 index)
 	} else {
 		Q_ASSERT_FORCE(false);
 	}
+#endif
 
 	fillRate = (edge.bandwidth / qreal(MSEC_TO_NSEC)) * weight;
 

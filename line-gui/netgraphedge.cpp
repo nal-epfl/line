@@ -359,6 +359,7 @@ NetGraphEdge::NetGraphEdge()
 
 	recordSampledTimeline = false;
 	recordFullTimeline = false;
+	timelineSamplingPeriod = 1 * 1000ULL * 1000ULL * 1000ULL;
 
     queueCount = 1;
 	queueWeights.resize(1);

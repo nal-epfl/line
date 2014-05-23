@@ -289,6 +289,11 @@ void MainWindow::loadSimulation()
 		if (!experimentIntervalMeasurements.load(fileName)) {
 			emit logError(ui->txtBatch, QString("Failed to open file %1").arg(fileName));
 		} else {
+			const qreal firstTransientCutSec = 10;
+			const qreal lastTransientCutSec = 10;
+			const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+			const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+
 			intervalSize = experimentIntervalMeasurements.intervalSize;
 
 			QVector<bool> trueEdgeNeutrality(editor->graph()->edges.count());
@@ -326,7 +331,7 @@ void MainWindow::loadSimulation()
 			{
 				QTableWidget *table = new QTableWidget();
                 QStringList columnHeaders = QStringList() << "Link" << "Type" << "Neutrality";
-				for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+				for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 					columnHeaders << QString("Interval %1").arg(interval + 1);
 				}
 				table->setColumnCount(columnHeaders.count());
@@ -361,7 +366,7 @@ void MainWindow::loadSimulation()
 					table->setItem(table->rowCount() - 1, col, cell);
 					col++;
 
-					for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+					for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 						cell = new QTableWidgetItem();
 						qint64 numDropped = experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsDropped;
 						qint64 numSent = experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight;
@@ -420,7 +425,7 @@ void MainWindow::loadSimulation()
 						lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
 						lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
 						lossRateData->pointSymbol = "o";
-						for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+						for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 							qreal loss;
 							if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
 								loss = qreal(experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsDropped) /
@@ -451,17 +456,16 @@ void MainWindow::loadSimulation()
 
 					// class 0
 					for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+						QInt32Pair ep = QInt32Pair(e, p);
+						if (experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight == 0)
+							continue;
 						QOPlotCurveData *lossRateData = new QOPlotCurveData();
 
 						lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
 						lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
 						lossRateData->pointSymbol = "o";
 
-                        const qreal firstTransientCutSec = 10;
-                        const qreal lastTransientCutSec = 10;
-                        const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
-                        const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
-                        for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+						for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
                             const LinkIntervalMeasurement &data = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
                             qreal t = interval * experimentIntervalMeasurements.intervalSize;
 
@@ -494,11 +498,12 @@ void MainWindow::loadSimulation()
 
 			{
 				QTableWidget *table = new QTableWidget();
-				QList<qreal> thresholds = QList<qreal>() << 0.100 << 0.050 << 0.040 << 0.030 << 0.025 << 0.020 << 0.015 << 0.010 << 0.005 << 0.0025;
+				QList<qreal> thresholds = QList<qreal>() << 0.100 << 0.050 << 0.040 << 0.030 << 0.025 << 0.020 << 0.015 << 0.010 << 0.005 << 0.0025 << 0.0000001;
                 QStringList columnHeaders = QStringList() << "Link" << "Neutrality";
 				foreach (qreal threshold, thresholds) {
-					columnHeaders << QString("%1%").arg(threshold * 100.0, 0, 'f', 1);
+					columnHeaders << QString("%1%").arg(threshold * 100.0, 0, 'f', 2);
 				}
+				columnHeaders << "PPI avg" << "PPI min" << "PPI max";
 
 				table->setColumnCount(columnHeaders.count());
 				table->setHorizontalHeaderLabels(columnHeaders);
@@ -536,7 +541,8 @@ void MainWindow::loadSimulation()
 
 						foreach (qreal threshold, thresholds) {
 							qreal lossyProbability = 0;
-							for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+							qreal lossyCount = 0;
+							for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 								if (p < 0) {
 									if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
 										qreal loss = qreal(experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsDropped) /
@@ -544,6 +550,7 @@ void MainWindow::loadSimulation()
 										if (loss >= threshold) {
 											lossyProbability += 1.0;
 										}
+										lossyCount += 1.0;
 									}
 								} else {
 									QInt32Pair ep = QInt32Pair(e, p);
@@ -553,13 +560,61 @@ void MainWindow::loadSimulation()
 										if (loss >= threshold) {
 											lossyProbability += 1.0;
 										}
+										lossyCount += 1.0;
 									}
 								}
 							}
-							lossyProbability /= qMax(1, experimentIntervalMeasurements.numIntervals());
+							lossyProbability /= qMax(1.0, lossyCount);
 							cell = new QTableWidgetItem();
 							cell->setData(Qt::EditRole, lossyProbability);
 							cell->setData(Qt::DisplayRole, lossyProbability);
+							table->setItem(table->rowCount() - 1, col, cell);
+							col++;
+						}
+
+						{
+							qreal ppiMin = 0;
+							qreal ppiMax = 0;
+							qreal ppiAvg = 0;
+							qreal ppiCount = 0;
+							for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+								if (p < 0) {
+									if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
+										qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight;
+										ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+										ppiMax = qMax(ppiMax, ppi);
+										ppiAvg += ppi;
+										ppiCount += 1;
+									}
+								} else {
+									QInt32Pair ep = QInt32Pair(e, p);
+									if (experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight > 0) {
+										qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight;
+										ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+										ppiMax = qMax(ppiMax, ppi);
+										ppiAvg += ppi;
+										ppiCount += 1;
+									}
+								}
+							}
+
+							ppiAvg /= qMax(1.0, ppiCount);
+
+							cell = new QTableWidgetItem();
+							cell->setData(Qt::EditRole, ppiAvg);
+							cell->setData(Qt::DisplayRole, ppiAvg);
+							table->setItem(table->rowCount() - 1, col, cell);
+							col++;
+
+							cell = new QTableWidgetItem();
+							cell->setData(Qt::EditRole, ppiMin);
+							cell->setData(Qt::DisplayRole, ppiMin);
+							table->setItem(table->rowCount() - 1, col, cell);
+							col++;
+
+							cell = new QTableWidgetItem();
+							cell->setData(Qt::EditRole, ppiMax);
+							cell->setData(Qt::DisplayRole, ppiMax);
 							table->setItem(table->rowCount() - 1, col, cell);
 							col++;
 						}
@@ -625,7 +680,8 @@ void MainWindow::loadSimulation()
 						qreal lossyProbability1 = 0;
 						qreal lossyProbability2 = 0;
 						qreal lossyProbability12 = 0;
-						for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+						qreal lossyCount = 0;
+						for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 							qreal loss1 = 1.0 - experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p1].successRate();
 							if (loss1 >= threshold) {
 								lossyProbability1 += 1.0;
@@ -637,10 +693,11 @@ void MainWindow::loadSimulation()
 							if (loss1 >= threshold && loss2 >= threshold) {
 								lossyProbability12 += 1.0;
 							}
+							lossyCount += 1.0;
 						}
-						lossyProbability1 /= qMax(1, experimentIntervalMeasurements.numIntervals());
-						lossyProbability2 /= qMax(1, experimentIntervalMeasurements.numIntervals());
-						lossyProbability12 /= qMax(1, experimentIntervalMeasurements.numIntervals());
+						lossyProbability1 /= qMax(1.0, lossyCount);
+						lossyProbability2 /= qMax(1.0, lossyCount);
+						lossyProbability12 /= qMax(1.0, lossyCount);
 
 						qreal pLinkLossyComputed = 1.0 - (1.0 - lossyProbability1) * (1.0 - lossyProbability2) /
 												   qMax(0.0001, 1.0 - lossyProbability12);
@@ -662,7 +719,7 @@ void MainWindow::loadSimulation()
 			{
 				QTableWidget *table = new QTableWidget();
 				QStringList columnHeaders = QStringList() << "Path" << "Neutrality group";
-				for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+				for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 					columnHeaders << QString("Interval %1").arg(interval + 1);
 				}
 				table->setColumnCount(columnHeaders.count());
@@ -689,7 +746,7 @@ void MainWindow::loadSimulation()
 					table->setItem(table->rowCount() - 1, col, cell);
 					col++;
 
-					for (int interval = 0; interval < experimentIntervalMeasurements.numIntervals(); interval++) {
+					for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 						cell = new QTableWidgetItem();
 						if (experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].numPacketsInFlight == 0) {
 							cell->setData(Qt::EditRole, " ");
@@ -1061,7 +1118,235 @@ void MainWindow::loadSimulation()
 				table->setSortingEnabled(true);
 				table->sortByColumn(0);
 				table->setMinimumHeight(tableHeight);
-                accordion->addWidget("Link neutrality", table);
+				accordion->addWidget("Link neutrality (by transmission rate)", table);
+			}
+
+			{
+				QTableWidget *table = new QTableWidget();
+				QStringList columnHeaders = QStringList() << "Link" << "Policy" <<
+															 "Min" <<
+															 "Max" <<
+															 "Avg" <<
+															 "Max-min" <<
+															 "Variance" <<
+															 "Min (1)" <<
+															 "Max (1)" <<
+															 "Avg (1)" <<
+															 "Max-min (1)" <<
+															 "Variance (1)" <<
+															 "Min (2)" <<
+															 "Max (2)" <<
+															 "Avg (2)" <<
+															 "Max-min (2)" <<
+															 "Variance (2)";
+				table->setColumnCount(columnHeaders.count());
+				table->setHorizontalHeaderLabels(columnHeaders);
+
+				table->setRowCount(experimentIntervalMeasurements.numEdges);
+
+				table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+				for (int e = 0; e < experimentIntervalMeasurements.numEdges; e++) {
+					QTableWidgetItem *cell;
+					int col = 0;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, e + 1);
+					cell->setData(Qt::DisplayRole, e + 1);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					QString neutrality = trueEdgeNeutrality[e] ? "Neutral" : "Non-neutral";
+					cell->setData(Qt::EditRole, neutrality);
+					cell->setData(Qt::DisplayRole, neutrality);
+					table->setItem(e, col, cell);
+					col++;
+
+					if (experimentIntervalMeasurements.globalMeasurements.edgeMeasurements[e].numPacketsInFlight == 0) {
+						table->setRowHidden(e, true);
+						continue;
+					}
+					qreal probMin = 1.0e99;
+					qreal probMax = 0.0;
+					qreal numProbs = 0;
+					qreal sumProbs = 0;
+
+					qreal probMin0 = 1.0e99;
+					qreal probMax0 = 0.0;
+					qreal numProbs0 = 0;
+					qreal sumProbs0 = 0;
+
+					qreal probMin1 = 1.0e99;
+					qreal probMax1 = 0.0;
+					qreal numProbs1 = 0;
+					qreal sumProbs1 = 0;
+					for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+						QInt32Pair ep = QInt32Pair(e, p);
+						if (experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight == 0)
+							continue;
+
+						const qreal threshold = 0.0000001;
+
+						qreal prob;
+						{
+							qreal numGood = 0.0;
+							qreal numCongested = 0.0;
+							for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+								const LinkIntervalMeasurement &data = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
+
+								bool ok;
+								qreal rate = data.successRate(&ok);
+								if (!ok)
+									continue;
+
+								if (rate <= 1.0 - threshold) {
+									numCongested += 1;
+								} else {
+									numGood += 1;
+								}
+							}
+							prob = numCongested / qMax(1.0, numGood + numCongested);
+						}
+
+						probMin = qMin(probMin, prob);
+						probMax = qMax(probMax, prob);
+						sumProbs += prob;
+						numProbs += 1;
+
+						if (pathTrafficClass[p] == 0) {
+							probMin0 = qMin(probMin0, prob);
+							probMax0 = qMax(probMax0, prob);
+							sumProbs0 += prob;
+							numProbs0 += 1;
+						} else if (pathTrafficClass[p] == 1) {
+							probMin1 = qMin(probMin1, prob);
+							probMax1 = qMax(probMax1, prob);
+							sumProbs1 += prob;
+							numProbs1 += 1;
+						}
+					}
+					qreal avgProb = sumProbs/numProbs;
+					qreal avgProb0 = numProbs0 > 0 ? sumProbs0/numProbs0 : 0;
+					qreal avgProb1 = numProbs1 > 0 ? sumProbs1/numProbs1 : numProbs1;
+
+					qreal varProb = 0;
+					qreal varProb0 = 0;
+					qreal varProb1 = 0;
+					for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+						QInt32Pair ep = QInt32Pair(e, p);
+						if (experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight == 0)
+							continue;
+
+						qreal prob = 1.0 -
+									 qreal(experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsDropped) /
+									 qreal(experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight);
+						varProb += (prob - avgProb) * (prob - avgProb) / numProbs;
+
+						if (pathTrafficClass[p] == 0) {
+							varProb0 += (prob - avgProb0) * (prob - avgProb0) / numProbs0;
+						} else if (pathTrafficClass[p] == 1) {
+							varProb1 += (prob - avgProb1) * (prob - avgProb1) / numProbs1;
+						}
+					}
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMin);
+					cell->setData(Qt::DisplayRole, probMin);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMax);
+					cell->setData(Qt::DisplayRole, probMax);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, avgProb);
+					cell->setData(Qt::DisplayRole, avgProb);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMax - probMin);
+					cell->setData(Qt::DisplayRole, probMax - probMin);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, varProb);
+					cell->setData(Qt::DisplayRole, varProb);
+					table->setItem(e, col, cell);
+					col++;
+
+					// group 1
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMin0);
+					cell->setData(Qt::DisplayRole, probMin0);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMax0);
+					cell->setData(Qt::DisplayRole, probMax0);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, avgProb0);
+					cell->setData(Qt::DisplayRole, avgProb0);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMax0 - probMin0);
+					cell->setData(Qt::DisplayRole, probMax0 - probMin0);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, varProb0);
+					cell->setData(Qt::DisplayRole, varProb0);
+					table->setItem(e, col, cell);
+					col++;
+
+					// group 2
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMin1);
+					cell->setData(Qt::DisplayRole, probMin1);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMax1);
+					cell->setData(Qt::DisplayRole, probMax1);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, avgProb1);
+					cell->setData(Qt::DisplayRole, avgProb1);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, probMax1 - probMin1);
+					cell->setData(Qt::DisplayRole, probMax1 - probMin1);
+					table->setItem(e, col, cell);
+					col++;
+
+					cell = new QTableWidgetItem();
+					cell->setData(Qt::EditRole, varProb1);
+					cell->setData(Qt::DisplayRole, varProb1);
+					table->setItem(e, col, cell);
+					col++;
+				}
+
+				table->setSortingEnabled(true);
+				table->sortByColumn(0);
+				table->setMinimumHeight(tableHeight);
+				accordion->addWidget("Link neutrality (by prob. of congestion)", table);
 			}
 		}
 	}
@@ -1104,6 +1389,8 @@ void MainWindow::loadSimulation()
         if (readEdgeTimelines(edgeTimelines, editor->graph(), simulations[currentSimulation].dir)) {
             foreach (qint32 iEdge, interestingEdges) {
                 for (int queue = -1; queue < editor->graph()->edges[iEdge].queueCount; queue++) {
+					if (editor->graph()->edges[iEdge].isNeutral())
+						continue;
                     EdgeTimeline &timeline = edgeTimelines.timelines[iEdge][1 + queue];
                     if (timeline.items.isEmpty() || timeline.tsMin > timeline.tsMax)
                         continue;

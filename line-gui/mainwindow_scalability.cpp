@@ -53,14 +53,16 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 	const int numHops = ui->spinBenchmarkHopsPerPath->value();
 	const qreal totalBwMbps = ui->spinBenchmarkBandwidth->value();
 	const int rtt = ui->spinBenchmarkRTT->value();
+	const bool oneBottleneck = ui->checkBenchmarkBottleneck->isChecked();
 
-	const QString graphName = QString("benchmark-paths-%1-flowspp-%2-hops-%3-bw-%4Mbps-rtt-%5-traffic-%6")
+	const QString graphName = QString("benchmark-paths-%1-flowspp-%2-hops-%3-bw-%4Mbps-rtt-%5-traffic-%6-bottleneck-%7")
 							  .arg(numPaths)
 							  .arg(numFlowsPerPath)
 							  .arg(numHops)
 							  .arg(totalBwMbps)
 							  .arg(rtt)
-							  .arg(trafficLabel);
+							  .arg(trafficLabel)
+							  .arg(oneBottleneck ? "yes" : "no");
 	g.setFileName(graphName + ".graph");
 
 	const qreal nodeDistance = 200;
@@ -75,33 +77,52 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 		for (int iHop = 0; iHop < numHops + 1; iHop++) {
 			QPointF position = QPointF(nodeDistance * iPath, nodeDistance * iHop);
 			int nodeType = ((iHop == 0) || (iHop == numHops)) ? NETGRAPH_NODE_HOST : NETGRAPH_NODE_GATEWAY;
-			pathNodes << g.addNode(nodeType, position);
+			if (!oneBottleneck) {
+				pathNodes << g.addNode(nodeType, position);
+			} else {
+				if (iHop != numHops - 1 && iHop != numHops - 2) {
+					pathNodes << g.addNode(nodeType, position);
+				} else {
+					if (iPath == 0) {
+						position = QPointF(nodeDistance * (numPaths - 1) / 2.0, nodeDistance * iHop);
+						pathNodes << g.addNode(nodeType, position);
+					} else {
+						pathNodes << nodes[0][pathNodes.count()];
+					}
+				}
+			}
 		}
 		nodes << pathNodes;
 	}
 
 	// Create links
-	const qreal linkBw_MBps = totalBwMbps / numPaths;
+	const qreal linkBw_MBps = oneBottleneck ? totalBwMbps : totalBwMbps / numPaths;
 	const qreal linkBw_kBps = linkBw_MBps * 1000.0 / 8.0;
 	const int linkDelay_ms = qMax(1, rtt / numHops / 2);
 	for (int iPath = 0; iPath < numPaths; iPath++) {
 		for (int iHop = 0; iHop < numHops; iHop++) {
-			g.addEdgeSym(nodes[iPath][iHop],
-						 nodes[iPath][iHop + 1],
-                    linkBw_kBps,
-					linkDelay_ms,
-					0,
-					MIN_QUEUE_LEN_FRAMES /* irrelevant */);
+			if (!oneBottleneck || iPath == 0 || (iHop != numHops - 2)) {
+				g.addEdgeSym(nodes[iPath][iHop],
+							 nodes[iPath][iHop + 1],
+						linkBw_kBps,
+						linkDelay_ms,
+						0,
+						MIN_QUEUE_LEN_FRAMES /* irrelevant */,
+						true);
+			}
 		}
 		// Add cross links so we can have a full mesh
-        if (numPaths > 1 && !(numPaths == 2 && iPath > 0)) {
-			const int iPathOther = (iPath + 1) % numPaths;
-			g.addEdgeSym(nodes[iPath][1],
-						 nodes[iPathOther][1],
-					linkBw_kBps,
-					linkDelay_ms,
-					0,
-                    MIN_QUEUE_LEN_FRAMES);
+		if (!oneBottleneck) {
+			if (numPaths > 1 && !(numPaths == 2 && iPath > 0)) {
+				const int iPathOther = (iPath + 1) % numPaths;
+				g.addEdgeSym(nodes[iPath][1],
+						nodes[iPathOther][1],
+						linkBw_kBps,
+						linkDelay_ms,
+						0,
+						MIN_QUEUE_LEN_FRAMES,
+						true);
+			}
 		}
 	}
 

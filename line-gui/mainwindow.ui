@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -415,7 +415,7 @@
               <item row="0" column="7">
                <widget class="QSpinBox" name="spinBenchmarkHopsPerPath">
                 <property name="minimum">
-                 <number>2</number>
+                 <number>3</number>
                 </property>
                 <property name="maximum">
                  <number>10000</number>
@@ -426,6 +426,13 @@
                <widget class="QLabel" name="label_55">
                 <property name="text">
                  <string>RTT:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="12">
+               <widget class="QCheckBox" name="checkBenchmarkBottleneck">
+                <property name="text">
+                 <string>Single bottleneck</string>
                 </property>
                </widget>
               </item>
@@ -1782,8 +1789,8 @@ For performance reasons, the number of packets that can be captured is limited b
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>1571</width>
+             <height>699</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13"/>

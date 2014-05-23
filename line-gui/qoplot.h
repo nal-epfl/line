@@ -287,6 +287,8 @@ public:
 	QOPlotDataHit bestHit;
 };
 
+class QOPlotGroup;
+
 class QOPlotWidget : public QWidget
 {
 	Q_OBJECT
@@ -331,6 +333,7 @@ public:
 	void setAntiAliasing(bool enable);
 signals:
 	void mouseHit(QOPlotHit hits);
+	void viewportChanged(qreal xmin, qreal ymin, qreal xmax, qreal ymax, QOPlotWidget *plot);
 
 public slots:
 	// repopulates the scene (i.e. redraws everything); call this after changing data, labels, colors etc.
@@ -412,6 +415,8 @@ protected:
 		minHeight = h;
 	}
 
+	void emitViewportChanged();
+
 protected slots:
 	// process mouse events for drag and zoom
 	void mouseMoveEvent(QMouseEvent* event);
@@ -422,6 +427,23 @@ protected slots:
 	void focusInEvent(QFocusEvent *event);
 	void focusOutEvent(QFocusEvent *event);
 	void enterEvent(QEvent *event);
+
+private:
+	friend class QOPlotGroup;
+};
+
+class QOPlotGroup : public QObject {
+	Q_OBJECT
+
+public:
+	void addPlot(QOPlotWidget *plot);
+	void clear();
+
+protected:
+	QSet<QOPlotWidget*> plots;
+
+public slots:
+	void viewportChanged(qreal xmin, qreal ymin, qreal xmax, qreal ymax, QOPlotWidget *sender);
 };
 
 #endif // QOPLOT_H

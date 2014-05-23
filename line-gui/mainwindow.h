@@ -189,6 +189,7 @@ private:
 	QProcess httpServer;
 
 	QHash<QPlainTextEdit*, QTextCursor> logOutputPositions;
+	QOPlotGroup resultsPlotGroup;
 
 private slots:
 	void initPlots();

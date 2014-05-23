@@ -2033,6 +2033,7 @@ void QOPlotWidget::mouseMoveEvent(QMouseEvent* event)
 			plot.autoAdjustedFixedAspect = false;
 			plot.fixedAxes = false;
 			updateGeometry();
+			emitViewportChanged();
 		} else if (event->buttons() & Qt::RightButton) {
 			track_x = world_x;
 			track_y = world_y;
@@ -2122,6 +2123,7 @@ void QOPlotWidget::wheelEvent(QWheelEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		drawPlot();
+		emitViewportChanged();
 		event->accept();
 	}
 }
@@ -2147,6 +2149,7 @@ void QOPlotWidget::keyPressEvent(QKeyEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		updateGeometry();
+		emitViewportChanged();
 		event->accept();
 	} else if (event->key() == Qt::Key_Right && plot.drag_x_enabled) {
 		qreal widget_dx, widget_dy, world_dx, world_dy;
@@ -2166,6 +2169,7 @@ void QOPlotWidget::keyPressEvent(QKeyEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		updateGeometry();
+		emitViewportChanged();
 		event->accept();
 	} else if (event->key() == Qt::Key_Up && plot.drag_y_enabled) {
 		qreal widget_dx, widget_dy, world_dx, world_dy;
@@ -2185,6 +2189,7 @@ void QOPlotWidget::keyPressEvent(QKeyEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		updateGeometry();
+		emitViewportChanged();
 		event->accept();
 	} else if (event->key() == Qt::Key_Down && plot.drag_y_enabled) {
 		qreal widget_dx, widget_dy, world_dx, world_dy;
@@ -2204,6 +2209,7 @@ void QOPlotWidget::keyPressEvent(QKeyEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		updateGeometry();
+		emitViewportChanged();
 		event->accept();
 	} else if (event->key() == Qt::Key_Minus) {
 		float steps;
@@ -2236,6 +2242,7 @@ void QOPlotWidget::keyPressEvent(QKeyEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		updateGeometry();
+		emitViewportChanged();
 		event->accept();
 	} else if (event->key() == Qt::Key_Plus || event->key() == Qt::Key_Equal) {
 		float steps;
@@ -2268,9 +2275,11 @@ void QOPlotWidget::keyPressEvent(QKeyEvent *event)
 		plot.autoAdjustedFixedAspect = false;
 		plot.fixedAxes = false;
 		updateGeometry();
+		emitViewportChanged();
 		event->accept();
 	} else if (event->key() == Qt::Key_A) {
 		autoAdjustAxes();
+		emitViewportChanged();
 	} else if (event->key() == Qt::Key_S) {
 		saveImage(plotFileName.isEmpty() ? "" : plotFileName + ".png");
 	} else if (event->key() == Qt::Key_V) {
@@ -2473,3 +2482,43 @@ void QOPlotWidget::widgetDeltaToWorldDelta(qreal widget_dx, qreal widget_dy, qre
 	world_dy = widget_dy / deviceH * worldH;
 }
 
+void QOPlotWidget::emitViewportChanged()
+{
+	qreal deviceW, deviceH, worldW, worldH;
+	getPlotAreaGeometry(deviceW, deviceH, worldW, worldH);
+
+	emit viewportChanged(world_x_off, world_y_off, world_x_off + worldW, world_y_off + worldH, this);
+}
+
+
+
+void QOPlotGroup::addPlot(QOPlotWidget *plot)
+{
+	plots.insert(plot);
+	QObject::connect(plot, SIGNAL(viewportChanged(qreal,qreal,qreal,qreal,QOPlotWidget*)), this, SLOT(viewportChanged(qreal,qreal,qreal,qreal,QOPlotWidget*)));
+}
+
+void QOPlotGroup::clear()
+{
+	plots.clear();
+}
+
+void QOPlotGroup::viewportChanged(qreal xmin, qreal ymin, qreal xmax, qreal ymax, QOPlotWidget *sender)
+{
+	foreach (QOPlotWidget *plot, plots) {
+		if (plot != sender) {
+			if (plot->plot.zoom_x_enabled && plot->plot.zoom_y_enabled) {
+				plot->recalcViewport(xmin, xmax, ymin, ymax);
+			} else if (plot->plot.zoom_x_enabled) {
+				qreal deviceW, deviceH, worldW, worldH;
+				plot->getPlotAreaGeometry(deviceW, deviceH, worldW, worldH);
+				plot->recalcViewport(xmin, xmax, plot->world_y_off, plot->world_y_off + worldH);
+			} else if (plot->plot.zoom_y_enabled) {
+				qreal deviceW, deviceH, worldW, worldH;
+				plot->getPlotAreaGeometry(deviceW, deviceH, worldW, worldH);
+				plot->recalcViewport(plot->world_x_off, plot->world_x_off + worldW, ymin, ymax);
+			}
+			plot->updateGeometry();
+		}
+	}
+}

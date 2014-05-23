@@ -150,6 +150,7 @@ void MainWindow::loadSimulation()
 		}
 	}
 
+	resultsPlotGroup.clear();
 	foreach (QObject *obj, ui->scrollPlotsWidgetContents->children()) {
 		delete obj;
 	}
@@ -445,71 +446,48 @@ void MainWindow::loadSimulation()
 						plot_lossRate->autoAdjustAxes();
 						plot_lossRate->drawPlot();
 						accordion->addWidget(title, plot_lossRate);
+						resultsPlotGroup.addPlot(plot_lossRate);
 					}
 
 					// class 0
-					QVector<int> pathClass = editor->graph()->getPathTrafficClass();
-					{
-						QOPlotCurveData *lossRateData1 = new QOPlotCurveData();
-						QOPlotCurveData *lossRateData2 = new QOPlotCurveData();
+					for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+						QOPlotCurveData *lossRateData = new QOPlotCurveData();
 
-						lossRateData1->x.reserve(experimentIntervalMeasurements.numIntervals());
-						lossRateData1->y.reserve(experimentIntervalMeasurements.numIntervals());
-						lossRateData1->pointSymbol = "o";
-
-						lossRateData2->x.reserve(experimentIntervalMeasurements.numIntervals());
-						lossRateData2->y.reserve(experimentIntervalMeasurements.numIntervals());
-						lossRateData2->pointSymbol = "o";
+						lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
+						lossRateData->pointSymbol = "o";
 
                         const qreal firstTransientCutSec = 10;
                         const qreal lastTransientCutSec = 10;
                         const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
                         const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
                         for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
-                            LinkIntervalMeasurement data1, data2;
-                            for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
-                                if (pathClass[p] == 0) {
-                                    data1 += experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
-                                } else {
-                                    data2 += experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
-                                }
-                            }
+                            const LinkIntervalMeasurement &data = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
                             qreal t = interval * experimentIntervalMeasurements.intervalSize;
 
-							lossRateData1->x << (t * 1.0e-9);
-							lossRateData1->y << ((1.0 - data1.successRate()) * 100.0);
+							bool ok;
+							data.successRate(&ok);
+							if (!ok)
+								continue;
 
-							lossRateData2->x << (t * 1.0e-9);
-							lossRateData2->y << ((1.0 - data2.successRate()) * 100.0);
+							lossRateData->x << (t * 1.0e-9);
+							lossRateData->y << ((1.0 - data.successRate()) * 100.0);
 						}
 
-						QString title = QString("Loss for link %1, class 1").arg(e + 1);
+						QString title = QString("Loss for link %1, path %2").arg(e + 1).arg(p + 1);
 						QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
 						plot_lossRate->plot.title = title;
 						plot_lossRate->plot.xlabel = "Time (s)";
 						plot_lossRate->plot.xSISuffix = true;
 						plot_lossRate->plot.ylabel = "Loss (%)";
 						plot_lossRate->plot.ySISuffix = false;
-						plot_lossRate->plot.addData(lossRateData1);
+						plot_lossRate->plot.addData(lossRateData);
 						plot_lossRate->plot.drag_y_enabled = false;
 						plot_lossRate->plot.zoom_y_enabled = false;
 						plot_lossRate->autoAdjustAxes();
 						plot_lossRate->drawPlot();
 						accordion->addWidget(title, plot_lossRate);
-
-						title = QString("Loss for link %1, class 2").arg(e + 1);
-						plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-						plot_lossRate->plot.title = title;
-						plot_lossRate->plot.xlabel = "Time (s)";
-						plot_lossRate->plot.xSISuffix = true;
-						plot_lossRate->plot.ylabel = "Loss (%)";
-						plot_lossRate->plot.ySISuffix = false;
-						plot_lossRate->plot.addData(lossRateData2);
-						plot_lossRate->plot.drag_y_enabled = false;
-						plot_lossRate->plot.zoom_y_enabled = false;
-						plot_lossRate->autoAdjustAxes();
-						plot_lossRate->drawPlot();
-						accordion->addWidget(title, plot_lossRate);
+						resultsPlotGroup.addPlot(plot_lossRate);
 					}
 				}
 			}
@@ -1178,6 +1156,7 @@ void MainWindow::loadSimulation()
                         plot_arrivals_p->autoAdjustAxes();
                         plot_arrivals_p->drawPlot();
                         accordion->addWidget(title + subtitle, plot_arrivals_p);
+                        resultsPlotGroup.addPlot(plot_arrivals_p);
 
                         arrivals_B->x = arrivals_p->x;
                         arrivals_B->y.reserve(nelem);
@@ -1199,6 +1178,7 @@ void MainWindow::loadSimulation()
                         plot_arrivals_B->autoAdjustAxes();
                         plot_arrivals_B->drawPlot();
                         accordion->addWidget(title + subtitle, plot_arrivals_B);
+                        resultsPlotGroup.addPlot(plot_arrivals_B);
 
                         qdrops_p->x = arrivals_p->x;
                         qdrops_p->y.reserve(nelem);
@@ -1220,6 +1200,7 @@ void MainWindow::loadSimulation()
                         plot_qdrops_p->autoAdjustAxes();
                         plot_qdrops_p->drawPlot();
                         accordion->addWidget(title + subtitle, plot_qdrops_p);
+                        resultsPlotGroup.addPlot(plot_qdrops_p);
 
                         qdrops_B->x = arrivals_p->x;
                         qdrops_B->y.reserve(nelem);
@@ -1241,6 +1222,7 @@ void MainWindow::loadSimulation()
                         plot_qdrops_B->autoAdjustAxes();
                         plot_qdrops_B->drawPlot();
                         accordion->addWidget(title + subtitle, plot_qdrops_B);
+                        resultsPlotGroup.addPlot(plot_qdrops_B);
 
                         rdrops_p->x = arrivals_p->x;
                         rdrops_p->y.reserve(nelem);
@@ -1262,6 +1244,7 @@ void MainWindow::loadSimulation()
                         plot_rdrops_p->autoAdjustAxes();
                         plot_rdrops_p->drawPlot();
                         accordion->addWidget(title + subtitle, plot_rdrops_p);
+                        resultsPlotGroup.addPlot(plot_rdrops_p);
 
                         rdrops_B->x = arrivals_p->x;
                         rdrops_B->y.reserve(nelem);
@@ -1283,6 +1266,7 @@ void MainWindow::loadSimulation()
                         plot_rdrops_B->autoAdjustAxes();
                         plot_rdrops_B->drawPlot();
                         accordion->addWidget(title + subtitle, plot_rdrops_B);
+                        resultsPlotGroup.addPlot(plot_rdrops_B);
 
                         queue_sampled->x = arrivals_p->x;
                         queue_sampled->y.reserve(nelem);
@@ -1304,6 +1288,7 @@ void MainWindow::loadSimulation()
                         plot_queue_sampled->autoAdjustAxes();
                         plot_queue_sampled->drawPlot();
                         accordion->addWidget(title + subtitle, plot_queue_sampled);
+                        resultsPlotGroup.addPlot(plot_queue_sampled);
 
                         queue_max->x = arrivals_p->x;
                         queue_max->y.reserve(nelem);
@@ -1325,6 +1310,7 @@ void MainWindow::loadSimulation()
                         plot_queue_max->autoAdjustAxes();
                         plot_queue_max->drawPlot();
                         accordion->addWidget(title + subtitle, plot_queue_max);
+                        resultsPlotGroup.addPlot(plot_queue_max);
 
                         queue_avg->x = arrivals_p->x;
                         queue_avg->y.reserve(nelem);
@@ -1346,6 +1332,7 @@ void MainWindow::loadSimulation()
                         plot_queue_avg->autoAdjustAxes();
                         plot_queue_avg->drawPlot();
                         accordion->addWidget(title + subtitle, plot_queue_avg);
+                        resultsPlotGroup.addPlot(plot_queue_avg);
 
                         queue_numflows->x = arrivals_p->x;
                         queue_numflows->y.reserve(nelem);
@@ -1367,6 +1354,7 @@ void MainWindow::loadSimulation()
                         plot_numflows->autoAdjustAxes();
                         plot_numflows->drawPlot();
                         accordion->addWidget(title + subtitle, plot_numflows);
+                        resultsPlotGroup.addPlot(plot_numflows);
 
                         lossRate->x = arrivals_p->x;
                         lossRate->y.reserve(nelem);
@@ -1389,6 +1377,7 @@ void MainWindow::loadSimulation()
                         plot_lossRate->autoAdjustAxes();
                         plot_lossRate->drawPlot();
                         accordion->addWidget(title + subtitle, plot_lossRate);
+                        resultsPlotGroup.addPlot(plot_lossRate);
 
                         subtitle = " - Packet loss (%, CDF)";
                         QOPlotWidget *plot_lossRateCDF = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
@@ -1403,6 +1392,7 @@ void MainWindow::loadSimulation()
                         plot_lossRateCDF->autoAdjustAxes();
                         plot_lossRateCDF->drawPlot();
                         accordion->addWidget(title + subtitle, plot_lossRateCDF);
+                        resultsPlotGroup.addPlot(plot_lossRateCDF);
                     }
                 }
             }
@@ -1612,26 +1602,31 @@ void MainWindow::loadSimulation()
 				plotLoss->autoAdjustAxes();
 				plotLoss->drawPlot();
 				accordion->addWidget(plotLoss->plot.title, plotLoss);
+				resultsPlotGroup.addPlot(plotLoss);
 
 				plotThroughput->plot.differentColors();
 				plotThroughput->autoAdjustAxes();
 				plotThroughput->drawPlot();
 				accordion->addWidget(plotThroughput->plot.title, plotThroughput);
+				resultsPlotGroup.addPlot(plotThroughput);
 
 				plotThroughputCap->plot.differentColors();
 				plotThroughputCap->autoAdjustAxes();
 				plotThroughputCap->drawPlot();
 				accordion->addWidget(plotThroughputCap->plot.title, plotThroughputCap);
+				resultsPlotGroup.addPlot(plotThroughputCap);
 
 				plotRtt->plot.differentColors();
 				plotRtt->autoAdjustAxes();
 				plotRtt->drawPlot();
 				accordion->addWidget(plotRtt->plot.title, plotRtt);
+				resultsPlotGroup.addPlot(plotRtt);
 
 				plotRcvWin->plot.differentColors();
 				plotRcvWin->autoAdjustAxes();
 				plotRcvWin->drawPlot();
 				accordion->addWidget(plotRcvWin->plot.title, plotRcvWin);
+				resultsPlotGroup.addPlot(plotRcvWin);
 			}
 		}
 	}

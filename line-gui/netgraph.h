@@ -131,7 +131,7 @@ public:
 	bool readjustQueuesSmall();
 #endif
 
-	void recordTimelinesEverywhere();
+	void recordTimelinesEverywhere(quint64 interval = 1ULL * 1000ULL * 1000ULL * 1000ULL);
 
 #ifndef LINE_EMULATOR
 	// Computes the routing tables for the current connections and then the paths.

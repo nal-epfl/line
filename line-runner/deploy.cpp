@@ -97,7 +97,7 @@ bool deploy(NetGraph &g, const RunParams &params) {
 	}
 
     if (params.sampleAllTimelines) {
-        g.recordTimelinesEverywhere();
+		g.recordTimelinesEverywhere(params.intervalSize);
     }
 
 	if (params.setFixedTcpReceiveWindowSize) {

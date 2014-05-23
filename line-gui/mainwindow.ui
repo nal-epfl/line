@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -997,7 +997,7 @@ For performance reasons, the number of packets that can be captured is limited b
                   <item>
                    <widget class="QCheckBox" name="checkSampleTimelinesEverywhere">
                     <property name="text">
-                     <string>Take samples for all links every 1s</string>
+                     <string>Take samples for all links at the specified interval size</string>
                     </property>
                     <property name="checked">
                      <bool>true</bool>
@@ -1010,7 +1010,7 @@ For performance reasons, the number of packets that can be captured is limited b
                      <string>Uncheck to reduce latency</string>
                     </property>
                     <property name="text">
-                     <string>Flow tracking</string>
+                     <string>Flow tracking (sampled every 1s)</string>
                     </property>
                    </widget>
                   </item>

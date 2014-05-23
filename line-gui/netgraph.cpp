@@ -510,11 +510,11 @@ bool NetGraph::readjustQueuesSmall()
 }
 #endif
 
-void NetGraph::recordTimelinesEverywhere()
+void NetGraph::recordTimelinesEverywhere(quint64 interval)
 {
 	foreach (NetGraphEdge e, edges) {
 		edges[e.index].recordSampledTimeline = true;
-		edges[e.index].timelineSamplingPeriod = 1ULL * 1000ULL * 1000ULL * 1000ULL;
+		edges[e.index].timelineSamplingPeriod = interval;
 	}
 }
 

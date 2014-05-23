@@ -1389,7 +1389,7 @@ void MainWindow::loadSimulation()
         if (readEdgeTimelines(edgeTimelines, editor->graph(), simulations[currentSimulation].dir)) {
             foreach (qint32 iEdge, interestingEdges) {
                 for (int queue = -1; queue < editor->graph()->edges[iEdge].queueCount; queue++) {
-					if (editor->graph()->edges[iEdge].isNeutral())
+                    if (queue >= 0 && editor->graph()->edges[iEdge].isNeutral())
 						continue;
                     EdgeTimeline &timeline = edgeTimelines.timelines[iEdge][1 + queue];
                     if (timeline.items.isEmpty() || timeline.tsMin > timeline.tsMax)

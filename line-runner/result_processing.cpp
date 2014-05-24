@@ -320,9 +320,9 @@ bool nonNeutralityAnalysis(QString workingDir, QString graphName, QString experi
 
     QString dataFile;
     dataFile += QString("Experiment\t%1\tinterval\t%2\n").arg(experimentSuffix).arg(experimentIntervalMeasurements.intervalSize / 1.0e9);
+    dataFile += "\n";
     for (int e = 0; e < experimentIntervalMeasurements.numEdges; e++) {
         dataFile += QString("Link\t%1\t%2").arg(e + 1).arg(g.edges[e].isNeutral() ? "neutral" : g.edges[e].policerCount > 1 ? "policing" : "shaping");
-        dataFile += "\n";
         dataFile += "\n";
         for (int c = 0; c < numClasses; c++) {
             dataFile += QString("Class\t%1").arg(c + 1);
@@ -339,6 +339,154 @@ bool nonNeutralityAnalysis(QString workingDir, QString graphName, QString experi
     return true;
 }
 
+bool nonNeutralityDetection(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
+{
+    const int numClasses = 2;
+    const qreal threshold = 1.602e-19;
+
+    NetGraph g;
+    if (!loadGraph(workingDir, graphName, g))
+        return false;
+
+    QVector<int> pathTrafficClass = g.getPathTrafficClassStrict(true);
+    foreach (qreal c, pathTrafficClass) {
+        Q_ASSERT_FORCE(0 <= c && c < numClasses);
+    }
+
+    ExperimentIntervalMeasurements experimentIntervalMeasurements;
+    if (!experimentIntervalMeasurements.load(workingDir + "/" + "interval-measurements.data")) {
+        return false;
+    }
+    experimentIntervalMeasurements = experimentIntervalMeasurements.resample(resamplePeriod);
+    Q_ASSERT_FORCE(experimentIntervalMeasurements.numEdges == g.edges.count());
+    Q_ASSERT_FORCE(experimentIntervalMeasurements.numPaths == g.paths.count());
+
+    const qreal firstTransientCutSec = 10;
+    const qreal lastTransientCutSec = 10;
+    const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+    const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+
+    QHash<QSet<qint32>, bool> linkSequence2neutrality;
+    QHash<QSet<qint32>, QList<qreal> > linkSequence2computedProbsCongestion1;
+    QHash<QSet<qint32>, QList<qreal> > linkSequence2computedProbsCongestion2;
+    QHash<QSet<qint32>, QList<qreal> > linkSequence2computedProbsCongestion12;
+
+    for (int p1 = 0; p1 < g.paths.count(); p1++) {
+        const NetGraphPath &path1 = g.paths[p1];
+        for (int p2 = p1 + 1; p2 < g.paths.count(); p2++) {
+            const NetGraphPath &path2 = g.paths[p2];
+            QSet<NetGraphEdge> commonEdges = path1.edgeSet;
+            commonEdges.intersect(path2.edgeSet);
+            if (!commonEdges.isEmpty()) {
+                QSet<qint32> linkSequence;
+                bool neutrality = true;
+                foreach (NetGraphEdge edge, commonEdges) {
+                    linkSequence.insert(edge.index);
+                    neutrality = neutrality && edge.isNeutral();
+                }
+                linkSequence2neutrality[linkSequence] = neutrality;
+                // compute prob. of non-congestion for path 1
+                qreal probGood1 = 0;
+                qreal probGood1Count = 0;
+                for (int i = firstTransientCut; i < experimentIntervalMeasurements.numIntervals() - lastTransientCut; i++) {
+                    bool ok;
+                    qreal loss = 1.0 - experimentIntervalMeasurements.intervalMeasurements[i].pathMeasurements[p1].successRate(&ok);
+                    if (ok) {
+                        if (loss < threshold) {
+                            probGood1 += 1;
+                        }
+                        probGood1Count += 1;
+                    }
+                }
+                probGood1 /= qMax(1.0, probGood1Count);
+                // compute prob. of non-congestion for path 2
+                qreal probGood2 = 0;
+                qreal probGood2Count = 0;
+                for (int i = firstTransientCut; i < experimentIntervalMeasurements.numIntervals() - lastTransientCut; i++) {
+                    bool ok;
+                    qreal loss = 1.0 - experimentIntervalMeasurements.intervalMeasurements[i].pathMeasurements[p2].successRate(&ok);
+                    if (ok) {
+                        if (loss < threshold) {
+                            probGood2 += 1;
+                        }
+                        probGood2Count += 1;
+                    }
+                }
+                probGood2 /= qMax(1.0, probGood2Count);
+                // compute prob. of non-congestion for paths 1 & 2 (interval is non-congested if both paths are non-congested)
+                qreal probGood12 = 0;
+                qreal probGood12Count = 0;
+                for (int i = firstTransientCut; i < experimentIntervalMeasurements.numIntervals() - lastTransientCut; i++) {
+                    bool ok1;
+                    qreal loss1 = 1.0 - experimentIntervalMeasurements.intervalMeasurements[i].pathMeasurements[p1].successRate(&ok1);
+                    bool ok2;
+                    qreal loss2 = 1.0 - experimentIntervalMeasurements.intervalMeasurements[i].pathMeasurements[p2].successRate(&ok2);
+                    if (ok1 && ok2) {
+                        if (loss1 < threshold && loss2 < threshold) {
+                            probGood12 += 1;
+                        }
+                        probGood12Count += 1;
+                    }
+                }
+                probGood12 /= qMax(1.0, probGood12Count);
+                // this is the estimated probability of non-congestion for the link sequence
+                qreal estimatedProbGoodSequence = probGood1 * probGood2 / qMax(1.602e-19, probGood12);
+                // save the result in the appropriate class group
+                if (pathTrafficClass[p1] == 0 && pathTrafficClass[p2] == 0) {
+                    linkSequence2computedProbsCongestion1[linkSequence] << 1.0 - estimatedProbGoodSequence;
+                } else if (pathTrafficClass[p1] == 1 && pathTrafficClass[p2] == 1) {
+                    linkSequence2computedProbsCongestion2[linkSequence] << 1.0 - estimatedProbGoodSequence;
+                } else {
+                    linkSequence2computedProbsCongestion12[linkSequence] << 1.0 - estimatedProbGoodSequence;
+                }
+            }
+        }
+    }
+
+    // save result
+
+    QString dataFile;
+    dataFile += QString("Experiment\t%1\tinterval\t%2\n").arg(experimentSuffix).arg(experimentIntervalMeasurements.intervalSize / 1.0e9);
+    dataFile += "\n";
+    foreach (QInt32Set linkSequence, linkSequence2neutrality.uniqueKeys()) {
+        if ((linkSequence2computedProbsCongestion1[linkSequence].isEmpty() ? 0 : 1) +
+            (linkSequence2computedProbsCongestion2[linkSequence].isEmpty() ? 0 : 1) +
+            (linkSequence2computedProbsCongestion12[linkSequence].isEmpty() ? 0 : 1) < 2)
+            continue;
+
+        dataFile += QString("Link sequence\t");
+        dataFile += QString("neutrality\t%1\t").arg(linkSequence2neutrality[linkSequence] ? "neutral" : "non-neutral");
+        dataFile += QString("links");
+        foreach (qint32 e, linkSequence) {
+            dataFile += QString("\t%1").arg(e + 1);
+        }
+        dataFile += "\n";
+
+        dataFile += QString("Class\t1");
+        foreach (qreal prob, linkSequence2computedProbsCongestion1[linkSequence]) {
+            dataFile += QString("\t%1").arg(prob * 100.0);
+        }
+        dataFile += "\n";
+
+        dataFile += QString("Class\t2");
+        foreach (qreal prob, linkSequence2computedProbsCongestion2[linkSequence]) {
+            dataFile += QString("\t%1").arg(prob * 100.0);
+        }
+        dataFile += "\n";
+
+        dataFile += QString("Class\t1+2");
+        foreach (qreal prob, linkSequence2computedProbsCongestion12[linkSequence]) {
+            dataFile += QString("\t%1").arg(prob * 100.0);
+        }
+        dataFile += "\n";
+        dataFile += "\n";
+    }
+    if (!saveFile(workingDir + "/" + "edge-seq-cong-prob.txt", dataFile))
+        return false;
+
+    return true;
+}
+
 bool processResults(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
 {
     NetGraph g;
@@ -350,6 +498,7 @@ bool processResults(QString workingDir, QString graphName, QString experimentSuf
     computePathCongestionProbabilities(workingDir, graphName, experimentSuffix, resamplePeriod);
     dumpPathIntervalData(workingDir, graphName, experimentSuffix, resamplePeriod);
     nonNeutralityAnalysis(workingDir, graphName, experimentSuffix, resamplePeriod);
+    nonNeutralityDetection(workingDir, graphName, experimentSuffix, resamplePeriod);
 
 	return true;
 }

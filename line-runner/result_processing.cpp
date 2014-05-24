@@ -253,6 +253,91 @@ bool dumpPathIntervalData(QString workingDir, QString graphName, QString experim
     return true;
 }
 
+bool nonNeutralityAnalysis(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
+{
+    const int numClasses = 2;
+    const qreal threshold = 1.602e-19;
+
+    NetGraph g;
+    if (!loadGraph(workingDir, graphName, g))
+        return false;
+
+    QVector<int> pathTrafficClass = g.getPathTrafficClassStrict(true);
+
+    foreach (qreal c, pathTrafficClass) {
+        Q_ASSERT_FORCE(0 <= c && c < numClasses);
+    }
+
+    ExperimentIntervalMeasurements experimentIntervalMeasurements;
+    if (!experimentIntervalMeasurements.load(workingDir + "/" + "interval-measurements.data")) {
+        return false;
+    }
+
+    experimentIntervalMeasurements = experimentIntervalMeasurements.resample(resamplePeriod);
+
+    Q_ASSERT_FORCE(experimentIntervalMeasurements.numEdges == g.edges.count());
+    Q_ASSERT_FORCE(experimentIntervalMeasurements.numPaths == g.paths.count());
+
+    const qreal firstTransientCutSec = 10;
+    const qreal lastTransientCutSec = 10;
+    const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+    const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+
+    // first index: edge
+    // second index: class
+    // third index: arbitrary path index
+    QList<QList<QList<qreal> > > edgeClassPathCongProbs;
+    for (int e = 0; e < experimentIntervalMeasurements.numEdges; e++) {
+        edgeClassPathCongProbs << QList<QList<qreal> >();
+        for (int c = 0; c < numClasses; c++) {
+            edgeClassPathCongProbs[e] << QList<qreal>();
+            edgeClassPathCongProbs[e] << QList<qreal>();
+        }
+        for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+            QInt32Pair ep = QInt32Pair(e, p);
+            if (experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight == 0)
+                continue;
+
+            qreal congestionProbability = 0;
+            int numIntervals = 0;
+            for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                bool ok;
+                qreal loss = 1.0 -
+                             experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].successRate(&ok);
+                if (!ok)
+                    continue;
+                numIntervals++;
+                if (loss >= threshold) {
+                    congestionProbability += 1.0;
+                }
+            }
+            congestionProbability /= qMax(1, numIntervals);
+            edgeClassPathCongProbs[e][pathTrafficClass[p]] << congestionProbability;
+        }
+    }
+
+    // save result
+
+    QString dataFile;
+    dataFile += QString("Experiment\t%1\tinterval\t%2\n").arg(experimentSuffix).arg(experimentIntervalMeasurements.intervalSize / 1.0e9);
+    for (int e = 0; e < experimentIntervalMeasurements.numEdges; e++) {
+        dataFile += QString("Link\t%1\t%2").arg(e + 1).arg(g.edges[e].isNeutral() ? "neutral" : g.edges[e].policerCount > 1 ? "policing" : "shaping");
+        dataFile += "\n";
+        for (int c = 0; c < numClasses; c++) {
+            dataFile += QString("Class\t%1").arg(c + 1);
+            foreach (qreal prob, edgeClassPathCongProbs[e][c]) {
+                dataFile += QString("\t%1").arg(prob);
+            }
+            dataFile += "\n";
+        }
+        dataFile += "\n";
+    }
+    if (!saveFile(workingDir + "/" + "edge-class-path-cong-prob.txt", dataFile))
+        return false;
+
+    return true;
+}
+
 bool processResults(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod)
 {
     NetGraph g;
@@ -263,6 +348,7 @@ bool processResults(QString workingDir, QString graphName, QString experimentSuf
     saveFile(workingDir + "/" + "experiment-suffix.txt", experimentSuffix);
     computePathCongestionProbabilities(workingDir, graphName, experimentSuffix, resamplePeriod);
     dumpPathIntervalData(workingDir, graphName, experimentSuffix, resamplePeriod);
+    nonNeutralityAnalysis(workingDir, graphName, experimentSuffix, resamplePeriod);
 
 	return true;
 }

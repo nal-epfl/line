@@ -323,10 +323,11 @@ bool nonNeutralityAnalysis(QString workingDir, QString graphName, QString experi
     for (int e = 0; e < experimentIntervalMeasurements.numEdges; e++) {
         dataFile += QString("Link\t%1\t%2").arg(e + 1).arg(g.edges[e].isNeutral() ? "neutral" : g.edges[e].policerCount > 1 ? "policing" : "shaping");
         dataFile += "\n";
+        dataFile += "\n";
         for (int c = 0; c < numClasses; c++) {
             dataFile += QString("Class\t%1").arg(c + 1);
             foreach (qreal prob, edgeClassPathCongProbs[e][c]) {
-                dataFile += QString("\t%1").arg(prob);
+                dataFile += QString("\t%1").arg(prob * 100.0);
             }
             dataFile += "\n";
         }

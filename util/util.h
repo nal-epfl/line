@@ -36,7 +36,10 @@ typedef QTriple<qreal, qreal, qreal> QRealTriple;
 typedef QTriple<qint32, qint32, qint32> QInt32Triple;
 typedef QTriple<QString, QString, QString> QStringTriple;
 
+typedef QQuad<qint32, qint32, qint32, qint32> QInt32Quad;
+
 typedef QSet<qint32> QInt32Set;
+typedef QList<qint32> QInt32List;
 
 template <class T>
 uint qHash(const QSet<T>& set) {

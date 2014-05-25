@@ -1427,7 +1427,7 @@ void MainWindow::loadSimulation()
                         arrivals_p->pointSymbol = "o";
                         for (int i = 0; i < nelem; i++) {
                             arrivals_p->x << (timeline.items[i].timestamp * 1.0e-9);
-                            arrivals_p->y << timeline.items[i].arrivals_p;
+                            arrivals_p->y << timeline.items[i].arrivals_p / (tsample * 1.0e-9);
                         }
 
                         QString subtitle = " - Arrivals (packets)";
@@ -1435,7 +1435,7 @@ void MainWindow::loadSimulation()
                         plot_arrivals_p->plot.title = title + subtitle;
                         plot_arrivals_p->plot.xlabel = "Time (s)";
                         plot_arrivals_p->plot.xSISuffix = true;
-                        plot_arrivals_p->plot.ylabel = "Packets / interval";
+                        plot_arrivals_p->plot.ylabel = "Packets / second";
                         plot_arrivals_p->plot.ySISuffix = true;
                         plot_arrivals_p->plot.addData(arrivals_p);
                         plot_arrivals_p->plot.drag_y_enabled = false;
@@ -1449,7 +1449,7 @@ void MainWindow::loadSimulation()
                         arrivals_B->y.reserve(nelem);
                         arrivals_B->pointSymbol = "o";
                         for (int i = 0; i < nelem; i++) {
-                            arrivals_B->y << timeline.items[i].arrivals_B * 8;
+                            arrivals_B->y << timeline.items[i].arrivals_B * 8 / (tsample * 1.0e-9);
                         }
 
                         subtitle = " - Arrivals (bits)";
@@ -1457,7 +1457,7 @@ void MainWindow::loadSimulation()
                         plot_arrivals_B->plot.title = title + subtitle;
                         plot_arrivals_B->plot.xlabel = "Time (s)";
                         plot_arrivals_B->plot.xSISuffix = true;
-                        plot_arrivals_B->plot.ylabel = "Bits / interval";
+                        plot_arrivals_B->plot.ylabel = "Bits / second";
                         plot_arrivals_B->plot.ySISuffix = true;
                         plot_arrivals_B->plot.addData(arrivals_B);
                         plot_arrivals_B->plot.drag_y_enabled = false;
@@ -1493,7 +1493,7 @@ void MainWindow::loadSimulation()
                         qdrops_B->y.reserve(nelem);
                         qdrops_B->pointSymbol = "o";
                         for (int i = 0; i < nelem; i++) {
-                            qdrops_B->y << timeline.items[i].qdrops_B * 8;
+                            qdrops_B->y << timeline.items[i].qdrops_B * 8 / (tsample * 1.0e-9);
                         }
 
                         subtitle = " - Queue drops (bits)";
@@ -1501,7 +1501,7 @@ void MainWindow::loadSimulation()
                         plot_qdrops_B->plot.title = title + subtitle;
                         plot_qdrops_B->plot.xlabel = "Time (s)";
                         plot_qdrops_B->plot.xSISuffix = true;
-                        plot_qdrops_B->plot.ylabel = "Bits / interval";
+                        plot_qdrops_B->plot.ylabel = "Bits / second";
                         plot_qdrops_B->plot.ySISuffix = true;
                         plot_qdrops_B->plot.addData(qdrops_B);
                         plot_qdrops_B->plot.drag_y_enabled = false;
@@ -1537,7 +1537,7 @@ void MainWindow::loadSimulation()
                         rdrops_B->y.reserve(nelem);
                         rdrops_B->pointSymbol = "o";
                         for (int i = 0; i < nelem; i++) {
-                            rdrops_B->y << timeline.items[i].rdrops_B * 8;
+                            rdrops_B->y << timeline.items[i].rdrops_B * 8 / (tsample * 1.0e-9);
                         }
 
                         subtitle = " - Random drops (bits)";
@@ -1545,7 +1545,7 @@ void MainWindow::loadSimulation()
                         plot_rdrops_B->plot.title = title + subtitle;
                         plot_rdrops_B->plot.xlabel = "Time (s)";
                         plot_rdrops_B->plot.xSISuffix = true;
-                        plot_rdrops_B->plot.ylabel = "Bits / interval";
+                        plot_rdrops_B->plot.ylabel = "Bits / second";
                         plot_rdrops_B->plot.ySISuffix = true;
                         plot_rdrops_B->plot.addData(rdrops_B);
                         plot_rdrops_B->plot.drag_y_enabled = false;
@@ -1567,7 +1567,7 @@ void MainWindow::loadSimulation()
                         plot_queue_sampled->plot.title = title + subtitle;
                         plot_queue_sampled->plot.xlabel = "Time (s)";
                         plot_queue_sampled->plot.xSISuffix = true;
-                        plot_queue_sampled->plot.ylabel = "Bits / interval";
+                        plot_queue_sampled->plot.ylabel = "Bits";
                         plot_queue_sampled->plot.ySISuffix = true;
                         plot_queue_sampled->plot.addData(queue_sampled);
                         plot_queue_sampled->plot.drag_y_enabled = false;
@@ -1589,7 +1589,7 @@ void MainWindow::loadSimulation()
                         plot_queue_max->plot.title = title + subtitle;
                         plot_queue_max->plot.xlabel = "Time (s)";
                         plot_queue_max->plot.xSISuffix = true;
-                        plot_queue_max->plot.ylabel = "Bits / interval";
+                        plot_queue_max->plot.ylabel = "Bits";
                         plot_queue_max->plot.ySISuffix = true;
                         plot_queue_max->plot.addData(queue_max);
                         plot_queue_max->plot.drag_y_enabled = false;
@@ -1611,7 +1611,7 @@ void MainWindow::loadSimulation()
                         plot_queue_avg->plot.title = title + subtitle;
                         plot_queue_avg->plot.xlabel = "Time (s)";
                         plot_queue_avg->plot.xSISuffix = true;
-                        plot_queue_avg->plot.ylabel = "Bits / interval";
+                        plot_queue_avg->plot.ylabel = "Bits";
                         plot_queue_avg->plot.ySISuffix = true;
                         plot_queue_avg->plot.addData(queue_avg);
                         plot_queue_avg->plot.drag_y_enabled = false;
@@ -1633,7 +1633,7 @@ void MainWindow::loadSimulation()
                         plot_numflows->plot.title = title + subtitle;
                         plot_numflows->plot.xlabel = "Time (s)";
                         plot_numflows->plot.xSISuffix = true;
-                        plot_numflows->plot.ylabel = "Flows / interval";
+                        plot_numflows->plot.ylabel = "Flows";
                         plot_numflows->plot.ySISuffix = true;
                         plot_numflows->plot.addData(queue_numflows);
                         plot_numflows->plot.drag_y_enabled = false;
@@ -1656,7 +1656,7 @@ void MainWindow::loadSimulation()
                         plot_lossRate->plot.title = title + subtitle;
                         plot_lossRate->plot.xlabel = QString("Time (s) - sampled at %1s").arg(tsample / 1.0e9);
                         plot_lossRate->plot.xSISuffix = true;
-                        plot_lossRate->plot.ylabel = "Packet loss (%) / interval";
+                        plot_lossRate->plot.ylabel = "Packet loss (%)";
                         plot_lossRate->plot.ySISuffix = false;
                         plot_lossRate->plot.addData(lossRate);
                         plot_lossRate->plot.drag_y_enabled = false;
@@ -1669,7 +1669,7 @@ void MainWindow::loadSimulation()
                         subtitle = " - Packet loss (%, CDF)";
                         QOPlotWidget *plot_lossRateCDF = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
                         plot_lossRateCDF->plot.title = title + subtitle;
-                        plot_lossRateCDF->plot.xlabel = "Packet loss (%) / interval";
+                        plot_lossRateCDF->plot.xlabel = "Packet loss (%)";
                         plot_lossRateCDF->plot.xSISuffix = false;
                         plot_lossRateCDF->plot.ylabel = "Fraction";
                         plot_lossRateCDF->plot.ySISuffix = false;

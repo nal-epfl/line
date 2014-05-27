@@ -46,8 +46,7 @@ SOURCES += main.cpp \
     deploy.cpp \
     ../tomo/tomodata.cpp \
     simulate_experiment.cpp \
-    export_matlab.cpp \
-    result_processing.cpp
+    export_matlab.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -81,6 +80,11 @@ HEADERS += \
     simulate_experiment.h \
     export_matlab.h \
     result_processing.h
+
+exists(result_processing.cpp) {
+    SOURCES +=
+    DEFINES += HAVE_RESULT_PROCESSING
+}
 
 INCLUDEPATH += ../util/
 INCLUDEPATH += ../line-gui/

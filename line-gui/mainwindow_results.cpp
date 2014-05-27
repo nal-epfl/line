@@ -503,7 +503,8 @@ void MainWindow::loadSimulation()
 				foreach (qreal threshold, thresholds) {
 					columnHeaders << QString("%1%").arg(threshold * 100.0, 0, 'f', 2);
 				}
-				columnHeaders << "PPI avg" << "PPI min" << "PPI max";
+                columnHeaders << "PPI avg (e)" << "PPI min (e)" << "PPI max (e)";
+                columnHeaders << "PPI avg (e2e)" << "PPI min (e2e)" << "PPI max (e2e)";
 
 				table->setColumnCount(columnHeaders.count());
 				table->setHorizontalHeaderLabels(columnHeaders);
@@ -565,6 +566,8 @@ void MainWindow::loadSimulation()
 								}
 							}
 							lossyProbability /= qMax(1.0, lossyCount);
+                            lossyProbability *= 100.0;
+
 							cell = new QTableWidgetItem();
 							cell->setData(Qt::EditRole, lossyProbability);
 							cell->setData(Qt::DisplayRole, lossyProbability);
@@ -579,22 +582,18 @@ void MainWindow::loadSimulation()
 							qreal ppiCount = 0;
 							for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 								if (p < 0) {
-									if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
-										qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight;
-										ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
-										ppiMax = qMax(ppiMax, ppi);
-										ppiAvg += ppi;
-										ppiCount += 1;
-									}
+                                    qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight;
+                                    ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+                                    ppiMax = qMax(ppiMax, ppi);
+                                    ppiAvg += ppi;
+                                    ppiCount += 1;
 								} else {
 									QInt32Pair ep = QInt32Pair(e, p);
-									if (experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight > 0) {
-										qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight;
-										ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
-										ppiMax = qMax(ppiMax, ppi);
-										ppiAvg += ppi;
-										ppiCount += 1;
-									}
+                                    qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight;
+                                    ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+                                    ppiMax = qMax(ppiMax, ppi);
+                                    ppiAvg += ppi;
+                                    ppiCount += 1;
 								}
 							}
 
@@ -618,6 +617,42 @@ void MainWindow::loadSimulation()
 							table->setItem(table->rowCount() - 1, col, cell);
 							col++;
 						}
+
+                        {
+                            qreal ppiMin = 0;
+                            qreal ppiMax = 0;
+                            qreal ppiAvg = 0;
+                            qreal ppiCount = 0;
+                            if (p >= 0) {
+                                for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                                    qreal ppi = experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].numPacketsInFlight;
+                                    ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+                                    ppiMax = qMax(ppiMax, ppi);
+                                    ppiAvg += ppi;
+                                    ppiCount += 1;
+                                }
+                            }
+
+                            ppiAvg /= qMax(1.0, ppiCount);
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiAvg);
+                            cell->setData(Qt::DisplayRole, ppiAvg);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiMin);
+                            cell->setData(Qt::DisplayRole, ppiMin);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiMax);
+                            cell->setData(Qt::DisplayRole, ppiMax);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+                        }
 					}
 				}
 
@@ -701,6 +736,8 @@ void MainWindow::loadSimulation()
 
 						qreal pLinkLossyComputed = 1.0 - (1.0 - lossyProbability1) * (1.0 - lossyProbability2) /
 												   qMax(0.0001, 1.0 - lossyProbability12);
+
+                        pLinkLossyComputed *= 100.0;
 
 						cell = new QTableWidgetItem();
 						cell->setData(Qt::EditRole, pLinkLossyComputed);
@@ -1349,6 +1386,204 @@ void MainWindow::loadSimulation()
 				accordion->addWidget("Link neutrality (by prob. of congestion)", table);
 			}
 		}
+
+        ExperimentIntervalMeasurements flowIntervalMeasurements;
+        fileName = simulations[currentSimulation].dir + "/" + "flow-interval-measurements.data";
+        if (!flowIntervalMeasurements.load(fileName)) {
+            emit logError(ui->txtBatch, QString("Failed to open file %1").arg(fileName));
+        } else {
+            const qreal firstTransientCutSec = 10;
+            const qreal lastTransientCutSec = 10;
+            const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+            const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+
+            NetGraph g = *editor->graph();
+            g.flattenConnections();
+
+            intervalSize = experimentIntervalMeasurements.intervalSize;
+
+            QVector<bool> trueEdgeNeutrality(g.edges.count());
+            for (int i = 0; i < g.edges.count(); i++) {
+                trueEdgeNeutrality[i] = g.edges[i].isNeutral();
+            }
+
+            QVector<bool> edgeIsHostEdge(g.edges.count());
+            for (int i = 0; i < g.edges.count(); i++) {
+                edgeIsHostEdge[i] = g.nodes[g.edges[i].source].nodeType == NETGRAPH_NODE_HOST ||
+                                    g.nodes[g.edges[i].dest].nodeType == NETGRAPH_NODE_HOST;
+            }
+
+            QVector<int> pathTrafficClass(g.connections.count());
+            for (int c = 0; c < g.connections.count(); c++) {
+                pathTrafficClass[c] = g.connections[c].trafficClass;
+            }
+
+            {
+                QTableWidget *table = new QTableWidget();
+                QList<qreal> thresholds = QList<qreal>() << 0.100 << 0.050 << 0.040 << 0.030 << 0.025 << 0.020 << 0.015 << 0.010 << 0.005 << 0.0025 << 0.0000001;
+                QStringList columnHeaders = QStringList() << "Link" << "Neutrality";
+                foreach (qreal threshold, thresholds) {
+                    columnHeaders << QString("%1%").arg(threshold * 100.0, 0, 'f', 2);
+                }
+                columnHeaders << "PPI avg (e)" << "PPI min (e)" << "PPI max (e)";
+                columnHeaders << "PPI avg (e2e)" << "PPI min (e2e)" << "PPI max (e2e)";
+
+                table->setColumnCount(columnHeaders.count());
+                table->setHorizontalHeaderLabels(columnHeaders);
+                table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+                // flowIntervalMeasurements.intervalMeasurements[e].perPathEdgeMeasurements[e]
+                for (int e = 0; e < flowIntervalMeasurements.numEdges; e++) {
+                    if (flowIntervalMeasurements.globalMeasurements.edgeMeasurements[e].numPacketsInFlight == 0)
+                        continue;
+
+                    for (int p = -1; p < flowIntervalMeasurements.numPaths; p++) {
+                        QInt32Pair ep = QInt32Pair(e, p);
+                        if (p >= 0 &&
+                            flowIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight == 0)
+                            continue;
+                        table->setRowCount(table->rowCount() + 1);
+
+                        QTableWidgetItem *cell;
+                        int col = 0;
+
+                        cell = new QTableWidgetItem();
+                        cell->setData(Qt::EditRole, p < 0 ? QString("%1").arg(e + 1) :
+                                                            QString("%1 Flow %2 (%3)").arg(e + 1).arg(p + 1).arg(pathTrafficClass[p]));
+                        cell->setData(Qt::DisplayRole, p < 0 ? QString("%1").arg(e + 1) :
+                                                               QString("%1 Flow %2 (%3)").arg(e + 1).arg(p + 1).arg(pathTrafficClass[p]));
+                        table->setItem(table->rowCount() - 1, col, cell);
+                        col++;
+
+                        cell = new QTableWidgetItem();
+                        QString neutrality = trueEdgeNeutrality[e] ? "Neutral" : "Non-neutral";
+                        cell->setData(Qt::EditRole, neutrality);
+                        cell->setData(Qt::DisplayRole, neutrality);
+                        table->setItem(table->rowCount() - 1, col, cell);
+                        col++;
+
+                        foreach (qreal threshold, thresholds) {
+                            qreal lossyProbability = 0;
+                            qreal lossyCount = 0;
+                            for (int interval = firstTransientCut; interval < flowIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                                if (p < 0) {
+                                    if (flowIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
+                                        qreal loss = qreal(flowIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsDropped) /
+                                                     qreal(flowIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight);
+                                        if (loss >= threshold) {
+                                            lossyProbability += 1.0;
+                                        }
+                                        lossyCount += 1.0;
+                                    }
+                                } else {
+                                    QInt32Pair ep = QInt32Pair(e, p);
+                                    if (flowIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight > 0) {
+                                        qreal loss = qreal(flowIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsDropped) /
+                                                     qreal(flowIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight);
+                                        if (loss >= threshold) {
+                                            lossyProbability += 1.0;
+                                        }
+                                        lossyCount += 1.0;
+                                    }
+                                }
+                            }
+                            lossyProbability /= qMax(1.0, lossyCount);
+                            lossyProbability *= 100.0;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, lossyProbability);
+                            cell->setData(Qt::DisplayRole, lossyProbability);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+                        }
+
+                        {
+                            qreal ppiMin = 0;
+                            qreal ppiMax = 0;
+                            qreal ppiAvg = 0;
+                            qreal ppiCount = 0;
+                            for (int interval = firstTransientCut; interval < flowIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                                if (p < 0) {
+                                    qreal ppi = flowIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight;
+                                    ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+                                    ppiMax = qMax(ppiMax, ppi);
+                                    ppiAvg += ppi;
+                                    ppiCount += 1;
+                                } else {
+                                    QInt32Pair ep = QInt32Pair(e, p);
+                                    qreal ppi = flowIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight;
+                                    ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+                                    ppiMax = qMax(ppiMax, ppi);
+                                    ppiAvg += ppi;
+                                    ppiCount += 1;
+                                }
+                            }
+
+                            ppiAvg /= qMax(1.0, ppiCount);
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiAvg);
+                            cell->setData(Qt::DisplayRole, ppiAvg);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiMin);
+                            cell->setData(Qt::DisplayRole, ppiMin);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiMax);
+                            cell->setData(Qt::DisplayRole, ppiMax);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+                        }
+
+                        {
+                            qreal ppiMin = 0;
+                            qreal ppiMax = 0;
+                            qreal ppiAvg = 0;
+                            qreal ppiCount = 0;
+                            if (p >= 0) {
+                                for (int interval = firstTransientCut; interval < flowIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                                    qreal ppi = flowIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].numPacketsInFlight;
+                                    ppiMin = ppiMin > 0 ? qMin(ppiMin, ppi) : ppi;
+                                    ppiMax = qMax(ppiMax, ppi);
+                                    ppiAvg += ppi;
+                                    ppiCount += 1;
+                                }
+                            }
+
+                            ppiAvg /= qMax(1.0, ppiCount);
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiAvg);
+                            cell->setData(Qt::DisplayRole, ppiAvg);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiMin);
+                            cell->setData(Qt::DisplayRole, ppiMin);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+
+                            cell = new QTableWidgetItem();
+                            cell->setData(Qt::EditRole, ppiMax);
+                            cell->setData(Qt::DisplayRole, ppiMax);
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+                        }
+                    }
+                }
+
+                table->setSortingEnabled(true);
+                table->sortByColumn(0, Qt::AscendingOrder);
+                table->setMinimumHeight(tableHeight);
+                accordion->addWidget("Link congestion probability (by threshold) - per flow", table);
+            }
+        }
 	}
 
 	accordion->addLabel("Application output");

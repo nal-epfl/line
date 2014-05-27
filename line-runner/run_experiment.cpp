@@ -106,7 +106,7 @@ bool runExperiment(QString paramsFileName) {
 		return false;
 	}
 
-	if (!processResults(runParams.workingDir, runParams.graphName, runParams.experimentSuffix)) {
+    if (!processResults(QStringList() << runParams.workingDir)) {
 		return false;
 	}
 

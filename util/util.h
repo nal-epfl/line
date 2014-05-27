@@ -494,6 +494,7 @@ qreal effectiveRank_Vetterli(QList<qreal> svd);
 bool randomLessThan(const QString &, const QString &);
 
 qreal median(QList<qreal> list);
+qreal sum(QList<qreal> list);
 
 quint64 bPerSec2bPerNanosec(quint64 value);
 

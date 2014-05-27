@@ -21,7 +21,17 @@
 
 #include <QtCore>
 
-bool processResults(QString paramsFileName, quint64 resamplePeriod = 0);
-bool processResults(QString workingDir, QString graphName, QString experimentSuffix, quint64 resamplePeriod = 0);
+#ifdef HAVE_RESULT_PROCESSING
+
+bool processResults(QStringList params);
+
+#else
+
+inline bool processResults(QStringList params) {
+    Q_UNUSED(params);
+    return true;
+}
+
+#endif
 
 #endif // RESULT_PROCESSING_H

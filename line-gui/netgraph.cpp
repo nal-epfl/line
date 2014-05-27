@@ -1229,6 +1229,15 @@ QVector<int> NetGraph::getPathTrafficClassStrict(bool heavy)
     return result;
 }
 
+QVector<int> NetGraph::getConnectionTrafficClass()
+{
+    QVector<int> trafficClass(connections.count());
+    for (int c = 0; c < connections.count(); c++) {
+        trafficClass[c] = connections[c].trafficClass;
+    }
+    return trafficClass;
+}
+
 QVector<qint32> NetGraph::getConnection2PathMapping()
 {
 	QHash<QPair<qint32, qint32>, qint32 > pathEndpoints2index;

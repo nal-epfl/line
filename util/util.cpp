@@ -489,6 +489,15 @@ qreal median(QList<qreal> list)
 	}
 }
 
+qreal sum(QList<qreal> list)
+{
+    qreal result = 0;
+    foreach (qreal e, list) {
+        result += e;
+    }
+    return result;
+}
+
 qreal sphereDistance(qreal lat1, qreal long1, qreal lat2, qreal long2, qreal radius)
 {
 	qreal p1 = cos(M_PI/180.0*(long1-long2));
@@ -1685,3 +1694,4 @@ quint64 timeFromString(QString text, bool *ok)
 	}
 	return text.toULongLong(ok) * multiplier;
 }
+

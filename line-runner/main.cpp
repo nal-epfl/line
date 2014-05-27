@@ -85,7 +85,6 @@ int main(int argc, char **argv) {
 				paramsFileName = shiftCmdLineArg(argc, argv, command);
             } else if (arg == "--process-results") {
 				command = arg;
-				paramsFileName = shiftCmdLineArg(argc, argv, command);
 				extraParams.clear();
 				while (true) {
 					QString param = peekCmdLineArg(argc, argv);
@@ -128,31 +127,9 @@ int main(int argc, char **argv) {
 		}
 
         if (command == "--process-results") {
-            quint64 resamplePeriod = 0;
-            while (!extraParams.isEmpty()) {
-                if (extraParams.first() == "resample") {
-                    extraParams.removeFirst();
-                    if (!extraParams.isEmpty()) {
-                        bool ok;
-                        resamplePeriod = timeFromString(extraParams.first(), &ok);
-                        if (!ok) {
-                            qDebug() << "Bad argument for resample:" << extraParams;
-                            exit(-1);
-                        }
-                        extraParams.removeFirst();
-                        continue;
-                    } else {
-                        qDebug() << "Missing argument for resample:" << extraParams;
-                        exit(-1);
-                    }
-                }
-                qDebug() << "Bad argument for --process-results:" << extraParams;
-                exit(-1);
-            }
-            if (!processResults(paramsFileName, resamplePeriod)) {
+            if (!processResults(extraParams)) {
 				exit(-1);
 			}
-			processedParams << paramsFileName;
 		}
 
 		if (command == "--run") {

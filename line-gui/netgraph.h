@@ -227,6 +227,8 @@ public:
     // If heavy is true, take into account only connections with heavy traffic
     QVector<int> getPathTrafficClassStrict(bool heavy = false);
 
+    QVector<int> getConnectionTrafficClass();
+
 	// -1 if there is no path for a connection
 	QVector<qint32> getConnection2PathMapping();
 

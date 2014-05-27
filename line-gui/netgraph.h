@@ -234,6 +234,22 @@ public:
 
 	QList<QPair<qint32, qint32> > getSparseRoutingMatrixTransposed();
 
+    // The connections must have been flattened.
+    QList<QPair<qint32, qint32> > getSparseConnectionRoutingMatrixTransposed();
+
+    // Removes multipliers and instead creates etra connections. Does not work with TCPx (but TCP xn works).
+    // Has no effect if the connections are already flattened.
+    void flattenConnections();
+
+    // Assigns port numbers to connections. Flattens connections if necessary.
+    void assignPorts();
+
+    // Returns the index of the connection using the specified port number, or -1.
+    // Only works after calling assignPorts().
+    qint32 getConnectionIndex(quint16 port) const;
+
+    quint16 getBasePort() const;
+
 	//Q_DISABLE_COPY(NetGraph)
 };
 

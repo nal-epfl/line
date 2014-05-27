@@ -68,37 +68,7 @@ void connectionTransferCompletedHandler(void *arg);
 void assignPorts()
 {
 	qDebugT();
-    int port = 8000;
-    foreach (NetGraphConnection c, netGraph.connections) {
-		if (c.basicType == "TCP") {
-            netGraph.connections[c.index].port = port;
-            port++;
-		} else if (c.basicType == "TCPx") {
-            netGraph.connections[c.index].ports.clear();
-			for (int i = 0; i < c.multiplier; i++) {
-                netGraph.connections[c.index].ports << port;
-                port++;
-            }
-		} else if (c.basicType == "TCP-Poisson-Pareto") {
-			netGraph.connections[c.index].port = port;
-			port++;
-		} else if (c.basicType == "UDP-CBR") {
-			netGraph.connections[c.index].ports.clear();
-			netGraph.connections[c.index].port = port;
-			port++;
-		} else if (c.basicType == "UDP-VBR") {
-			netGraph.connections[c.index].ports.clear();
-			netGraph.connections[c.index].port = port;
-			port++;
-		} else if (c.basicType == "UDP-VCBR") {
-			netGraph.connections[c.index].ports.clear();
-			netGraph.connections[c.index].port = port;
-			port++;
-		} else {
-			qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters:" << c.encodedType;
-			Q_ASSERT_FORCE(false);
-		}
-    }
+    netGraph.assignPorts();
 }
 
 // Starts servers (sinks).
@@ -424,16 +394,7 @@ int main(int argc, char **argv)
 	}
 
 	// Multiply connections
-	{
-		QList<NetGraphConnection> newConnections;
-		for (int c = 0; c < netGraph.connections.count(); c++) {
-			for (int i = 1; i < netGraph.connections[c].multiplier; i++) {
-				newConnections << netGraph.connections[c];
-				newConnections.last().index = netGraph.connections.count() + newConnections.count() - 1;
-			}
-		}
-		netGraph.connections.append(newConnections);
-	}
+    netGraph.flattenConnections();
 
 	// Assign ports
 	assignPorts();

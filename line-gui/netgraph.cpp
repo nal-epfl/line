@@ -1268,5 +1268,82 @@ QList<QPair<qint32, qint32> > NetGraph::getSparseRoutingMatrixTransposed()
 			result << QPair<qint32, qint32>(e.index, p);
 		}
 	}
-	return result;
+    return result;
+}
+
+QList<QPair<qint32, qint32> > NetGraph::getSparseConnectionRoutingMatrixTransposed()
+{
+    QList<QPair<qint32, qint32> > result;
+    QVector<qint32> c2p = getConnection2PathMapping();
+    for (int c = 0; c < connections.count(); c++) {
+        int p = c2p[c];
+        if (p < 0)
+            continue;
+        foreach (NetGraphEdge e, paths[p].edgeList) {
+            result << QPair<qint32, qint32>(e.index, c);
+        }
+    }
+    return result;
+}
+
+void NetGraph::flattenConnections()
+{
+    QList<NetGraphConnection> newConnections;
+    for (int c = 0; c < connections.count(); c++) {
+        for (int i = 1; i < connections[c].multiplier; i++) {
+            newConnections << connections[c];
+            newConnections.last().index = connections.count() + newConnections.count() - 1;
+            newConnections.last().multiplier = 1;
+            connections[c].multiplier = 1;
+        }
+    }
+    connections.append(newConnections);
+}
+
+void NetGraph::assignPorts()
+{
+    flattenConnections();
+
+    int port = getBasePort();
+    foreach (NetGraphConnection c, connections) {
+        if (c.basicType == "TCP") {
+            connections[c.index].port = port;
+            port++;
+        } else if (c.basicType == "TCP-Poisson-Pareto") {
+            connections[c.index].port = port;
+            port++;
+        } else if (c.basicType == "UDP-CBR") {
+            connections[c.index].ports.clear();
+            connections[c.index].port = port;
+            port++;
+        } else if (c.basicType == "UDP-VBR") {
+            connections[c.index].ports.clear();
+            connections[c.index].port = port;
+            port++;
+        } else if (c.basicType == "UDP-VCBR") {
+            connections[c.index].ports.clear();
+            connections[c.index].port = port;
+            port++;
+        } else {
+            qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters:" << c.encodedType;
+            Q_ASSERT_FORCE(false);
+        }
+    }
+}
+
+qint32 NetGraph::getConnectionIndex(quint16 port) const
+{
+    qint32 result = port;
+    result -= getBasePort();
+    if (result >= 0 && result < connections.count())
+        return result;
+    return -1;
+}
+
+quint16 NetGraph::getBasePort() const
+{
+    // We should never assign ports that might be used as ephemeral ports.
+    // See https://en.wikipedia.org/wiki/Ephemeral_port
+    // This means no ports >= 32768, and no ports in [1024, 5000].
+    return 8000;
 }

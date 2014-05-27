@@ -183,6 +183,10 @@ void* packet_consumer_thread(void* ) {
 					p->l4_protocol = hdr.extended_hdr.parsed_pkt.l3_proto; // they named it worng
 					p->l4_src_port = hdr.extended_hdr.parsed_pkt.l4_src_port;
 					p->l4_dst_port = hdr.extended_hdr.parsed_pkt.l4_dst_port;
+                    p->connection_index = netGraph->getConnectionIndex(p->l4_src_port);
+                    if (p->connection_index < 0) {
+                        p->connection_index = netGraph->getConnectionIndex(p->l4_dst_port);
+                    }
 					p->tcpFlags = hdr.extended_hdr.parsed_pkt.tcp.flags;
 					p->tcpSeqNum = hdr.extended_hdr.parsed_pkt.tcp.seq_num;
 					p->tcpAckNum = hdr.extended_hdr.parsed_pkt.tcp.ack_num;

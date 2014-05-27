@@ -328,6 +328,9 @@ void NetGraphPath::prepareEmulation()
 
 void NetGraph::prepareEmulation()
 {
+    flattenConnections();
+    assignPorts();
+
 	edgeCache.clear();
 	for (int i = 0; i < edges.count(); i++) {
 		edges[i].prepareEmulation(paths.count());
@@ -796,10 +799,13 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		}
 	}
 
-    experimentIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);
+    pathIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);
+    flowIntervalMeasurements->countPacketInFLightEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1);
 	if (!queued) {
-        experimentIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-        experimentIntervalMeasurements->countPacketDropped(this->index, p->path_id, ts_now, p->length, 1);
+        pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
+        pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, ts_now, p->length, 1);
         if (flowTracking) {
             sampledPathFlowEvents->handlePacket(p, ts_now);
         }
@@ -922,7 +928,8 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
             sampledPathFlowEvents->handlePacket(p, ts_now);
         }
 
-        experimentIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+        pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
 		return PKT_FORWARDED;
 	}
 
@@ -946,8 +953,10 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
         if (flowTracking) {
             sampledPathFlowEvents->handlePacket(p, ts_now);
         }
-        experimentIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-        experimentIntervalMeasurements->countPacketDropped(p->queue_id, p->path_id, ts_now, p->length, 1);
+        pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
+        pathIntervalMeasurements->countPacketDropped(p->queue_id, p->path_id, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketDropped(p->queue_id, p->connection_index, ts_now, p->length, 1);
 		return PKT_DROPPED;
 	}
 

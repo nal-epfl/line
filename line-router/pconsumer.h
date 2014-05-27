@@ -76,6 +76,7 @@ public:
 		id = 0;
 		traffic_class = 0;
 		queue_id = -1;
+        connection_index = -1;
 		ts_expected_exit = 0;
 		dropped = false;
 		ecn_bit_set = false;
@@ -136,6 +137,8 @@ public:
 	qint32 queue_id;
 	// The time when the packet (the last byte) should reach the next link
 	quint64 ts_expected_exit;
+    // The index of the connection in the graph or -1 if not available
+    qint32 connection_index;
 	// True if the packet is dropped, important if it happens after queuing (e.g. with drop-head)
 	bool dropped;
 	bool ecn_bit_set;
@@ -145,7 +148,8 @@ public:
 };
 
 extern RecordedData *recordedData;
-extern ExperimentIntervalMeasurements *experimentIntervalMeasurements;
+extern ExperimentIntervalMeasurements *pathIntervalMeasurements;
+extern ExperimentIntervalMeasurements *flowIntervalMeasurements;
 extern SampledPathFlowEvents *sampledPathFlowEvents;
 extern NetGraph *netGraph;
 

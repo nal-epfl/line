@@ -74,7 +74,8 @@ static struct timeval startTime;
 unsigned long long numPkts[MAX_NUM_THREADS] = { 0 }, numBytes[MAX_NUM_THREADS] = { 0 };
 
 RecordedData *recordedData;
-ExperimentIntervalMeasurements *experimentIntervalMeasurements;
+ExperimentIntervalMeasurements *pathIntervalMeasurements;
+ExperimentIntervalMeasurements *flowIntervalMeasurements;
 SampledPathFlowEvents *sampledPathFlowEvents;
 bool flowTracking;
 
@@ -917,14 +918,24 @@ int runPacketFilter(int argc, char **argv) {
 
 	loadTopology(graphFileName);
 
-	experimentIntervalMeasurements = new ExperimentIntervalMeasurements();
-	experimentIntervalMeasurements->initialize(get_current_time(),
-											   estimatedDuration,
-											   intervalSize,
-											   netGraph->edges.count(),
-											   netGraph->paths.count(),
-                                               netGraph->getSparseRoutingMatrixTransposed(),
-                                               1400);
+    pathIntervalMeasurements = new ExperimentIntervalMeasurements();
+    pathIntervalMeasurements->initialize(get_current_time(),
+                                         estimatedDuration,
+                                         intervalSize,
+                                         netGraph->edges.count(),
+                                         netGraph->paths.count(),
+                                         netGraph->getSparseRoutingMatrixTransposed(),
+                                         1400);
+
+    flowIntervalMeasurements = new ExperimentIntervalMeasurements();
+    flowIntervalMeasurements->initialize(get_current_time(),
+                                         estimatedDuration,
+                                         intervalSize,
+                                         netGraph->edges.count(),
+                                         netGraph->connections.count(),
+                                         netGraph->getSparseConnectionRoutingMatrixTransposed(),
+                                         1400);
+
 	sampledPathFlowEvents = new SampledPathFlowEvents();
 	sampledPathFlowEvents->initialize(netGraph->paths.count());
 
@@ -963,9 +974,12 @@ int runPacketFilter(int argc, char **argv) {
 	recordedData->save("recorded.line-rec");
 	delete recordedData;
 
-	// save experimentIntervalMeasurements
-	experimentIntervalMeasurements->save("interval-measurements.data");
-	delete experimentIntervalMeasurements;
+    // save the interval measurements
+    pathIntervalMeasurements->save("interval-measurements.data");
+    delete pathIntervalMeasurements;
+
+    flowIntervalMeasurements->save("flow-interval-measurements.data");
+    delete flowIntervalMeasurements;
 
 	// save sampledPathFlowEvents
 	sampledPathFlowEvents->save("sampled-path-flows.data");

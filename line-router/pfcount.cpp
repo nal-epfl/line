@@ -923,7 +923,8 @@ int runPacketFilter(int argc, char **argv) {
 											   intervalSize,
 											   netGraph->edges.count(),
 											   netGraph->paths.count(),
-											   netGraph->getSparseRoutingMatrixTransposed());
+                                               netGraph->getSparseRoutingMatrixTransposed(),
+                                               1400);
 	sampledPathFlowEvents = new SampledPathFlowEvents();
 	sampledPathFlowEvents->initialize(netGraph->paths.count());
 

@@ -202,13 +202,15 @@ void ExperimentIntervalMeasurements::initialize(quint64 tsStart,
 												quint64 intervalSize,
 												int numEdges,
 												int numPaths,
-												QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed)
+                                                QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed,
+                                                int packetSizeThreshold)
 {
     this->tsStart = tsStart;
 	this->tsLast = tsStart;
     this->intervalSize = intervalSize;
     this->numEdges = numEdges;
     this->numPaths = numPaths;
+    this->packetSizeThreshold = packetSizeThreshold;
 
 	globalMeasurements.initialize(numEdges, numPaths, sparseRoutingMatrixTransposed);
 	int numIntervals = qMin(10000, qMax(100, (int)((2ULL * expectedDuration) / intervalSize) + 10));
@@ -218,10 +220,13 @@ void ExperimentIntervalMeasurements::initialize(quint64 tsStart,
     }
 }
 
-void ExperimentIntervalMeasurements::countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut,
+void ExperimentIntervalMeasurements::countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size,
                                                              int multiplier)
 {
-	tsLast = qMax(tsLast, tsIn);
+    if (size < packetSizeThreshold)
+        return;
+
+    tsLast = qMax(tsLast, tsIn);
 	tsLast = qMax(tsLast, tsOut);
     globalMeasurements.edgeMeasurements[edge].numPacketsInFlight += multiplier;
 	QInt32Pair ep = QInt32Pair(edge, path);
@@ -240,9 +245,12 @@ void ExperimentIntervalMeasurements::countPacketInFLightEdge(int edge, int path,
     }
 }
 
-void ExperimentIntervalMeasurements::countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int multiplier)
+void ExperimentIntervalMeasurements::countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier)
 {
-	tsLast = qMax(tsLast, tsIn);
+    if (size < packetSizeThreshold)
+        return;
+
+    tsLast = qMax(tsLast, tsIn);
 	tsLast = qMax(tsLast, tsOut);
     globalMeasurements.pathMeasurements[path].numPacketsInFlight += multiplier;
 
@@ -257,8 +265,11 @@ void ExperimentIntervalMeasurements::countPacketInFLightPath(int path, quint64 t
     }
 }
 
-void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quint64 tsDrop, int multiplier)
+void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quint64 tsDrop, int size, int multiplier)
 {
+    if (size < packetSizeThreshold)
+        return;
+
 	QInt32Pair ep = QInt32Pair(edge, path);
 	tsLast = qMax(tsLast, tsDrop);
     globalMeasurements.edgeMeasurements[edge].numPacketsDropped += multiplier;
@@ -1119,7 +1130,7 @@ ExperimentIntervalMeasurements ExperimentIntervalMeasurements::resample(quint64 
 
 QDataStream& operator<<(QDataStream& s, const ExperimentIntervalMeasurements& d)
 {
-	qint32 ver = 1;
+    qint32 ver = 2;
 
     s << ver;
 
@@ -1130,6 +1141,10 @@ QDataStream& operator<<(QDataStream& s, const ExperimentIntervalMeasurements& d)
     s << d.intervalSize;
     s << d.numEdges;
     s << d.numPaths;
+
+    if (ver >= 2) {
+        s << d.packetSizeThreshold;
+    }
 
     return s;
 }
@@ -1147,6 +1162,12 @@ QDataStream& operator>>(QDataStream& s, ExperimentIntervalMeasurements& d)
     s >> d.intervalSize;
     s >> d.numEdges;
     s >> d.numPaths;
+
+    if (ver >= 2) {
+        s >> d.packetSizeThreshold;
+    } else {
+        d.packetSizeThreshold = 0;
+    }
 
     return s;
 }

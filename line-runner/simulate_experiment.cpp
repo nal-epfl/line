@@ -250,7 +250,8 @@ bool runSimulation(NetGraph &g, RunParams runParams) {
 												  runParams.intervalSize,
 												  g.edges.count(),
 												  g.paths.count(),
-												  g.getSparseRoutingMatrixTransposed());
+                                                  g.getSparseRoutingMatrixTransposed(),
+                                                  1400);
 
 		for (int i = 0; i < numIntervals; i++) {
 			qDebug() << QString("Generating data for interval %1...").arg(i + 1);
@@ -291,16 +292,17 @@ bool runSimulation(NetGraph &g, RunParams runParams) {
 
 			// Forward packets over each connection
 			const int numPackets = 10000;
+            const int packetSize = 1000;
 			for (int c = 0; c < g.connections.count(); c++) {
 				int p = connection2path[c];
 				if (!perfectDropSampling) {
 					for (int packet = 0; packet < numPackets; packet++) {
-						experimentIntervalMeasurements.countPacketInFLightPath(p, t, t);
+                        experimentIntervalMeasurements.countPacketInFLightPath(p, t, t, packetSize, 1);
 						bool dropped = false;
 						foreach (qint32 e, pathEdges[p]) {
 							qreal transRate = linkTransRatesPerFlow[e][c];
 							// Count packet before queueing
-							experimentIntervalMeasurements.countPacketInFLightEdge(e, p, t, t);
+                            experimentIntervalMeasurements.countPacketInFLightEdge(e, p, t, t, packetSize, 1);
 							// Decide if it is dropped
 							qreal v = frandex2mt(randGen);
 							if (v > transRate) {
@@ -309,7 +311,7 @@ bool runSimulation(NetGraph &g, RunParams runParams) {
 							}
 							// Count as dropped if necessary, and stop forwarding along the path
 							if (dropped) {
-								experimentIntervalMeasurements.countPacketDropped(e, p, t);
+                                experimentIntervalMeasurements.countPacketDropped(e, p, t, packetSize, 1);
 								// The packet does not reach any other edges. As a side effect, this reduces the number of
 								// samples for edges that are further on the path, reducing the quality of the sampling.
 								break;
@@ -318,12 +320,12 @@ bool runSimulation(NetGraph &g, RunParams runParams) {
 					}
 				} else {
 					int packetsInFlight = numPackets;
-					experimentIntervalMeasurements.countPacketInFLightPath(p, t, t, packetsInFlight);
+                    experimentIntervalMeasurements.countPacketInFLightPath(p, t, t, packetSize, packetsInFlight);
 					foreach (qint32 e, pathEdges[p]) {
-						experimentIntervalMeasurements.countPacketInFLightEdge(e, p, t, t, packetsInFlight);
+                        experimentIntervalMeasurements.countPacketInFLightEdge(e, p, t, t, packetSize, packetsInFlight);
 						qreal transRate = linkTransRatesPerFlow[e][c];
 						int numDropped = (1.0 - transRate) * packetsInFlight;
-						experimentIntervalMeasurements.countPacketDropped(e, p, t, numDropped);
+                        experimentIntervalMeasurements.countPacketDropped(e, p, t, packetSize, numDropped);
 						packetsInFlight -= numDropped;
 						if (packetsInFlight <= 0) {
 							break;

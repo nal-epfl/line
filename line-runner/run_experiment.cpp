@@ -704,20 +704,22 @@ bool lineKernelRec2IntervalMeasurements(QString testId,
 									quint64(period) * 1000ULL * 1000ULL * 1000ULL,
 									18,
 									8,
-									QList<QInt32Pair>());
+                                    QList<QInt32Pair>(),
+                                    1400);
 
 	const int edge = 0;
 	for (int i = iStart; i <= iLast; i++) {
 		quint64 time = intervalMeasurements.tsStart + quint64((i - iStart) * period) * 1000ULL * 1000ULL * 1000ULL + period / 2;
+        const int packetSize = 1500;
 		for (int p = 0; p < dataAOut[i].count(); p++) {
 			if (dataAOut[i][p] >= dataDIn[i][p]) {
-				intervalMeasurements.countPacketInFLightEdge(edge, p, time, time, dataAOut[i][p]);
-				intervalMeasurements.countPacketInFLightPath(p, time, time, dataAOut[i][p]);
-				intervalMeasurements.countPacketDropped(edge, p, time, dataAOut[i][p] - dataDIn[i][p]);
+                intervalMeasurements.countPacketInFLightEdge(edge, p, time, time, packetSize, dataAOut[i][p]);
+                intervalMeasurements.countPacketInFLightPath(p, time, time, packetSize, dataAOut[i][p]);
+                intervalMeasurements.countPacketDropped(edge, p, time, packetSize, dataAOut[i][p] - dataDIn[i][p]);
 			} else {
-				intervalMeasurements.countPacketInFLightEdge(edge, p, time, time, dataDOut[i][p]);
-				intervalMeasurements.countPacketInFLightPath(p, time, time, dataDOut[i][p]);
-				intervalMeasurements.countPacketDropped(edge, p, time, dataDOut[i][p] - dataAIn[i][p]);
+                intervalMeasurements.countPacketInFLightEdge(edge, p, time, time, packetSize, dataDOut[i][p]);
+                intervalMeasurements.countPacketInFLightPath(p, time, time, packetSize, dataDOut[i][p]);
+                intervalMeasurements.countPacketDropped(edge, p, time, packetSize, dataDOut[i][p] - dataAIn[i][p]);
 			}
 		}
 	}

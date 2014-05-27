@@ -78,12 +78,13 @@ public:
                     quint64 intervalSize,
                     int numEdges,
 					int numPaths,
-					QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed);
+                    QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed,
+                    int packetSizeThreshold);
 
-    void countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int multiplier = 1);
-    void countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int multiplier = 1);
+    void countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
+    void countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
 
-    void countPacketDropped(int edge, int path, quint64 tsDrop, int multiplier = 1);
+    void countPacketDropped(int edge, int path, quint64 tsDrop, int size, int multiplier);
 
     // Returns the index of the interval that includes a timestamp.
     // Also resizes the vector of intervals if the index is outside of the current range.
@@ -121,6 +122,7 @@ public:
     quint64 intervalSize;
     int numEdges;
     int numPaths;
+    int packetSizeThreshold;
 };
 QDataStream& operator>>(QDataStream& s, ExperimentIntervalMeasurements& d);
 QDataStream& operator<<(QDataStream& s, const ExperimentIntervalMeasurements& d);

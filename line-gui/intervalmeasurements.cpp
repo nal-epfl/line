@@ -228,9 +228,13 @@ void ExperimentIntervalMeasurements::countPacketInFLightEdge(int edge, int path,
 
     tsLast = qMax(tsLast, tsIn);
 	tsLast = qMax(tsLast, tsOut);
-    globalMeasurements.edgeMeasurements[edge].numPacketsInFlight += multiplier;
-	QInt32Pair ep = QInt32Pair(edge, path);
-	globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight += multiplier;
+    if (edge >= 0) {
+        globalMeasurements.edgeMeasurements[edge].numPacketsInFlight += multiplier;
+        if (path >= 0) {
+            QInt32Pair ep = QInt32Pair(edge, path);
+            globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight += multiplier;
+        }
+    }
 
     int intervalIn = timestampToInterval(tsIn);
 	if (intervalIn < 0)
@@ -239,14 +243,20 @@ void ExperimentIntervalMeasurements::countPacketInFLightEdge(int edge, int path,
 	if (intervalOut < 0)
 		return;
     for (int interval = intervalIn; interval <= intervalOut; interval++) {
-        intervalMeasurements[interval].edgeMeasurements[edge].numPacketsInFlight += multiplier;
-		QInt32Pair ep = QInt32Pair(edge, path);
-		intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight += multiplier;
+        if (edge >= 0) {
+            intervalMeasurements[interval].edgeMeasurements[edge].numPacketsInFlight += multiplier;
+            if (path >= 0) {
+                QInt32Pair ep = QInt32Pair(edge, path);
+                intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight += multiplier;
+            }
+        }
     }
 }
 
 void ExperimentIntervalMeasurements::countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier)
 {
+    if (path < 0)
+        return;
     if (size < packetSizeThreshold)
         return;
 
@@ -267,6 +277,8 @@ void ExperimentIntervalMeasurements::countPacketInFLightPath(int path, quint64 t
 
 void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quint64 tsDrop, int size, int multiplier)
 {
+    if (path < 0 || edge < 0)
+        return;
     if (size < packetSizeThreshold)
         return;
 

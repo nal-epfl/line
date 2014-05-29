@@ -87,6 +87,9 @@ public:
 	// For poisson connections, if sequential is true, do not create a new transfer before the old one has finished.
 	// After the old one has finished, wait for a delay distributed exponentially according to the poissonRate.
 	bool sequential;
+    qreal bufferingRate_Mbps;
+    qreal bufferingTime_s;
+    qreal streamingPeriod_s;
 
 	// 0 means auto color by index
 	QRgb color;

@@ -5,3 +5,4 @@ remote-config.sh
 line-gui/customcontrols*
 *.pro.user
 *.pro.user*
+line-runner/result_processing.cpp

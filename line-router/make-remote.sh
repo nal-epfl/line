@@ -12,7 +12,7 @@ REMOTE_USER=$REMOTE_USER_ROUTER
 REMOTE_HOST=$REMOTE_HOST_ROUTER
 REMOTE_PORT=$REMOTE_PORT_ROUTER
 REMOTE_DIR=$( [ "$REMOTE_USER" == "root" ] && echo "/root" || echo "/home/$REMOTE_USER" )
-MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 CONFIG+=release && make clean && make -w -j7 && make install && install -m 755 -p /root/line-router/line-router /usr/bin/"
+MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 ${BUILD_CONFIG_ROUTER} && make clean && make -w -j7 && make install && install -m 755 -p /root/line-router/line-router /usr/bin/"
 #MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 CONFIG+=debug && make clean && make -w -j7 && make install && install -m 755 -p /root/line-router/line-router /usr/bin/"
 
 echo "make-remote.sh:1: warning: Compiling on $REMOTE_HOST ($(host $REMOTE_HOST | cut -d ' ' -f 5))"

@@ -1321,6 +1321,9 @@ void NetGraph::assignPorts()
         } else if (c.basicType == "TCP-Poisson-Pareto") {
             connections[c.index].port = port;
             port++;
+        } else if (c.basicType == "TCP-DASH") {
+            connections[c.index].port = port;
+            port++;
         } else if (c.basicType == "UDP-CBR") {
             connections[c.index].ports.clear();
             connections[c.index].port = port;

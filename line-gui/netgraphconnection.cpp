@@ -105,7 +105,20 @@ bool NetGraphConnection::setParamsFromType()
 			tokens.takeFirst();
 			sequential = true;
 		}
-	} else if (arg == "UDP-CBR") {
+    } else if (arg == "TCP-DASH") {
+        if (!readDouble(tokens, rate_Mbps)) {
+            return false;
+        }
+        if (!readDouble(tokens, bufferingRate_Mbps)) {
+            return false;
+        }
+        if (!readDouble(tokens, bufferingTime_s)) {
+            return false;
+        }
+        if (!readDouble(tokens, streamingPeriod_s)) {
+            return false;
+        }
+    } else if (arg == "UDP-CBR") {
 		if (!readDouble(tokens, rate_Mbps)) {
 			return false;
 		}
@@ -220,7 +233,14 @@ void NetGraphConnection::setTypeFromParams()
 					  .arg(paretoAlpha)
 					  .arg(bits2DataSizeWithUnit(paretoScale_b))
 					  .arg(sequential ? "sequential" : "");
-	} else if (basicType == "UDP-CBR") {
+    } else if (basicType == "TCP-DASH") {
+        encodedType = QString("%1 %2 %3 %4 %5")
+                      .arg(basicType)
+                      .arg(rate_Mbps)
+                      .arg(bufferingRate_Mbps)
+                      .arg(bufferingTime_s)
+                      .arg(streamingPeriod_s);
+    } else if (basicType == "UDP-CBR") {
 		encodedType = QString("%1 %2 %3")
 					  .arg(basicType)
 					  .arg(rate_Mbps)
@@ -287,6 +307,9 @@ void NetGraphConnection::setDefaultParams()
 	paretoScale_b = 5000000;
 	rate_Mbps = 1.0;
 	poisson = false;
+    bufferingRate_Mbps = 10 * 1.0e6;
+    bufferingTime_s = 60;
+    streamingPeriod_s = 5;
 	sequential = false;
 	encodedType = "";
 	basicType = "";
@@ -318,7 +341,7 @@ bool NetGraphConnection::isLight()
 
 QDataStream& operator<<(QDataStream& s, const NetGraphConnection& c)
 {
-	qint32 ver = 7;
+    qint32 ver = 8;
 
 	if (!unversionedStreams) {
 		s << ver;
@@ -373,6 +396,12 @@ QDataStream& operator<<(QDataStream& s, const NetGraphConnection& c)
 	if (ver >= 7) {
 		s << c.tcpCongestionControl;
 	}
+
+    if (ver >= 8) {
+        s << c.bufferingRate_Mbps;
+        s << c.bufferingTime_s;
+        s << c.streamingPeriod_s;
+    }
 
 	return s;
 }
@@ -446,13 +475,19 @@ QDataStream& operator>>(QDataStream& s, NetGraphConnection& c)
 		s >> c.tcpCongestionControl;
 	}
 
+    if (ver >= 8) {
+        s >> c.bufferingRate_Mbps;
+        s >> c.bufferingTime_s;
+        s >> c.streamingPeriod_s;
+    }
+
 	if (ver < 6) {
 		c.setLegacyTypeFromParams();
 		Q_ASSERT_FORCE(c.setParamsFromType());
 	}
 	c.setParamsFromType();
 
-	Q_ASSERT_FORCE(ver <= 7);
+    Q_ASSERT_FORCE(ver <= 8);
 
 	return s;
 }

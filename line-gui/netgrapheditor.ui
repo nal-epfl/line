@@ -20,7 +20,16 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -53,7 +62,16 @@
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_12">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <item>
@@ -983,7 +1001,16 @@
    <item>
     <widget class="QWidget" name="widget" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
@@ -1027,7 +1054,16 @@
          </size>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -1042,13 +1078,22 @@
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>-557</y>
+              <y>-692</y>
               <width>352</width>
-              <height>1110</height>
+              <height>1240</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_13">
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
              <item>
@@ -1069,7 +1114,7 @@
                 <string notr="true"/>
                </property>
                <property name="currentIndex">
-                <number>10</number>
+                <number>8</number>
                </property>
                <widget class="QWidget" name="pageAddEditLink">
                 <property name="sizePolicy">
@@ -1079,7 +1124,16 @@
                  </sizepolicy>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_25">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -1419,7 +1473,16 @@ Click an existing link to edit its properties.</string>
                     <item row="0" column="3">
                      <widget class="QWidget" name="widget_13" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_14">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -1486,7 +1549,16 @@ Click an existing link to edit its properties.</string>
                     <item row="1" column="3">
                      <widget class="QWidget" name="widget_14" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_15">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -1544,7 +1616,16 @@ Click an existing link to edit its properties.</string>
                     <item row="2" column="3">
                      <widget class="QWidget" name="widget_15" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_16">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -1591,7 +1672,16 @@ Click an existing link to edit its properties.</string>
                </widget>
                <widget class="QWidget" name="pageDeleteNode">
                 <layout class="QVBoxLayout" name="verticalLayout_26">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -1626,7 +1716,16 @@ Click an existing link to edit its properties.</string>
                </widget>
                <widget class="QWidget" name="pageDelNodeArea">
                 <layout class="QVBoxLayout" name="verticalLayout_4">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -1661,7 +1760,16 @@ Click an existing link to edit its properties.</string>
                </widget>
                <widget class="QWidget" name="pageDeleteLink">
                 <layout class="QVBoxLayout" name="verticalLayout_27">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -1702,7 +1810,16 @@ Click an existing link to edit its properties.</string>
                  </sizepolicy>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_3">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -1726,7 +1843,16 @@ Use numbers separated by spaces or commas: 1 5 8, 21</string>
                     <item>
                      <widget class="QWidget" name="widget_7" native="true">
                       <layout class="QGridLayout" name="gridLayout_6">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item row="5" column="1">
@@ -1834,7 +1960,16 @@ Use numbers separated by spaces or commas: 1 5 8, 21</string>
                           </sizepolicy>
                          </property>
                          <layout class="QHBoxLayout" name="horizontalLayout_21">
-                          <property name="margin">
+                          <property name="leftMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="bottomMargin">
                            <number>0</number>
                           </property>
                           <item>
@@ -1900,7 +2035,16 @@ Use numbers separated by spaces or commas: 1 5 8, 21</string>
                        <item>
                         <widget class="QWidget" name="widget_2" native="true">
                          <layout class="QGridLayout" name="gridLayout_7">
-                          <property name="margin">
+                          <property name="leftMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="bottomMargin">
                            <number>0</number>
                           </property>
                           <item row="0" column="1">
@@ -1943,7 +2087,16 @@ Use numbers separated by spaces or commas: 1 5 8, 21</string>
                  </sizepolicy>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_28">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -1978,7 +2131,16 @@ Use numbers separated by spaces or commas: 1 5 8, 21</string>
                </widget>
                <widget class="QWidget" name="pageShowRoutes">
                 <layout class="QVBoxLayout" name="verticalLayout_29">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -2015,7 +2177,16 @@ For optimization reasons, routing tables are only computed for pairs of nodes wh
                </widget>
                <widget class="QWidget" name="pageDrag">
                 <layout class="QVBoxLayout" name="verticalLayout_3">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -2175,13 +2346,31 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="4" column="1">
                      <widget class="QWidget" name="widget_18" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_19">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
                         <widget class="QWidget" name="widget_20" native="true">
                          <layout class="QHBoxLayout" name="horizontalLayout_20">
-                          <property name="margin">
+                          <property name="leftMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="bottomMargin">
                            <number>0</number>
                           </property>
                           <item>
@@ -2272,7 +2461,16 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="6" column="0" colspan="3">
                      <widget class="QWidget" name="widget_17" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_18">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -2331,7 +2529,16 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="3" column="1">
                      <widget class="QWidget" name="widget_19" native="true">
                       <layout class="QGridLayout" name="gridLayout_23">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item row="0" column="2">
@@ -2453,7 +2660,16 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="5" column="0" colspan="3">
                      <widget class="QWidget" name="widget_16" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_17">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -2503,7 +2719,16 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="4" column="1">
                      <widget class="QWidget" name="widget_8" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_8">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -2701,6 +2926,262 @@ Use the zoom slider to zoom in and out.</string>
                    </layout>
                   </widget>
                  </item>
+                 <item>
+                  <widget class="QGroupBox" name="groupBox_27">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="title">
+                    <string>TCP DASH</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_27">
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_83">
+                      <property name="text">
+                       <string>Multiplier</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="0">
+                     <widget class="QLabel" name="label_85">
+                      <property name="text">
+                       <string>Chunking period:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="1">
+                     <widget class="QWidget" name="widget_25" native="true">
+                      <layout class="QHBoxLayout" name="horizontalLayout_25">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QDoubleSpinBox" name="spinTCPDashBufferingTime">
+                         <property name="prefix">
+                          <string/>
+                         </property>
+                         <property name="suffix">
+                          <string> s</string>
+                         </property>
+                         <property name="decimals">
+                          <number>1</number>
+                         </property>
+                         <property name="minimum">
+                          <double>0.100000000000000</double>
+                         </property>
+                         <property name="maximum">
+                          <double>9999.000000000000000</double>
+                         </property>
+                         <property name="singleStep">
+                          <double>1.000000000000000</double>
+                         </property>
+                         <property name="value">
+                          <double>60.000000000000000</double>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item row="4" column="2">
+                     <widget class="QToolButton" name="btnTCPDashBufferingTime">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="6" column="0" colspan="3">
+                     <widget class="QWidget" name="widget_24" native="true">
+                      <layout class="QHBoxLayout" name="horizontalLayout_24">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="cmbTcpDashCongestionControl">
+                      <property name="sizeAdjustPolicy">
+                       <enum>QComboBox::AdjustToContents</enum>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>cubic</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>reno</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="2">
+                     <widget class="QToolButton" name="btnTcpDashCongestionControl">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_82">
+                      <property name="text">
+                       <string>Buffering rate:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QSpinBox" name="spinTCPDashMultiplier">
+                      <property name="minimum">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <number>100000</number>
+                      </property>
+                      <property name="singleStep">
+                       <number>50</number>
+                      </property>
+                      <property name="value">
+                       <number>200</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QDoubleSpinBox" name="spinTCPDashRate">
+                      <property name="suffix">
+                       <string> Mbps</string>
+                      </property>
+                      <property name="minimum">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>9999.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="1">
+                     <widget class="QDoubleSpinBox" name="spinTCPDashStreamingPeriod">
+                      <property name="prefix">
+                       <string/>
+                      </property>
+                      <property name="suffix">
+                       <string> s</string>
+                      </property>
+                      <property name="decimals">
+                       <number>1</number>
+                      </property>
+                      <property name="minimum">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>9999.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>1.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>5.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="2">
+                     <widget class="QToolButton" name="btnTCPDashBufferingRate">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="2">
+                     <widget class="QToolButton" name="btnTCPDashRate">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_81">
+                      <property name="text">
+                       <string>Buffering time:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="2">
+                     <widget class="QToolButton" name="btnTCPDashMultiplier">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <widget class="QDoubleSpinBox" name="spinTCPDashBufferingRate">
+                      <property name="suffix">
+                       <string> Mbps</string>
+                      </property>
+                      <property name="minimum">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>9999.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>10.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_84">
+                      <property name="text">
+                       <string>TCP c.c.</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_53">
+                      <property name="text">
+                       <string>Average rate:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="2">
+                     <widget class="QToolButton" name="btnTCPDashStreamingPeriod">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
                <widget class="QWidget" name="pageAddEditNode">
@@ -2711,7 +3192,16 @@ Use the zoom slider to zoom in and out.</string>
                  </sizepolicy>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_10">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -2819,7 +3309,16 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="0" column="2">
                      <widget class="QWidget" name="widget_3" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_4">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -2912,7 +3411,16 @@ Use the zoom slider to zoom in and out.</string>
                     <item row="3" column="1">
                      <widget class="QWidget" name="widget_22" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_22">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -2979,7 +3487,16 @@ Use the zoom slider to zoom in and out.</string>
                  </sizepolicy>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_30">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -3087,7 +3604,16 @@ Use the zoom slider to zoom in and out.</string>
                          <property name="spacing">
                           <number>6</number>
                          </property>
-                         <property name="margin">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
                           <number>0</number>
                          </property>
                          <item>
@@ -3156,7 +3682,16 @@ Use the zoom slider to zoom in and out.</string>
                             <item row="0" column="2">
                              <widget class="QWidget" name="widget_11" native="true">
                               <layout class="QHBoxLayout" name="horizontalLayout_12">
-                               <property name="margin">
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
                                 <number>0</number>
                                </property>
                               </layout>
@@ -3193,7 +3728,16 @@ Use the zoom slider to zoom in and out.</string>
                             <item row="4" column="1">
                              <widget class="QWidget" name="widget_9" native="true">
                               <layout class="QHBoxLayout" name="horizontalLayout_9">
-                               <property name="margin">
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
                                 <number>0</number>
                                </property>
                                <item>
@@ -3613,10 +4157,261 @@ Large values: narrow range.</string>
                             <item row="2" column="1">
                              <widget class="QWidget" name="widget_10" native="true">
                               <layout class="QHBoxLayout" name="horizontalLayout_10">
-                               <property name="margin">
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
                                 <number>0</number>
                                </property>
                               </layout>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QGroupBox" name="boxTcpDashParameters">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="title">
+                            <string>TCP DASH parameters</string>
+                           </property>
+                           <layout class="QGridLayout" name="gridLayout_26">
+                            <item row="2" column="0">
+                             <widget class="QLabel" name="label_71">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="text">
+                               <string>Buffering rate</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="4" column="0">
+                             <widget class="QLabel" name="label_77">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="text">
+                               <string>Chunking period</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="2" column="1">
+                             <widget class="QDoubleSpinBox" name="spinTcpDashBufferingRate">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="suffix">
+                               <string> Mbps</string>
+                              </property>
+                              <property name="maximum">
+                               <double>1000.000000000000000</double>
+                              </property>
+                              <property name="singleStep">
+                               <double>0.500000000000000</double>
+                              </property>
+                              <property name="value">
+                               <double>10.000000000000000</double>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="3" column="1">
+                             <widget class="QDoubleSpinBox" name="spinTcpDashBufferingTime">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="prefix">
+                               <string/>
+                              </property>
+                              <property name="suffix">
+                               <string> s</string>
+                              </property>
+                              <property name="decimals">
+                               <number>0</number>
+                              </property>
+                              <property name="minimum">
+                               <double>1.000000000000000</double>
+                              </property>
+                              <property name="maximum">
+                               <double>999999.000000000000000</double>
+                              </property>
+                              <property name="singleStep">
+                               <double>5.000000000000000</double>
+                              </property>
+                              <property name="value">
+                               <double>60.000000000000000</double>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="0">
+                             <widget class="QLabel" name="label_51">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="text">
+                               <string>Average rate</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="1" column="1">
+                             <widget class="QDoubleSpinBox" name="spinTcpDashRate">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="suffix">
+                               <string> Mbps</string>
+                              </property>
+                              <property name="maximum">
+                               <double>1000.000000000000000</double>
+                              </property>
+                              <property name="singleStep">
+                               <double>0.500000000000000</double>
+                              </property>
+                              <property name="value">
+                               <double>1.000000000000000</double>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="5" column="1">
+                             <widget class="QWidget" name="widget_23" native="true">
+                              <layout class="QHBoxLayout" name="horizontalLayout_23">
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item row="3" column="0">
+                             <widget class="QLabel" name="label_76">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="text">
+                               <string>Buffering time</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="4" column="1">
+                             <widget class="QDoubleSpinBox" name="spinTcpDashStreamingPeriod">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>28</height>
+                               </size>
+                              </property>
+                              <property name="prefix">
+                               <string/>
+                              </property>
+                              <property name="suffix">
+                               <string> s</string>
+                              </property>
+                              <property name="decimals">
+                               <number>0</number>
+                              </property>
+                              <property name="minimum">
+                               <double>1.000000000000000</double>
+                              </property>
+                              <property name="maximum">
+                               <double>999999.000000000000000</double>
+                              </property>
+                              <property name="singleStep">
+                               <double>5.000000000000000</double>
+                              </property>
+                              <property name="value">
+                               <double>5.000000000000000</double>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="0">
+                             <widget class="QLabel" name="label_78">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="text">
+                               <string>TCP c.c.</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="1">
+                             <widget class="QComboBox" name="cmbTcpDashCc">
+                              <item>
+                               <property name="text">
+                                <string>cubic</string>
+                               </property>
+                              </item>
+                              <item>
+                               <property name="text">
+                                <string>reno</string>
+                               </property>
+                              </item>
                              </widget>
                             </item>
                            </layout>
@@ -3637,7 +4432,16 @@ Large values: narrow range.</string>
                             <item row="1" column="2">
                              <widget class="QWidget" name="widget_12" native="true">
                               <layout class="QHBoxLayout" name="horizontalLayout_13">
-                               <property name="margin">
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
                                 <number>0</number>
                                </property>
                               </layout>
@@ -3700,6 +4504,11 @@ Large values: narrow range.</string>
                         <item>
                          <property name="text">
                           <string>TCP-Poisson-Pareto</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>TCP DASH</string>
                          </property>
                         </item>
                         <item>
@@ -3784,7 +4593,16 @@ Large values: narrow range.</string>
                       <item row="11" column="1">
                        <widget class="QWidget" name="widget_5" native="true">
                         <layout class="QHBoxLayout" name="horizontalLayout_6">
-                         <property name="margin">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
                           <number>0</number>
                          </property>
                          <item>
@@ -3851,7 +4669,16 @@ Large values: narrow range.</string>
                       <item row="12" column="1">
                        <widget class="QWidget" name="widget_6" native="true">
                         <layout class="QHBoxLayout" name="horizontalLayout_7">
-                         <property name="margin">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
                           <number>0</number>
                          </property>
                          <item>
@@ -3941,7 +4768,16 @@ Large values: narrow range.</string>
                     <item>
                      <widget class="QWidget" name="widget_4" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_5">
-                       <property name="margin">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
                         <number>0</number>
                        </property>
                        <item>
@@ -4048,7 +4884,16 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                  </sizepolicy>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_9">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -4083,7 +4928,16 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                </widget>
                <widget class="QWidget" name="pagePhasing">
                 <layout class="QVBoxLayout" name="verticalLayout_32">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>0</number>
                  </property>
                  <item>
@@ -4106,11 +4960,20 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                       <x>0</x>
                       <y>0</y>
                       <width>350</width>
-                      <height>1025</height>
+                      <height>1234</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_41">
-                     <property name="margin">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
                       <number>0</number>
                      </property>
                      <item>

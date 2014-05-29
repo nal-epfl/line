@@ -35,6 +35,7 @@
 #include "tcpsource.h"
 #include "tcpsink.h"
 #include "tcpparetosource.h"
+#include "tcpdashsource.h"
 #include "evudp.h"
 #include "udpsource.h"
 #include "udpsink.h"
@@ -98,7 +99,11 @@ void initConnection(struct ev_loop *loop, NetGraphConnection &c)
 				TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl);
 		// The first transmission is delayed exponentially
 		c.delayStart = true;
-	} else if (c.basicType == "UDP-CBR") {
+    } else if (c.basicType == "TCP-DASH") {
+        int port = netGraph.connections[c.index].port;
+        c.serverFD = tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+                TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl);
+    } else if (c.basicType == "UDP-CBR") {
 		int port = netGraph.connections[c.index].port;
 		c.serverFD = udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
 								UDPSink::makeUDPSink);
@@ -160,7 +165,18 @@ void startConnection(NetGraphConnection &c)
 			qDebugT() << "Delaying Poisson connection" << delay;
 			ev_once(loop, -1, 0, delay, poissonStartConnectionTimeoutHandler, &c);
 		}
-	} else if (c.basicType == "UDP-CBR") {
+    } else if (c.basicType == "TCP-DASH") {
+        TCPDashSourceArg params(c.rate_Mbps * 1.0e6 / 8.0,
+                                c.bufferingRate_Mbps * 1.0e6 / 8.0,
+                                c.bufferingTime_s,
+                                c.streamingPeriod_s);
+        qDebugT() << "Creating DASH connection";
+        int port = netGraph.connections[c.index].port;
+        c.clientFD = tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+                qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
+                c.trafficClass, TCPDashSource::makeTCPDashSource, &params, c.tcpReceiveWindowSize,
+                c.tcpCongestionControl);
+    } else if (c.basicType == "UDP-CBR") {
 		qreal rate_Bps = c.rate_Mbps * 1.0e6 / 8.0;
 		int port = netGraph.connections[c.index].port;
 		UDPCBRSourceArg params(rate_Bps, 1400, c.poisson);
@@ -229,7 +245,9 @@ void connectionTransferCompleted(NetGraphConnection &c)
 				-1, 0, 0, poissonStartConnectionTimeoutHandler, &netGraph.connections[c.index]);
 	} else if (c.basicType == "TCP-Repeated-Pareto") {
 		// Nothing to do
-	} else if (c.basicType == "UDP-CBR") {
+    } else if (c.basicType == "TCP-DASH") {
+        // Nothing to do
+    } else if (c.basicType == "UDP-CBR") {
 		// Nothing to do
 	} else if (c.basicType == "UDP-VBR") {
 		// Nothing to do

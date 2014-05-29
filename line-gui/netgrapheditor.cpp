@@ -1706,14 +1706,124 @@ void NetGraphEditor::on_btnTCPParetoExp_clicked()
 	reloadScene();
 }
 
+void NetGraphEditor::on_btnTcpDashCongestionControl_clicked()
+{
+    foreach (NetGraphConnection c, graph()->connections) {
+        if (c.basicType != "TCP-DASH")
+            continue;
+        if (!ui->checkAdjustClass0->isChecked() &&
+            c.trafficClass == 0)
+            continue;
+        if (!ui->checkAdjustClass1->isChecked() &&
+            c.trafficClass == 1)
+            continue;
+        graph()->connections[c.index].tcpCongestionControl = ui->cmbTcpDashCongestionControl->currentText();
+        graph()->connections[c.index].setTypeFromParams();
+    }
+    setModified();
+    reloadScene();
+}
+
+void NetGraphEditor::on_btnTCPDashMultiplier_clicked()
+{
+    foreach (NetGraphConnection c, graph()->connections) {
+        if (!ui->checkAdjustClass0->isChecked() &&
+            c.trafficClass == 0)
+            continue;
+        if (!ui->checkAdjustClass1->isChecked() &&
+            c.trafficClass == 1)
+            continue;
+        if (c.basicType == "TCP-DASH") {
+            graph()->connections[c.index].multiplier = ui->spinTCPDashMultiplier->value();
+            graph()->connections[c.index].setTypeFromParams();
+        }
+    }
+    setModified();
+    reloadScene();
+}
+
+void NetGraphEditor::on_btnTCPDashRate_clicked()
+{
+    foreach (NetGraphConnection c, graph()->connections) {
+        if (!ui->checkAdjustClass0->isChecked() &&
+            c.trafficClass == 0)
+            continue;
+        if (!ui->checkAdjustClass1->isChecked() &&
+            c.trafficClass == 1)
+            continue;
+        if (c.basicType == "TCP-DASH") {
+            graph()->connections[c.index].rate_Mbps = ui->spinTCPDashRate->value();
+            graph()->connections[c.index].setTypeFromParams();
+        }
+    }
+    setModified();
+    reloadScene();
+}
+
+void NetGraphEditor::on_btnTCPDashBufferingRate_clicked()
+{
+    foreach (NetGraphConnection c, graph()->connections) {
+        if (!ui->checkAdjustClass0->isChecked() &&
+            c.trafficClass == 0)
+            continue;
+        if (!ui->checkAdjustClass1->isChecked() &&
+            c.trafficClass == 1)
+            continue;
+        if (c.basicType == "TCP-DASH") {
+            graph()->connections[c.index].bufferingRate_Mbps = ui->spinTCPDashBufferingRate->value();
+            graph()->connections[c.index].setTypeFromParams();
+        }
+    }
+    setModified();
+    reloadScene();
+}
+
+void NetGraphEditor::on_btnTCPDashBufferingTime_clicked()
+{
+    foreach (NetGraphConnection c, graph()->connections) {
+        if (!ui->checkAdjustClass0->isChecked() &&
+            c.trafficClass == 0)
+            continue;
+        if (!ui->checkAdjustClass1->isChecked() &&
+            c.trafficClass == 1)
+            continue;
+        if (c.basicType == "TCP-DASH") {
+            graph()->connections[c.index].bufferingTime_s = ui->spinTCPDashBufferingTime->value();
+            graph()->connections[c.index].setTypeFromParams();
+        }
+    }
+    setModified();
+    reloadScene();
+}
+
+void NetGraphEditor::on_btnTCPDashStreamingPeriod_clicked()
+{
+    foreach (NetGraphConnection c, graph()->connections) {
+        if (!ui->checkAdjustClass0->isChecked() &&
+            c.trafficClass == 0)
+            continue;
+        if (!ui->checkAdjustClass1->isChecked() &&
+            c.trafficClass == 1)
+            continue;
+        if (c.basicType == "TCP-DASH") {
+            graph()->connections[c.index].streamingPeriod_s = ui->spinTCPDashStreamingPeriod->value();
+            graph()->connections[c.index].setTypeFromParams();
+        }
+    }
+    setModified();
+    reloadScene();
+}
+
 void NetGraphEditor::on_cmbConnectionTypeBase_currentIndexChanged(const QString &)
 {
     ui->boxTCPParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP");
 	ui->boxTCPPoissonParetoParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto");
+    ui->boxTcpDashParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP DASH");
 	ui->boxUDPCBRParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "UDP CBR");
 	ui->boxUDPVCBRParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "UDP VCBR");
 	updateTxtConnectionType();
-	if (ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto") {
+    if (ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto" ||
+        ui->cmbConnectionTypeBase->currentText() == "TCP DASH") {
 		ui->checkConnectionOnOff->setChecked(false);
 		ui->checkConnectionOnOff->setEnabled(false);
 	} else {
@@ -1734,7 +1844,14 @@ void NetGraphEditor::updateTxtConnectionType()
 									   arg(ui->cmbParetoUnit->currentText()).
                                        arg(ui->checkPoissonSequential->isChecked() ? "sequential" : "").
                                        arg(ui->cmbTcpParetoCc->currentText()));
-	} else if (ui->cmbConnectionTypeBase->currentText() == "UDP CBR") {
+    } else if (ui->cmbConnectionTypeBase->currentText() == "TCP DASH") {
+        ui->txtConnectionType->setText(QString("TCP-DASH %1 %2 %3 %4 cc %5").
+                                       arg(ui->spinTcpDashRate->value()).
+                                       arg(ui->spinTcpDashBufferingRate->value()).
+                                       arg(ui->spinTcpDashBufferingTime->value()).
+                                       arg(ui->spinTcpDashStreamingPeriod->value()).
+                                       arg(ui->cmbTcpDashCc->currentText()));
+    } else if (ui->cmbConnectionTypeBase->currentText() == "UDP CBR") {
 		ui->txtConnectionType->setText(QString("UDP-CBR %1 %2").
 									   arg(ui->spinUDPCBRRate->value()).
 									   arg(ui->checkUDPCBRPoisson->isChecked() ? "poisson" : ""));
@@ -1805,6 +1922,31 @@ void NetGraphEditor::on_spinParetoScale_valueChanged(double )
 void NetGraphEditor::on_cmbParetoUnit_currentIndexChanged(const QString &)
 {
 	updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_cmbTcpDashCc_currentIndexChanged(int )
+{
+    updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_spinTcpDashRate_valueChanged(double )
+{
+    updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_spinTcpDashBufferingRate_valueChanged(double )
+{
+    updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_spinTcpDashBufferingTime_valueChanged(double )
+{
+    updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_spinTcpDashStreamingPeriod_valueChanged(double )
+{
+    updateTxtConnectionType();
 }
 
 void NetGraphEditor::on_spinUDPCBRRate_valueChanged(double )
@@ -2419,6 +2561,7 @@ void NetGraphEditor::on_btnTcpParetoCongestionControl_clicked()
         if (!ui->checkAdjustClass1->isChecked() &&
             c.trafficClass == 1)
             continue;
+        // TODO BUG
         graph()->connections[c.index].tcpCongestionControl = ui->cmbTcpCongestionControl->currentText();
         graph()->connections[c.index].setTypeFromParams();
     }

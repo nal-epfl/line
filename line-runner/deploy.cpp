@@ -690,6 +690,9 @@ void generateHostDeploymentScript(NetGraph &g, bool realRouting) {
 	// Enable TCP selective acks.
 	lines << QString("command \"sh -c 'echo 1 > /proc/sys/net/ipv4/tcp_sack'\";");
 
+    // Disable Slow-Start Restart (required to generate DASH video traffic).
+    lines << QString("command \"sh -c 'echo 0 > /proc/sys/net/ipv4/tcp_slow_start_after_idle'\";");
+
 	if (!realRouting) {
 		if (QString(REMOTE_DEDICATED_IP_HOSTS) != "127.0.0.1") {
 			QString gateway = REMOTE_DEDICATED_IP_ROUTER;

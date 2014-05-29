@@ -12,7 +12,7 @@ REMOTE_USER=$REMOTE_USER_HOSTS
 REMOTE_HOST=$REMOTE_HOST_HOSTS
 REMOTE_PORT=$REMOTE_PORT_HOSTS
 REMOTE_DIR=$( [ "$REMOTE_USER" = "root" ] && echo "/root" || echo "/home/$REMOTE_USER" )
-MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 CONFIG+=release && make clean && make -w -j12 && install -m 755 -p line-traffic /usr/bin/"
+MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 ${BUILD_CONFIG_HOSTS} && make clean && make -w -j12 && install -m 755 -p line-traffic /usr/bin/"
 #MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 CONFIG+=debug && make clean && make -w -j12 && install -m 755 -p line-traffic /usr/bin/"
 
 echo "make-remote.sh:1: warning: Compiling on $REMOTE_HOST ($(host $REMOTE_HOST | cut -d ' ' -f 5))"

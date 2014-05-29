@@ -220,6 +220,28 @@ private slots:
 
     void on_btnTcpParetoCongestionControl_clicked();
 
+    void on_cmbTcpDashCc_currentIndexChanged(int index);
+
+    void on_spinTcpDashRate_valueChanged(double arg1);
+
+    void on_spinTcpDashBufferingRate_valueChanged(double arg1);
+
+    void on_spinTcpDashBufferingTime_valueChanged(double arg1);
+
+    void on_spinTcpDashStreamingPeriod_valueChanged(double arg1);
+
+    void on_btnTcpDashCongestionControl_clicked();
+
+    void on_btnTCPDashMultiplier_clicked();
+
+    void on_btnTCPDashRate_clicked();
+
+    void on_btnTCPDashBufferingRate_clicked();
+
+    void on_btnTCPDashBufferingTime_clicked();
+
+    void on_btnTCPDashStreamingPeriod_clicked();
+
 protected:
 	virtual void resizeEvent(QResizeEvent* event);
 

@@ -98,3 +98,9 @@ exists( ../line.pro ) {
 	bundle.files = $$TARGET
 	INSTALLS += bundle
 }
+
+HEADERS += \
+    tcpdashsource.h
+
+SOURCES += \
+    tcpdashsource.cpp

@@ -2561,8 +2561,7 @@ void NetGraphEditor::on_btnTcpParetoCongestionControl_clicked()
         if (!ui->checkAdjustClass1->isChecked() &&
             c.trafficClass == 1)
             continue;
-        // TODO BUG
-        graph()->connections[c.index].tcpCongestionControl = ui->cmbTcpCongestionControl->currentText();
+        graph()->connections[c.index].tcpCongestionControl = ui->cmbTcpParetoCongestionControl->currentText();
         graph()->connections[c.index].setTypeFromParams();
     }
     setModified();

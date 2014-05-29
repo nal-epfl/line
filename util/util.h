@@ -37,6 +37,7 @@ typedef QTriple<qint32, qint32, qint32> QInt32Triple;
 typedef QTriple<QString, QString, QString> QStringTriple;
 
 typedef QQuad<qint32, qint32, qint32, qint32> QInt32Quad;
+typedef QQuad<QString, QString, QString, QString> QStringQuad;
 
 typedef QSet<qint32> QInt32Set;
 typedef QList<qint32> QInt32List;

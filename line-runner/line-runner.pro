@@ -82,7 +82,7 @@ HEADERS += \
     result_processing.h
 
 exists(result_processing.cpp) {
-    SOURCES +=
+    SOURCES += result_processing.cpp
     DEFINES += HAVE_RESULT_PROCESSING
 }
 

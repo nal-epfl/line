@@ -33,6 +33,8 @@ public:
 	qreal successRate(bool *ok = NULL) const;
 	void clear();
 
+    void sample(int packetCount);
+
 	friend bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 	friend bool operator !=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 	friend bool operator <(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);

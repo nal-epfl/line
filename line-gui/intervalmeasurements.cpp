@@ -46,6 +46,37 @@ void LinkIntervalMeasurement::clear()
     events.clear();
 }
 
+void LinkIntervalMeasurement::sample(int packetCount)
+{
+    if (packetCount > numPacketsInFlight)
+        return;
+
+    QVector<quint8> packetEvents = events.toVector();
+
+    // Generate random events if they are missing
+    if (packetEvents.size() != numPacketsInFlight) {
+        packetEvents.resize(numPacketsInFlight);
+        for (int i = 0; i < packetEvents.count(); i++) {
+            packetEvents[i] = i < numPacketsDropped ? 0 : 1;
+        }
+        qShuffle(packetEvents);
+    }
+
+    // Sample the events
+    QVector<quint8> sampledEvents = packetEvents;
+
+    qShuffle(sampledEvents);
+    sampledEvents.resize(packetCount);
+
+    // Reconstruct measurement
+    numPacketsInFlight = sampledEvents.count();
+    numPacketsDropped = sampledEvents.count(0);
+    events.clear();
+    foreach (quint8 event, sampledEvents) {
+        events.append(event);
+    }
+}
+
 LinkIntervalMeasurement& LinkIntervalMeasurement::operator+=(LinkIntervalMeasurement other)
 {
 	this->numPacketsInFlight += other.numPacketsInFlight;

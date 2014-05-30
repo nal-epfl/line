@@ -5,10 +5,10 @@ malloc_profile.so: malloc_profile.c
 	gcc -O2 -Wall -fPIC -std=gnu99 -o malloc_profile.so -shared malloc_profile.c -ldl -lrt -lunwind
 
 clean:
-	rm malloc_profile.so || /bin/true
-	rm malloc_profile_test.o || /bin/true
-	rm malloc_profile_wrapper.o || /bin/true
-	rm malloc_profile_test || /bin/true
+	rm malloc_profile.so 2>/dev/null || /bin/true
+	rm malloc_profile_test.o 2>/dev/null || /bin/true
+	rm malloc_profile_wrapper.o 2>/dev/null || /bin/true
+	rm malloc_profile_test 2>/dev/null || /bin/true
 
 install: malloc_profile.so
 	install -m 755 -p malloc_profile.so /usr/lib

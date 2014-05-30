@@ -38,7 +38,7 @@
 //#define LINE_EMULATOR
 #endif
 #ifdef LINE_EMULATOR
-#include "../line-router/bitarray.h"
+#include "../util/bitarray.h"
 #include "../util/ovector.h"
 #endif
 

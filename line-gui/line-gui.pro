@@ -89,7 +89,8 @@ SOURCES += main.cpp\
     mainwindow_fake_emulation.cpp \
     ../line-runner/run_experiment_params.cpp \
     flowevent.cpp \
-    ../util/ovector.cpp
+    ../util/ovector.cpp \
+    ../util/bitarray.cpp
 
 HEADERS  += mainwindow.h \
     netgraph.h \
@@ -144,7 +145,8 @@ HEADERS  += mainwindow.h \
     qrgb-line.h \
     ../line-runner/run_experiment_params.h \
     flowevent.h \
-    ../util/ovector.h
+    ../util/ovector.h \
+    ../util/bitarray.h
 
 FORMS    += mainwindow.ui \
     ../util/qswiftprogressdialog.ui \

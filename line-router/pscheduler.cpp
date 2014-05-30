@@ -801,11 +801,17 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 
     pathIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);
     flowIntervalMeasurements->countPacketInFLightEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1);
+    // It is currently possible to have correct per-edge event recording only for tail-drop.
+    // For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops.
+    pathIntervalMeasurements->recordPacketEventEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1, queued);
+    flowIntervalMeasurements->recordPacketEventEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1, queued);
 	if (!queued) {
         pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
         flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
         pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, ts_now, p->length, 1);
         flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, ts_now, p->length, 1);
+        pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, queued);
+        flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, queued);
         if (flowTracking) {
             sampledPathFlowEvents->handlePacket(p, ts_now);
         }
@@ -930,6 +936,8 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 
         pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
         flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
+        pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, true);
+        flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, true);
 		return PKT_FORWARDED;
 	}
 
@@ -957,6 +965,8 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
         flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
         pathIntervalMeasurements->countPacketDropped(p->queue_id, p->path_id, ts_now, p->length, 1);
         flowIntervalMeasurements->countPacketDropped(p->queue_id, p->connection_index, ts_now, p->length, 1);
+        pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, !p->dropped);
+        flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, !p->dropped);
 		return PKT_DROPPED;
 	}
 

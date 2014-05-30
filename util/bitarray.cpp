@@ -25,30 +25,30 @@ BitArray::BitArray() {
 
 BitArray& BitArray::append(int bit) {
     if (bitCount % 64 == 0) {
+        // extend
         bits << 0ULL;
     }
-    if (bit) {
-        bits.last() = (bits.last() << 1) | 1ULL;
-    } else {
-        bits.last() = (bits.last() << 1);
-    }
+    bits.last() = (bits.last() << 1) | (bit ? 1ULL : 0ULL);
     bitCount++;
     return *this;
 }
 
-quint64 BitArray::count() {
+quint64 BitArray::count() const {
     return bitCount;
 }
 
-QByteArray BitArray::serialize() {
-    QByteArray result;
+QString BitArray::toString() const {
+    QString result;
     quint64 bitsLeft = bitCount;
     foreach (quint64 word, bits) {
+        if (!result.isEmpty()) {
+            result += "\n";
+        }
         if (bitsLeft < 64) {
             word <<= 64 - bitsLeft;
         }
         for (quint64 i = qMin(64ULL, bitsLeft); i > 0; i--) {
-            result += (word & (1ULL << 63)) ? "1 " : "0 ";
+            result += (word & (1ULL << 63)) ? "1" : "0";
             word <<= 1;
             bitsLeft--;
         }
@@ -56,7 +56,7 @@ QByteArray BitArray::serialize() {
     return result;
 }
 
-QVector<quint8> BitArray::toVector() {
+QVector<quint8> BitArray::toVector() const {
     QVector<quint8> result;
     quint64 bitsLeft = bitCount;
     foreach (quint64 word, bits) {
@@ -72,22 +72,60 @@ QVector<quint8> BitArray::toVector() {
     return result;
 }
 
-BitArray& BitArray::operator<< (int bit) {
+BitArray& BitArray::operator<<(int bit) {
     return append(bit);
+}
+
+void BitArray::reserve(int size)
+{
+    bits.reserve(size / 64);
+}
+
+void BitArray::clear()
+{
+    bits.clear();
+    bitCount = 0;
+}
+
+QDataStream& operator<<(QDataStream& s, const BitArray& d) {
+    qint32 ver = 1;
+    s << ver;
+
+    if (ver == 1) {
+        s << d.bits;
+        s << d.bitCount;
+    }
+
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, BitArray& d) {
+    qint32 ver;
+    s >> ver;
+
+    if (ver == 1) {
+        s >> d.bits;
+        s >> d.bitCount;
+    } else {
+        qDebug() << __FILE__ << __LINE__ << "Read error";
+        exit(-1);
+    }
+
+    return s;
 }
 
 void BitArray::test() {
     BitArray bits;
-    QByteArray reference;
+    QString reference;
 
     for (int i = 0; i < 100; i++) {
         for (int c = i; c > 0; c--) {
             bits << 0;
             reference += "0 ";
-            if (reference != bits.serialize()) {
+            if (reference != bits.toString()) {
                 qDebug() << "FAIL";
                 qDebug() << reference;
-                qDebug() << bits.serialize();
+                qDebug() << bits.toString();
                 qDebug() << bits.count();
 				qDebug() << __FILE__ << __LINE__;
 				exit(EXIT_FAILURE);
@@ -96,10 +134,10 @@ void BitArray::test() {
         for (int c = i; c > 0; c--) {
             bits << 1;
             reference += "1 ";
-            if (reference != bits.serialize()) {
+            if (reference != bits.toString()) {
                 qDebug() << "FAIL";
                 qDebug() << reference;
-                qDebug() << bits.serialize();
+                qDebug() << bits.toString();
                 qDebug() << bits.count();
 				qDebug() << __FILE__ << __LINE__;
 				exit(EXIT_FAILURE);

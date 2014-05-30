@@ -58,7 +58,7 @@ exists( ../line.pro ) {
 		pconsumer.cpp \
 		pscheduler.cpp \
 		psender.cpp \
-		bitarray.cpp \
+		../util/bitarray.cpp \
 		../line-gui/netgraphpath.cpp \
     ../line-gui/netgraphnode.cpp \
 		../line-gui/netgraphedge.cpp \
@@ -85,7 +85,7 @@ exists( ../line.pro ) {
 		pscheduler.h \
 		pconsumer.h \
 		psender.h \
-		bitarray.h \
+		../util/bitarray.h \
 		../line-gui/netgraphpath.h \
 		../line-gui/netgraphnode.h \
 		../line-gui/netgraphedge.h \

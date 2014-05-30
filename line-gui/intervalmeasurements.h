@@ -20,6 +20,7 @@
 #define INTERVALMEASUREMENTS_H
 
 #include <QtCore>
+#include "../util/bitarray.h"
 
 class LinkIntervalMeasurement
 {
@@ -27,6 +28,8 @@ public:
     LinkIntervalMeasurement();
 	qint64 numPacketsInFlight;
 	qint64 numPacketsDropped;
+    // 1: forward, 0: drop
+    BitArray events;
 	qreal successRate(bool *ok = NULL) const;
 	void clear();
 
@@ -81,10 +84,14 @@ public:
                     QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed,
                     int packetSizeThreshold);
 
+    // These functions update the counters
     void countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
     void countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
-
     void countPacketDropped(int edge, int path, quint64 tsDrop, int size, int multiplier);
+
+    // Updates the events bitmask
+    void recordPacketEventPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier, bool forwarded);
+    void recordPacketEventEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size, int multiplier, bool forwarded);
 
     // Returns the index of the interval that includes a timestamp.
     // Also resizes the vector of intervals if the index is outside of the current range.

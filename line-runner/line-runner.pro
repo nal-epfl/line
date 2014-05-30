@@ -46,7 +46,8 @@ SOURCES += main.cpp \
     deploy.cpp \
     ../tomo/tomodata.cpp \
     simulate_experiment.cpp \
-    export_matlab.cpp
+    export_matlab.cpp \
+    ../util/bitarray.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -79,7 +80,8 @@ HEADERS += \
     ../tomo/tomodata.h \
     simulate_experiment.h \
     export_matlab.h \
-    result_processing.h
+    result_processing.h \
+    ../util/bitarray.h
 
 exists(result_processing.cpp) {
     SOURCES += result_processing.cpp

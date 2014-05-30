@@ -791,15 +791,17 @@ void MainWindow::loadSimulation()
 						} else {
 							qint64 numDropped = experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].numPacketsDropped;
 							qint64 numSent = experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].numPacketsInFlight;
+                            QString events = experimentIntervalMeasurements.intervalMeasurements[interval].pathMeasurements[p].events.toString();
 							qreal rate = 1.0 -
 										 qreal(numDropped) /
 										 qreal(numSent);
 							cell->setData(Qt::EditRole, rate);
 							cell->setData(Qt::DisplayRole, rate);
 							cell->setData(Qt::ToolTipRole,
-										  QString("%1 dropped out of %2")
+                                          QString("%1 dropped out of %2. Events:\n%3")
 										  .arg(numDropped)
-										  .arg(numSent));
+                                          .arg(numSent)
+                                          .arg(events));
 						}
 						table->setItem(table->rowCount() - 1, col, cell);
 						col++;
@@ -811,6 +813,76 @@ void MainWindow::loadSimulation()
 				table->setMinimumHeight(tableHeight);
 				accordion->addWidget("Path transmission rates", table);
 			}
+
+            {
+                QTableWidget *table = new QTableWidget();
+                QStringList columnHeaders = QStringList() << "Link" << "Path" << "Neutrality group";
+                for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                    columnHeaders << QString("Interval %1").arg(interval + 1);
+                }
+                table->setColumnCount(columnHeaders.count());
+                table->setHorizontalHeaderLabels(columnHeaders);
+                table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+                for (int e = 0; e < experimentIntervalMeasurements.numEdges; e++) {
+                    for (int p = 0; p < experimentIntervalMeasurements.numPaths; p++) {
+                        QInt32Pair ep = QInt32Pair(e, p);
+                        if (experimentIntervalMeasurements.globalMeasurements.perPathEdgeMeasurements[ep].numPacketsInFlight == 0)
+                            continue;
+                        table->setRowCount(table->rowCount() + 1);
+
+                        QTableWidgetItem *cell;
+                        int col = 0;
+
+                        cell = new QTableWidgetItem();
+                        cell->setData(Qt::EditRole, e + 1);
+                        cell->setData(Qt::DisplayRole, e + 1);
+                        table->setItem(table->rowCount() - 1, col, cell);
+                        col++;
+
+                        cell = new QTableWidgetItem();
+                        cell->setData(Qt::EditRole, p + 1);
+                        cell->setData(Qt::DisplayRole, p + 1);
+                        table->setItem(table->rowCount() - 1, col, cell);
+                        col++;
+
+                        cell = new QTableWidgetItem();
+                        cell->setData(Qt::EditRole, pathTrafficClass[p] + 1);
+                        cell->setData(Qt::DisplayRole, pathTrafficClass[p] + 1);
+                        table->setItem(table->rowCount() - 1, col, cell);
+                        col++;
+
+                        for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
+                            cell = new QTableWidgetItem();
+                            if (experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight == 0) {
+                                cell->setData(Qt::EditRole, " ");
+                                cell->setData(Qt::DisplayRole, " ");
+                            } else {
+                                qint64 numDropped = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsDropped;
+                                qint64 numSent = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsInFlight;
+                                QString events = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[ep].events.toString();
+                                qreal rate = 1.0 -
+                                             qreal(numDropped) /
+                                             qreal(numSent);
+                                cell->setData(Qt::EditRole, rate);
+                                cell->setData(Qt::DisplayRole, rate);
+                                cell->setData(Qt::ToolTipRole,
+                                              QString("%1 dropped out of %2. Events:\n%3")
+                                              .arg(numDropped)
+                                              .arg(numSent)
+                                              .arg(events));
+                            }
+                            table->setItem(table->rowCount() - 1, col, cell);
+                            col++;
+                        }
+                    }
+                }
+
+                table->setSortingEnabled(true);
+                table->sortByColumn(0);
+                table->setMinimumHeight(tableHeight);
+                accordion->addWidget("Per-path link transmission rates", table);
+            }
 
 			{
 				QTableWidget *table = new QTableWidget();

@@ -33,26 +33,34 @@ public:
     BitArray &append(int bit);
 
     // Returns the number of bits in the array.
-    quint64 count();
+    quint64 count() const;
 
     // Returns a vector of bytes holding the bits, one bit per byte.
     // A byte can be either 0 or 1.
-    QVector<quint8> toVector();
+    QVector<quint8> toVector() const;
 
     // Appends the bit to the end of the array.
     // Returns a reference to self.
-    BitArray &operator<< (int bit);
+    BitArray &operator<<(int bit);
 
-    // TODO move to a separate _test file.
+    void reserve(int size);
+
+    void clear();
+
+    // Serializes the array into some representation (currently ASCII).
+    QString toString() const;
+
     static void test();
 
 protected:
-    // Serializes the array into some representation (currently ASCII).
-    // Used only for testing purposes. Should be kept protected.
-    QByteArray serialize();
-
-	QList<quint64> bits;
+    QVector<quint64> bits;
 	quint64 bitCount;
+
+    friend QDataStream& operator>>(QDataStream& s, BitArray& d);
+    friend QDataStream& operator<<(QDataStream& s, const BitArray& d);
 };
+
+QDataStream& operator>>(QDataStream& s, BitArray& d);
+QDataStream& operator<<(QDataStream& s, const BitArray& d);
 
 #endif // BITARRAY_H

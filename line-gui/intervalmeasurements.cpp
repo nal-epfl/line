@@ -43,6 +43,7 @@ void LinkIntervalMeasurement::clear()
 {
 	numPacketsInFlight = 0;
 	numPacketsDropped = 0;
+    events.clear();
 }
 
 LinkIntervalMeasurement& LinkIntervalMeasurement::operator+=(LinkIntervalMeasurement other)
@@ -83,7 +84,7 @@ bool operator >=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement
 }
 
 QDataStream& operator<<(QDataStream& s, const LinkIntervalMeasurement& d) {
-	qint32 ver = 3;
+    qint32 ver = 4;
 	s << ver;
 
 	if (ver == 1) {
@@ -100,7 +101,11 @@ QDataStream& operator<<(QDataStream& s, const LinkIntervalMeasurement& d) {
 	} else if (ver == 3) {
 		writeNumberCompressed(s, d.numPacketsInFlight);
 		writeNumberCompressed(s, d.numPacketsDropped);
-	}
+    } else if (ver == 4) {
+        writeNumberCompressed(s, d.numPacketsInFlight);
+        writeNumberCompressed(s, d.numPacketsDropped);
+        s << d.events;
+    }
 
 	return s;
 }
@@ -109,6 +114,7 @@ QDataStream& operator>>(QDataStream& s, LinkIntervalMeasurement& d) {
     qint32 ver;
     s >> ver;
 
+    d.clear();
 	if (ver == 1) {
 		quint64 v;
 		s >> v;
@@ -124,7 +130,11 @@ QDataStream& operator>>(QDataStream& s, LinkIntervalMeasurement& d) {
 	} else if (ver == 3) {
 		readNumberCompressed(s, d.numPacketsInFlight);
 		readNumberCompressed(s, d.numPacketsDropped);
-	} else {
+    } else if (ver == 4) {
+        readNumberCompressed(s, d.numPacketsInFlight);
+        readNumberCompressed(s, d.numPacketsDropped);
+        s >> d.events;
+    } else {
 		qDebug() << __FILE__ << __LINE__ << "Read error";
 		exit(-1);
 	}
@@ -140,6 +150,20 @@ void GraphIntervalMeasurements::initialize(int numEdges, int numPaths,
 	foreach (QInt32Pair ep, sparseRoutingMatrixTransposed) {
 		perPathEdgeMeasurements[ep] = LinkIntervalMeasurement();
 	}
+    // 833 packets/100ms corresponds to 100 Mbps
+    // 1024 corresponds to the amount of weakly-bursty traffic over a 100Mbps link
+    // 1024*4 for good measure
+    // TODO allocate this based on the fastest link in the network
+    const int bitmaskSize = 1024 * 4;
+    for (qint32 e = 0; e < numEdges; e++) {
+        edgeMeasurements[e].events.reserve(bitmaskSize);
+    }
+    for (qint32 p = 0; p < numPaths; p++) {
+        pathMeasurements[p].events.reserve(bitmaskSize);
+    }
+    foreach (QInt32Pair ep, sparseRoutingMatrixTransposed) {
+        perPathEdgeMeasurements[ep].events.reserve(bitmaskSize);
+    }
 }
 
 void GraphIntervalMeasurements::clear()
@@ -294,6 +318,64 @@ void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quin
     intervalMeasurements[interval].edgeMeasurements[edge].numPacketsDropped += multiplier;
 	intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsDropped += multiplier;
     intervalMeasurements[interval].pathMeasurements[path].numPacketsDropped += multiplier;
+}
+
+void ExperimentIntervalMeasurements::recordPacketEventPath(int path,
+                                                           quint64 tsIn, quint64 tsOut,
+                                                           int size, int multiplier,
+                                                           bool forwarded)
+{
+    if (path < 0)
+        return;
+    if (size < packetSizeThreshold)
+        return;
+
+    tsLast = qMax(tsLast, tsIn);
+    tsLast = qMax(tsLast, tsOut);
+
+    int intervalIn = timestampToInterval(tsIn);
+    if (intervalIn < 0)
+        return;
+    int intervalOut = timestampToOpenInterval(tsOut);
+    if (intervalOut < 0)
+        return;
+    for (int interval = intervalIn; interval <= intervalOut; interval++) {
+        for (int m = 0; m < multiplier; m++) {
+            intervalMeasurements[interval].pathMeasurements[path].events.append(forwarded);
+        }
+    }
+}
+
+void ExperimentIntervalMeasurements::recordPacketEventEdge(int edge, int path,
+                                                           quint64 tsIn, quint64 tsOut,
+                                                           int size, int multiplier,
+                                                           bool forwarded)
+{
+    if (size < packetSizeThreshold)
+        return;
+
+    tsLast = qMax(tsLast, tsIn);
+    tsLast = qMax(tsLast, tsOut);
+
+    int intervalIn = timestampToInterval(tsIn);
+    if (intervalIn < 0)
+        return;
+    int intervalOut = timestampToOpenInterval(tsOut);
+    if (intervalOut < 0)
+        return;
+    for (int interval = intervalIn; interval <= intervalOut; interval++) {
+        if (edge >= 0) {
+            for (int m = 0; m < multiplier; m++) {
+                intervalMeasurements[interval].edgeMeasurements[edge].events.append(forwarded);
+            }
+            if (path >= 0) {
+                QInt32Pair ep = QInt32Pair(edge, path);
+                for (int m = 0; m < multiplier; m++) {
+                    intervalMeasurements[interval].perPathEdgeMeasurements[ep].events.append(forwarded);
+                }
+            }
+        }
+    }
 }
 
 int ExperimentIntervalMeasurements::timestampToInterval(quint64 ts)

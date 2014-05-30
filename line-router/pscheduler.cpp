@@ -808,8 +808,8 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 	if (!queued) {
         pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
         flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-        pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, ts_now, p->length, 1);
-        flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, ts_now, p->length, 1);
+        pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
         pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, queued);
         flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, queued);
         if (flowTracking) {
@@ -963,10 +963,10 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
         }
         pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
         flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-        pathIntervalMeasurements->countPacketDropped(p->queue_id, p->path_id, ts_now, p->length, 1);
-        flowIntervalMeasurements->countPacketDropped(p->queue_id, p->connection_index, ts_now, p->length, 1);
-        pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, !p->dropped);
-        flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, !p->dropped);
+        pathIntervalMeasurements->countPacketDropped(p->queue_id, p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+        flowIntervalMeasurements->countPacketDropped(p->queue_id, p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
+        pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, false);
+        flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, false);
 		return PKT_DROPPED;
 	}
 

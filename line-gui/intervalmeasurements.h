@@ -89,7 +89,7 @@ public:
     // These functions update the counters
     void countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
     void countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
-    void countPacketDropped(int edge, int path, quint64 tsDrop, int size, int multiplier);
+    void countPacketDropped(int edge, int path, quint64 tsIn, quint64 tsDrop, int size, int multiplier);
 
     // Updates the events bitmask
     void recordPacketEventPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier, bool forwarded);

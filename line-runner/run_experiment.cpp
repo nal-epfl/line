@@ -715,11 +715,11 @@ bool lineKernelRec2IntervalMeasurements(QString testId,
 			if (dataAOut[i][p] >= dataDIn[i][p]) {
                 intervalMeasurements.countPacketInFLightEdge(edge, p, time, time, packetSize, dataAOut[i][p]);
                 intervalMeasurements.countPacketInFLightPath(p, time, time, packetSize, dataAOut[i][p]);
-                intervalMeasurements.countPacketDropped(edge, p, time, packetSize, dataAOut[i][p] - dataDIn[i][p]);
+                intervalMeasurements.countPacketDropped(edge, p, time, time, packetSize, dataAOut[i][p] - dataDIn[i][p]);
 			} else {
                 intervalMeasurements.countPacketInFLightEdge(edge, p, time, time, packetSize, dataDOut[i][p]);
                 intervalMeasurements.countPacketInFLightPath(p, time, time, packetSize, dataDOut[i][p]);
-                intervalMeasurements.countPacketDropped(edge, p, time, packetSize, dataDOut[i][p] - dataAIn[i][p]);
+                intervalMeasurements.countPacketDropped(edge, p, time, time, packetSize, dataDOut[i][p] - dataAIn[i][p]);
 			}
 		}
 	}

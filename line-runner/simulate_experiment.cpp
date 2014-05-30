@@ -311,7 +311,7 @@ bool runSimulation(NetGraph &g, RunParams runParams) {
 							}
 							// Count as dropped if necessary, and stop forwarding along the path
 							if (dropped) {
-                                experimentIntervalMeasurements.countPacketDropped(e, p, t, packetSize, 1);
+                                experimentIntervalMeasurements.countPacketDropped(e, p, t, t, packetSize, 1);
 								// The packet does not reach any other edges. As a side effect, this reduces the number of
 								// samples for edges that are further on the path, reducing the quality of the sampling.
 								break;
@@ -325,7 +325,7 @@ bool runSimulation(NetGraph &g, RunParams runParams) {
                         experimentIntervalMeasurements.countPacketInFLightEdge(e, p, t, t, packetSize, packetsInFlight);
 						qreal transRate = linkTransRatesPerFlow[e][c];
 						int numDropped = (1.0 - transRate) * packetsInFlight;
-                        experimentIntervalMeasurements.countPacketDropped(e, p, t, packetSize, numDropped);
+                        experimentIntervalMeasurements.countPacketDropped(e, p, t, t, packetSize, numDropped);
 						packetsInFlight -= numDropped;
 						if (packetsInFlight <= 0) {
 							break;

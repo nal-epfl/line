@@ -330,7 +330,7 @@ void ExperimentIntervalMeasurements::countPacketInFLightPath(int path, quint64 t
     }
 }
 
-void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quint64 tsDrop, int size, int multiplier)
+void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quint64 tsIn, quint64 tsDrop, int size, int multiplier)
 {
     if (path < 0 || edge < 0)
         return;
@@ -343,12 +343,17 @@ void ExperimentIntervalMeasurements::countPacketDropped(int edge, int path, quin
 	globalMeasurements.perPathEdgeMeasurements[ep].numPacketsDropped += multiplier;
     globalMeasurements.pathMeasurements[path].numPacketsDropped += multiplier;
 
-    int interval = timestampToOpenInterval(tsDrop);
-	if (interval < 0)
-		return;
-    intervalMeasurements[interval].edgeMeasurements[edge].numPacketsDropped += multiplier;
-	intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsDropped += multiplier;
-    intervalMeasurements[interval].pathMeasurements[path].numPacketsDropped += multiplier;
+    int intervalIn = timestampToInterval(tsIn);
+    if (intervalIn < 0)
+        return;
+    int intervalOut = timestampToOpenInterval(tsDrop);
+    if (intervalOut < 0)
+        return;
+    for (int interval = intervalIn; interval <= intervalOut; interval++) {
+        intervalMeasurements[interval].edgeMeasurements[edge].numPacketsDropped += multiplier;
+        intervalMeasurements[interval].perPathEdgeMeasurements[ep].numPacketsDropped += multiplier;
+        intervalMeasurements[interval].pathMeasurements[path].numPacketsDropped += multiplier;
+    }
 }
 
 void ExperimentIntervalMeasurements::recordPacketEventPath(int path,

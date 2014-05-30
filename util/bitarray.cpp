@@ -116,13 +116,13 @@ QDataStream& operator>>(QDataStream& s, BitArray& d) {
 
 void BitArray::test() {
     BitArray bits;
-    QString reference;
+    QVector<quint8> reference;
 
     for (int i = 0; i < 100; i++) {
         for (int c = i; c > 0; c--) {
             bits << 0;
-            reference += "0 ";
-            if (reference != bits.toString()) {
+            reference << 0;
+            if (reference != bits.toVector()) {
                 qDebug() << "FAIL";
                 qDebug() << reference;
                 qDebug() << bits.toString();
@@ -133,8 +133,8 @@ void BitArray::test() {
         }
         for (int c = i; c > 0; c--) {
             bits << 1;
-            reference += "1 ";
-            if (reference != bits.toString()) {
+            reference << 1;
+            if (reference != bits.toVector()) {
                 qDebug() << "FAIL";
                 qDebug() << reference;
                 qDebug() << bits.toString();

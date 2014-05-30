@@ -56,7 +56,7 @@ void setupLogging(QString logDir) {
 }
 
 int main(int argc, char **argv) {
-	unsigned int seed = clock() ^ time(NULL) ^ getpid();
+    unsigned int seed = clock() ^ time(NULL) ^ getpid();
 	qDebug() << "Seed:" << seed;
 	srand(seed);
 

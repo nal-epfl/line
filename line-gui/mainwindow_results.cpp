@@ -283,7 +283,7 @@ void MainWindow::loadSimulation()
 
     quint64 intervalSize = 0;
 	accordion->addLabel("Interval transmission records");
-    if (0) {
+    if (1) {
 		ExperimentIntervalMeasurements experimentIntervalMeasurements;
 		QString fileName = simulations[currentSimulation].dir + "/" + "interval-measurements.data";
 		if (!experimentIntervalMeasurements.load(fileName)) {
@@ -1890,7 +1890,8 @@ void MainWindow::loadSimulation()
                         //queue_max->x = arrivals_p->x;
                         queue_max->y.reserve(nelem);
                         queue_max->pointSymbol = "";
-                        int step = 3;
+                        //int step = 3;
+                        int step = 1;
                         for (int i = 0; i < nelem; i++) {
                             queue_max->x << arrivals_p->x[i];
                             queue_max->y << timeline.items[i].queue_max * 8 / 1.0e6;

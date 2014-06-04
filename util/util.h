@@ -504,6 +504,8 @@ QVector<int> kMeans1D(QVector<qreal> points, int k,
                       int maxIterations = 1000,
                       QVector<qreal> initialCentroids = QVector<qreal>());
 
+QVector<QVector<qreal> > clusterPoints1D(QVector<qreal> points, QVector<int> clusters, int k);
+
 void kMeans1DTest();
 
 quint64 bPerSec2bPerNanosec(quint64 value);

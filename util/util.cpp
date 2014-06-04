@@ -1777,6 +1777,19 @@ QVector<int> kMeans1D(QVector<qreal> points, int k, int maxIterations, QVector<q
     return clusters;
 }
 
+QVector<QVector<qreal> > clusterPoints1D(QVector<qreal> points, QVector<int> clusters, int k)
+{
+    QVector<QVector<qreal> > clusteredPoints;
+    clusteredPoints.resize(k);
+    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
+    }
+    for (int c = 0; c < clusteredPoints.count(); c++) {
+        qSort(clusteredPoints[c]);
+    }
+    return clusteredPoints;
+}
+
 void kMeans1DTest()
 {
     //
@@ -1794,12 +1807,7 @@ void kMeans1DTest()
 
     Q_ASSERT_FORCE(clusters.count() == points.count());
 
-    clusteredPoints.clear();
-    clusteredPoints.resize(k);
-    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
-        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
-    }
-
+    clusteredPoints = clusterPoints1D(points, clusters, k);
     qDebug() << "Points:" << points;
     qDebug() << "Clusters:" << clusteredPoints;
 
@@ -1813,12 +1821,7 @@ void kMeans1DTest()
 
     Q_ASSERT_FORCE(clusters.count() == points.count());
 
-    clusteredPoints.clear();
-    clusteredPoints.resize(k);
-    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
-        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
-    }
-
+    clusteredPoints = clusterPoints1D(points, clusters, k);
     qDebug() << "Points:" << points;
     qDebug() << "Clusters:" << clusteredPoints;
 
@@ -1832,12 +1835,7 @@ void kMeans1DTest()
 
     Q_ASSERT_FORCE(clusters.count() == points.count());
 
-    clusteredPoints.clear();
-    clusteredPoints.resize(k);
-    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
-        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
-    }
-
+    clusteredPoints = clusterPoints1D(points, clusters, k);
     qDebug() << "Points:" << points;
     qDebug() << "Clusters:" << clusteredPoints;
 

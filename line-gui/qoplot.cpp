@@ -457,7 +457,7 @@ QOPlotDataHit QOPlotData::getHits(qreal x, qreal y, qreal aspectRatio)
 QOPlotCurveData::QOPlotCurveData() : QOPlotData()
 {
 	dataType = "line";
-	pen = QPen(Qt::blue, 1.0, Qt::SolidLine);
+    pen = QPen(Qt::black, 1.0, Qt::SolidLine);
 	pen.setCosmetic(true);
 	pointSymbol = QString();
 	symbolSize = 6.0;
@@ -1646,12 +1646,12 @@ void QOPlotWidget::saveEps(QString fileName)
 		printer.setOutputFileName(fileName);
 		printer.setFullPage(true);
 		printer.setPageSize(QPrinter::Custom);
-		printer.setPaperSize(QSizeF(width(), height()), QPrinter::Point);
-		printer.setPageMargins(0, 0, 0, 0, QPrinter::Point);
+        printer.setPaperSize(QSizeF(width(), height()), QPrinter::Point);
+        printer.setPageMargins(0, 0, 0, 0, QPrinter::Point);
 
 		QPainter painter;
 		painter.begin(&printer);
-		painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::HighQualityAntialiasing);
 		scenePlot->render(&painter, QRectF(), QRectF(0, 0, width(), height()));
 		painter.end();
 	}
@@ -1683,8 +1683,8 @@ void QOPlotWidget::saveJson(QString fileName)
 	out << QString("\"title\": \"%1\",").arg(escapeLatexJson(plot.title)) << endl;
 	out << QString("\"xLabel\": \"%1\",").arg(escapeLatexJson(plot.xlabel)) << endl;
 	out << QString("\"yLabel\": \"%1\",").arg(escapeLatexJson(plot.ylabel)) << endl;
-	out << QString("\"fileName\": \"%1\",").arg(fileName + ".pdf") << endl;
-	out << QString("\"fontScale\": 1.5,") << endl;
+    out << QString("\"fileName\": \"%1\",").arg(QString(fileName).replace(".json", ".eps")) << endl;
+    out << QString("\"fontScale\": 2.5,") << endl;
 	out << QString("\"grid\": \"%1\",")
 		   .arg((plot.xGridVisible || plot.yGridVisible) ? "major" : "") << endl;
 	if (plot.fixedAxes) {
@@ -1780,6 +1780,12 @@ void QOPlotWidget::saveJson(QString fileName)
 	out << QString("\"_majorYTicks\" : -1,") << endl;
 	out << QString("\"%1noLegend\" : 0,").arg(plot.legendVisible ? "_" : "") << endl;
 	out << QString("\"_legendTitle\" : \"Legend\",") << endl;
+
+    //out << QString("\"w\" : %1,").arg(width() / qApp->desktop()->logicalDpiX()) << endl;
+    //out << QString("\"h\" : %1,").arg(height() / qApp->desktop()->logicalDpiY()) << endl;
+    out << QString("\"w\" : 30,") << endl;
+    out << QString("\"h\" : 8,") << endl;
+
 	out << QString("\"data\": [") << endl;
 
 	for (int i = 0; i < plot.data.count(); i++) {
@@ -1868,6 +1874,7 @@ void QOPlotWidget::updateGeometry()
 	const qreal x_tick_length = 5; // line length
 	nice_loose_label(world_x_off, world_x_off + world_w, x_tick_count, x_tick_start, x_tick_size);
 	// X tick marks & grid
+    QColor gridColor = Qt::gray;
 	for (int i = 0; i <= x_tick_count; i++) {
 		qreal x_tick_world = x_tick_start + i * x_tick_size;
 		if (world_x_off <= x_tick_world && x_tick_world <= world_x_off + world_w) {
@@ -1887,7 +1894,7 @@ void QOPlotWidget::updateGeometry()
 			line->setZValue(0.5);
 			tickItems << line;
 			if (plot.xGridVisible) {
-				line = scenePlot->addLine(x_tick_device, marginTop + plotHeight, x_tick_device, marginTop + plotHeight - plotHeight, QPen(plot.foregroundColor, 1.0, Qt::DotLine));
+                line = scenePlot->addLine(x_tick_device, marginTop + plotHeight, x_tick_device, marginTop + plotHeight - plotHeight, QPen(gridColor, 1.0, Qt::DotLine));
 				line->setZValue(0.4);
 				tickItems << line;
 			}
@@ -1927,7 +1934,7 @@ void QOPlotWidget::updateGeometry()
 			line->setZValue(0.5);
 			tickItems << line;
 			if (plot.yGridVisible) {
-				line = scenePlot->addLine(marginLeft, y_tick_device, marginLeft + plotWidth, y_tick_device, QPen(plot.foregroundColor, 1.0, Qt::DotLine));
+                line = scenePlot->addLine(marginLeft, y_tick_device, marginLeft + plotWidth, y_tick_device, QPen(gridColor, 1.0, Qt::DotLine));
 				line->setZValue(0.4);
 				tickItems << line;
 			}

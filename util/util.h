@@ -497,6 +497,15 @@ bool randomLessThan(const QString &, const QString &);
 qreal median(QList<qreal> list);
 qreal sum(QList<qreal> list);
 
+// Applies 1D k-means clustering to the points.
+// Returns a vector with the cluster assignment for each point (index: point index, value: 0 to k-1).
+// If the k initial centroids are not specified, they are selected at random.
+QVector<int> kMeans1D(QVector<qreal> points, int k,
+                      int maxIterations = 1000,
+                      QVector<qreal> initialCentroids = QVector<qreal>());
+
+void kMeans1DTest();
+
 quint64 bPerSec2bPerNanosec(quint64 value);
 
 // Converts a number followed by [multiplier] and unit (b or B)

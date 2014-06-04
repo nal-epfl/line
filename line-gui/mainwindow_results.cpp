@@ -283,12 +283,13 @@ void MainWindow::loadSimulation()
 
     quint64 intervalSize = 0;
 	accordion->addLabel("Interval transmission records");
-	{
+    if (0) {
 		ExperimentIntervalMeasurements experimentIntervalMeasurements;
 		QString fileName = simulations[currentSimulation].dir + "/" + "interval-measurements.data";
 		if (!experimentIntervalMeasurements.load(fileName)) {
 			emit logError(ui->txtBatch, QString("Failed to open file %1").arg(fileName));
 		} else {
+            // experimentIntervalMeasurements = experimentIntervalMeasurements.resample(1 * SEC_TO_NSEC);
 			const qreal firstTransientCutSec = 10;
 			const qreal lastTransientCutSec = 10;
 			const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
@@ -424,7 +425,7 @@ void MainWindow::loadSimulation()
 
 						lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
 						lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
-						lossRateData->pointSymbol = "o";
+                        lossRateData->pointSymbol = "";
 						for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
 							qreal loss;
 							if (experimentIntervalMeasurements.intervalMeasurements[interval].edgeMeasurements[e].numPacketsInFlight > 0) {
@@ -440,11 +441,12 @@ void MainWindow::loadSimulation()
 
 						QString title = QString("Loss for link %1").arg(e + 1);
 						QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-						plot_lossRate->plot.title = title;
-						plot_lossRate->plot.xlabel = "Time (s)";
+                        plot_lossRate->plot.title = "";
+                        plot_lossRate->plot.xlabel = "Time [s]";
 						plot_lossRate->plot.xSISuffix = true;
-						plot_lossRate->plot.ylabel = "Loss (%)";
+                        plot_lossRate->plot.ylabel = "Packet loss [%]";
 						plot_lossRate->plot.ySISuffix = false;
+                        plot_lossRate->plot.legendVisible = false;
 						plot_lossRate->plot.addData(lossRateData);
 						plot_lossRate->plot.drag_y_enabled = false;
 						plot_lossRate->plot.zoom_y_enabled = false;
@@ -463,7 +465,7 @@ void MainWindow::loadSimulation()
 
 						lossRateData->x.reserve(experimentIntervalMeasurements.numIntervals());
 						lossRateData->y.reserve(experimentIntervalMeasurements.numIntervals());
-						lossRateData->pointSymbol = "o";
+                        lossRateData->pointSymbol = "";
 
 						for (int interval = firstTransientCut; interval < experimentIntervalMeasurements.numIntervals() - lastTransientCut; interval++) {
                             const LinkIntervalMeasurement &data = experimentIntervalMeasurements.intervalMeasurements[interval].perPathEdgeMeasurements[QInt32Pair(e, p)];
@@ -480,7 +482,7 @@ void MainWindow::loadSimulation()
 
 						QString title = QString("Loss for link %1, path %2").arg(e + 1).arg(p + 1);
 						QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-						plot_lossRate->plot.title = title;
+                        plot_lossRate->plot.title = "";
 						plot_lossRate->plot.xlabel = "Time (s)";
 						plot_lossRate->plot.xSISuffix = true;
 						plot_lossRate->plot.ylabel = "Loss (%)";
@@ -1723,7 +1725,8 @@ void MainWindow::loadSimulation()
                         QOPlotCurveData *queue_numflows = new QOPlotCurveData;
                         QOPlotCurveData *lossRate = new QOPlotCurveData;
 
-                        QString title = QString("Timeline for link %1 -> %2, %3sampling period %4 s").
+                        QString title = QString("Timeline for link %1 (%2 -> %3), %4sampling period %5 s").
+                                        arg(iEdge + 1).
                                 arg(editor->graph()->edges[iEdge].source + 1).
                                 arg(editor->graph()->edges[iEdge].dest + 1).
                                 arg(queue >= 0 ? QString("queue %1, ").arg(queue) : QString("")).
@@ -1731,7 +1734,7 @@ void MainWindow::loadSimulation()
 
                         arrivals_p->x.reserve(nelem);
                         arrivals_p->y.reserve(nelem);
-                        arrivals_p->pointSymbol = "o";
+                        arrivals_p->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             arrivals_p->x << (timeline.items[i].timestamp * 1.0e-9);
                             arrivals_p->y << timeline.items[i].arrivals_p / (tsample * 1.0e-9);
@@ -1739,7 +1742,7 @@ void MainWindow::loadSimulation()
 
                         QString subtitle = " - Arrivals (packets)";
                         QOPlotWidget *plot_arrivals_p = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_arrivals_p->plot.title = title + subtitle;
+                        plot_arrivals_p->plot.title = "" + subtitle;
                         plot_arrivals_p->plot.xlabel = "Time (s)";
                         plot_arrivals_p->plot.xSISuffix = true;
                         plot_arrivals_p->plot.ylabel = "Packets / second";
@@ -1754,14 +1757,14 @@ void MainWindow::loadSimulation()
 
                         arrivals_B->x = arrivals_p->x;
                         arrivals_B->y.reserve(nelem);
-                        arrivals_B->pointSymbol = "o";
+                        arrivals_B->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             arrivals_B->y << timeline.items[i].arrivals_B * 8 / (tsample * 1.0e-9);
                         }
 
                         subtitle = " - Arrivals (bits)";
                         QOPlotWidget *plot_arrivals_B = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_arrivals_B->plot.title = title + subtitle;
+                        plot_arrivals_B->plot.title = "" + subtitle;
                         plot_arrivals_B->plot.xlabel = "Time (s)";
                         plot_arrivals_B->plot.xSISuffix = true;
                         plot_arrivals_B->plot.ylabel = "Bits / second";
@@ -1776,14 +1779,14 @@ void MainWindow::loadSimulation()
 
                         qdrops_p->x = arrivals_p->x;
                         qdrops_p->y.reserve(nelem);
-                        qdrops_p->pointSymbol = "o";
+                        qdrops_p->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             qdrops_p->y << timeline.items[i].qdrops_p;
                         }
 
                         subtitle = " - Queue drops (packets)";
                         QOPlotWidget *plot_qdrops_p = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_qdrops_p->plot.title = title + subtitle;
+                        plot_qdrops_p->plot.title = "" + subtitle;
                         plot_qdrops_p->plot.xlabel = "Time (s)";
                         plot_qdrops_p->plot.xSISuffix = true;
                         plot_qdrops_p->plot.ylabel = "Packets / interval";
@@ -1798,14 +1801,14 @@ void MainWindow::loadSimulation()
 
                         qdrops_B->x = arrivals_p->x;
                         qdrops_B->y.reserve(nelem);
-                        qdrops_B->pointSymbol = "o";
+                        qdrops_B->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             qdrops_B->y << timeline.items[i].qdrops_B * 8 / (tsample * 1.0e-9);
                         }
 
                         subtitle = " - Queue drops (bits)";
                         QOPlotWidget *plot_qdrops_B = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_qdrops_B->plot.title = title + subtitle;
+                        plot_qdrops_B->plot.title = "" + subtitle;
                         plot_qdrops_B->plot.xlabel = "Time (s)";
                         plot_qdrops_B->plot.xSISuffix = true;
                         plot_qdrops_B->plot.ylabel = "Bits / second";
@@ -1820,14 +1823,14 @@ void MainWindow::loadSimulation()
 
                         rdrops_p->x = arrivals_p->x;
                         rdrops_p->y.reserve(nelem);
-                        rdrops_p->pointSymbol = "o";
+                        rdrops_p->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             rdrops_p->y << timeline.items[i].rdrops_p;
                         }
 
                         subtitle = " - Random drops (packets)";
                         QOPlotWidget *plot_rdrops_p = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_rdrops_p->plot.title = title + subtitle;
+                        plot_rdrops_p->plot.title = "" + subtitle;
                         plot_rdrops_p->plot.xlabel = "Time (s)";
                         plot_rdrops_p->plot.xSISuffix = true;
                         plot_rdrops_p->plot.ylabel = "Packets / interval";
@@ -1842,14 +1845,14 @@ void MainWindow::loadSimulation()
 
                         rdrops_B->x = arrivals_p->x;
                         rdrops_B->y.reserve(nelem);
-                        rdrops_B->pointSymbol = "o";
+                        rdrops_B->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             rdrops_B->y << timeline.items[i].rdrops_B * 8 / (tsample * 1.0e-9);
                         }
 
                         subtitle = " - Random drops (bits)";
                         QOPlotWidget *plot_rdrops_B = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_rdrops_B->plot.title = title + subtitle;
+                        plot_rdrops_B->plot.title = "" + subtitle;
                         plot_rdrops_B->plot.xlabel = "Time (s)";
                         plot_rdrops_B->plot.xSISuffix = true;
                         plot_rdrops_B->plot.ylabel = "Bits / second";
@@ -1864,14 +1867,14 @@ void MainWindow::loadSimulation()
 
                         queue_sampled->x = arrivals_p->x;
                         queue_sampled->y.reserve(nelem);
-                        queue_sampled->pointSymbol = "o";
+                        queue_sampled->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             queue_sampled->y << timeline.items[i].queue_sampled * 8;
                         }
 
                         subtitle = " - Queue size (sampled)";
                         QOPlotWidget *plot_queue_sampled = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_queue_sampled->plot.title = title + subtitle;
+                        plot_queue_sampled->plot.title = "" + subtitle;
                         plot_queue_sampled->plot.xlabel = "Time (s)";
                         plot_queue_sampled->plot.xSISuffix = true;
                         plot_queue_sampled->plot.ylabel = "Bits";
@@ -1884,20 +1887,29 @@ void MainWindow::loadSimulation()
                         accordion->addWidget(title + subtitle, plot_queue_sampled);
                         resultsPlotGroup.addPlot(plot_queue_sampled);
 
-                        queue_max->x = arrivals_p->x;
+                        //queue_max->x = arrivals_p->x;
                         queue_max->y.reserve(nelem);
-                        queue_max->pointSymbol = "o";
+                        queue_max->pointSymbol = "";
+                        int step = 3;
                         for (int i = 0; i < nelem; i++) {
-                            queue_max->y << timeline.items[i].queue_max * 8;
+                            queue_max->x << arrivals_p->x[i];
+                            queue_max->y << timeline.items[i].queue_max * 8 / 1.0e6;
+                            for (int j = 1; j < step; j++) {
+                                i++;
+                                if (i >= nelem)
+                                    break;
+                                queue_max->y.last() = qMax(queue_max->y.last(), timeline.items[i].queue_max * 8.0 / 1.0e6);
+                            }
                         }
 
                         subtitle = " - Queue size (interval maximums)";
                         QOPlotWidget *plot_queue_max = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_queue_max->plot.title = title + subtitle;
-                        plot_queue_max->plot.xlabel = "Time (s)";
+                        plot_queue_max->plot.title = "";
+                        plot_queue_max->plot.xlabel = "Time [s]";
                         plot_queue_max->plot.xSISuffix = true;
-                        plot_queue_max->plot.ylabel = "Bits";
+                        plot_queue_max->plot.ylabel = "Queue occupancy [Mb]";
                         plot_queue_max->plot.ySISuffix = true;
+                        plot_queue_max->plot.legendVisible = false;
                         plot_queue_max->plot.addData(queue_max);
                         plot_queue_max->plot.drag_y_enabled = false;
                         plot_queue_max->plot.zoom_y_enabled = false;
@@ -1908,14 +1920,14 @@ void MainWindow::loadSimulation()
 
                         queue_avg->x = arrivals_p->x;
                         queue_avg->y.reserve(nelem);
-                        queue_avg->pointSymbol = "o";
+                        queue_avg->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             queue_avg->y << timeline.items[i].queue_avg * 8;
                         }
 
                         subtitle = " - Queue size (interval average)";
                         QOPlotWidget *plot_queue_avg = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_queue_avg->plot.title = title + subtitle;
+                        plot_queue_avg->plot.title = "" + subtitle;
                         plot_queue_avg->plot.xlabel = "Time (s)";
                         plot_queue_avg->plot.xSISuffix = true;
                         plot_queue_avg->plot.ylabel = "Bits";
@@ -1930,14 +1942,14 @@ void MainWindow::loadSimulation()
 
                         queue_numflows->x = arrivals_p->x;
                         queue_numflows->y.reserve(nelem);
-                        queue_numflows->pointSymbol = "o";
+                        queue_numflows->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             queue_numflows->y << timeline.items[i].numFlows;
                         }
 
                         subtitle = " - Number of flows";
                         QOPlotWidget *plot_numflows = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_numflows->plot.title = title + subtitle;
+                        plot_numflows->plot.title = "" + subtitle;
                         plot_numflows->plot.xlabel = "Time (s)";
                         plot_numflows->plot.xSISuffix = true;
                         plot_numflows->plot.ylabel = "Flows";
@@ -1952,7 +1964,7 @@ void MainWindow::loadSimulation()
 
                         lossRate->x = arrivals_p->x;
                         lossRate->y.reserve(nelem);
-                        lossRate->pointSymbol = "o";
+                        lossRate->pointSymbol = "";
                         for (int i = 0; i < nelem; i++) {
                             lossRate->y << ((timeline.items[i].arrivals_p > 1.0e-9) ? (100.0 * timeline.items[i].qdrops_p / timeline.items[i].arrivals_p) :
                                                                                  0.0);
@@ -1960,7 +1972,7 @@ void MainWindow::loadSimulation()
 
                         subtitle = " - Packet loss (%)";
                         QOPlotWidget *plot_lossRate = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_lossRate->plot.title = title + subtitle;
+                        plot_lossRate->plot.title = "" + subtitle;
                         plot_lossRate->plot.xlabel = QString("Time (s) - sampled at %1s").arg(tsample / 1.0e9);
                         plot_lossRate->plot.xSISuffix = true;
                         plot_lossRate->plot.ylabel = "Packet loss (%)";
@@ -1975,7 +1987,7 @@ void MainWindow::loadSimulation()
 
                         subtitle = " - Packet loss (%, CDF)";
                         QOPlotWidget *plot_lossRateCDF = new QOPlotWidget(accordion, 0, graphHeight, QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-                        plot_lossRateCDF->plot.title = title + subtitle;
+                        plot_lossRateCDF->plot.title = "" + subtitle;
                         plot_lossRateCDF->plot.xlabel = "Packet loss (%)";
                         plot_lossRateCDF->plot.xSISuffix = false;
                         plot_lossRateCDF->plot.ylabel = "Fraction";
@@ -2030,7 +2042,7 @@ void MainWindow::loadSimulation()
 														  graphHeight,
 														  QSizePolicy(QSizePolicy::MinimumExpanding,
 																	  QSizePolicy::Fixed));
-				plotThroughput->plot.title = title + subtitle;
+                plotThroughput->plot.title = "" + subtitle;
 				plotThroughput->plot.xlabel = "Time (s)";
 				plotThroughput->plot.xSISuffix = false;
 				plotThroughput->plot.ylabel = "Throughput (Mbps)";
@@ -2045,7 +2057,7 @@ void MainWindow::loadSimulation()
 																graphHeight,
 																QSizePolicy(QSizePolicy::MinimumExpanding,
 																			QSizePolicy::Fixed));
-				plotLoss->plot.title = title + subtitle;
+                plotLoss->plot.title = "" + subtitle;
 				plotLoss->plot.xlabel = "Time (s)";
 				plotLoss->plot.xSISuffix = false;
 				plotLoss->plot.ylabel = "Loss (%)";
@@ -2060,7 +2072,7 @@ void MainWindow::loadSimulation()
 														  graphHeight,
 														  QSizePolicy(QSizePolicy::MinimumExpanding,
 																	  QSizePolicy::Fixed));
-				plotThroughputCap->plot.title = title + subtitle;
+                plotThroughputCap->plot.title = "" + subtitle;
 				plotThroughputCap->plot.xlabel = "Time (s)";
 				plotThroughputCap->plot.xSISuffix = true;
                 plotThroughputCap->plot.ylabel = "Throughput cap for the opposite (Mbps)";
@@ -2075,7 +2087,7 @@ void MainWindow::loadSimulation()
 														  graphHeight,
 														  QSizePolicy(QSizePolicy::MinimumExpanding,
 																	  QSizePolicy::Fixed));
-				plotRtt->plot.title = title + subtitle;
+                plotRtt->plot.title = "" + subtitle;
 				plotRtt->plot.xlabel = "Time (s)";
 				plotRtt->plot.xSISuffix = true;
 				plotRtt->plot.ylabel = "One-way delay (ms)";
@@ -2090,7 +2102,7 @@ void MainWindow::loadSimulation()
 														  graphHeight,
 														  QSizePolicy(QSizePolicy::MinimumExpanding,
 																	  QSizePolicy::Fixed));
-				plotRcvWin->plot.title = title + subtitle;
+                plotRcvWin->plot.title = "" + subtitle;
 				plotRcvWin->plot.xlabel = "Time (s)";
 				plotRcvWin->plot.xSISuffix = true;
 				plotRcvWin->plot.ylabel = "Receive window (B)";
@@ -2126,27 +2138,27 @@ void MainWindow::loadSimulation()
 					QOPlotCurveData *curveLoss = new QOPlotCurveData;
 					curveLoss->legendVisible = true;
 					curveLoss->legendLabel = flowLabel;
-					curveLoss->pointSymbol = "o";
+                    curveLoss->pointSymbol = "";
 
 					QOPlotCurveData *curveThroughput = new QOPlotCurveData;
 					curveThroughput->legendVisible = true;
 					curveThroughput->legendLabel = flowLabel;
-					curveThroughput->pointSymbol = "o";
+                    curveThroughput->pointSymbol = "";
 
 					QOPlotCurveData *curveThroughputCap = new QOPlotCurveData;
 					curveThroughputCap->legendVisible = true;
 					curveThroughputCap->legendLabel = flowLabel;
-					curveThroughputCap->pointSymbol = "o";
+                    curveThroughputCap->pointSymbol = "";
 
 					QOPlotCurveData *curveRtt = new QOPlotCurveData;
 					curveRtt->legendVisible = true;
 					curveRtt->legendLabel = flowLabel;
-					curveRtt->pointSymbol = "o";
+                    curveRtt->pointSymbol = "";
 
 					QOPlotCurveData *curveRcvWin = new QOPlotCurveData;
 					curveRcvWin->legendVisible = true;
 					curveRcvWin->legendLabel = flowLabel;
-					curveRcvWin->pointSymbol = "o";
+                    curveRcvWin->pointSymbol = "";
 
 					// seconds
 					qreal rtt = 0.001;

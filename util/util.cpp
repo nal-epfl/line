@@ -1695,3 +1695,153 @@ quint64 timeFromString(QString text, bool *ok)
 	return text.toULongLong(ok) * multiplier;
 }
 
+QVector<int> kMeans1DAssignPointsToClusters(QVector<qreal> points, QVector<qreal> centroids)
+{
+    QVector<int> clusters;
+    clusters.resize(points.count());
+
+    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+        clusters[iPoint] = 0;
+        qreal distMin = fabs(centroids[0] - points[iPoint]);
+        for (int c = 0; c < centroids.count(); c++) {
+            qreal dist = fabs(centroids[c] - points[iPoint]);
+            if (dist < distMin) {
+                clusters[iPoint] = c;
+                distMin = dist;
+            }
+        }
+    }
+
+    return clusters;
+}
+
+QVector<qreal> kMeans1DComputeCentroids(QVector<qreal> points, QVector<int> clusters, int k)
+{
+    QVector<qreal> centroids;
+    centroids.fill(0.0, k);
+    QVector<int> centroidPointCount;
+    centroidPointCount.fill(0, k);
+
+    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+        Q_ASSERT_FORCE(0 <= clusters[iPoint] && clusters[iPoint] < k);
+        centroids[clusters[iPoint]] += points[iPoint];
+        centroidPointCount[clusters[iPoint]]++;
+    }
+
+    for (int c = 0; c < k; c++) {
+        centroids[c] = centroidPointCount[c] > 0 ?
+                           centroids[c] / centroidPointCount[c] :
+                           1.0e99;
+    }
+
+    return centroids;
+}
+
+QVector<int> kMeans1D(QVector<qreal> points, int k, int maxIterations, QVector<qreal> initialCentroids)
+{
+    Q_ASSERT_FORCE(k >= 1);
+
+    if (initialCentroids.count() != k) {
+        QVector<int> pointIndices;
+        pointIndices.resize(points.count());
+        for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+            pointIndices[iPoint] = iPoint;
+        }
+        qShuffle(pointIndices);
+
+        initialCentroids.fill(1.0e99, k);
+        for (int c = 0; c < initialCentroids.count(); c++) {
+            if (c < pointIndices.count()) {
+                initialCentroids[c] = points[pointIndices[c]];
+            }
+        }
+    }
+
+    Q_ASSERT_FORCE(initialCentroids.count() == k);
+
+    QVector<qreal> centroids = initialCentroids;
+    qSort(centroids);
+    QVector<int> clusters = kMeans1DAssignPointsToClusters(points, centroids);
+
+    for (int i = 0; i < maxIterations; i++) {
+        centroids = kMeans1DComputeCentroids(points, clusters, k);
+        qSort(centroids);
+        QVector<int> newClusters = kMeans1DAssignPointsToClusters(points, centroids);
+        if (newClusters == clusters) {
+            qDebug() << "Result found after" << (i + 1) << "iterations";
+            break;
+        }
+        clusters = newClusters;
+    }
+
+    return clusters;
+}
+
+void kMeans1DTest()
+{
+    //
+    int k = 2;
+    QVector<qreal> points;
+    QVector<int> trueClusters;
+    QVector<int> clusters;
+    QVector<QVector<qreal> > clusteredPoints;
+
+    /////////
+    // Test 1
+    points = QVector<qreal>()     << 0.1 << 0.2 << 0.3 << 0.4 << 0.5 << 0.6 << 2.5 << 3 << 4;
+    trueClusters = QVector<int>() << 0   << 0   << 0   << 0   << 0   << 0   << 1   << 1 << 1;
+    clusters = kMeans1D(points, k);
+
+    Q_ASSERT_FORCE(clusters.count() == points.count());
+
+    clusteredPoints.clear();
+    clusteredPoints.resize(k);
+    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
+    }
+
+    qDebug() << "Points:" << points;
+    qDebug() << "Clusters:" << clusteredPoints;
+
+    Q_ASSERT_FORCE(clusters == trueClusters);
+
+    /////////
+    // Test 2
+    points = QVector<qreal>()     << 0.1 << 0.2 << 0.3 << 0.4 << 0.5 << 0.6 << 2.5 << 3 << 4 << 10;
+    trueClusters = QVector<int>() << 0   << 0   << 0   << 0   << 0   << 0   << 0   << 0 << 1 << 1;
+    clusters = kMeans1D(points, k);
+
+    Q_ASSERT_FORCE(clusters.count() == points.count());
+
+    clusteredPoints.clear();
+    clusteredPoints.resize(k);
+    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
+    }
+
+    qDebug() << "Points:" << points;
+    qDebug() << "Clusters:" << clusteredPoints;
+
+    Q_ASSERT_FORCE(clusters == trueClusters);
+
+    /////////
+    // Test 3
+    points = QVector<qreal>()     << 0.1 << 0.2 << 0.3 << 0.4 << 0.5 << 0.6 << 2.5 << 3 << 4 << 100;
+    trueClusters = QVector<int>() << 0   << 0   << 0   << 0   << 0   << 0   << 0   << 0 << 0 << 1;
+    clusters = kMeans1D(points, k);
+
+    Q_ASSERT_FORCE(clusters.count() == points.count());
+
+    clusteredPoints.clear();
+    clusteredPoints.resize(k);
+    for (int iPoint = 0; iPoint < points.count(); iPoint++) {
+        clusteredPoints[clusters[iPoint]].append(points[iPoint]);
+    }
+
+    qDebug() << "Points:" << points;
+    qDebug() << "Clusters:" << clusteredPoints;
+
+    Q_ASSERT_FORCE(clusters == trueClusters);
+
+    exit(0);
+}

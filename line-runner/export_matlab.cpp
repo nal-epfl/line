@@ -43,7 +43,7 @@ bool exportMatlab(QString paramsFileName) {
 }
 
 bool exportMatlab(QString resultsDir, QString graphName) {
-	QString graphFileName = resultsDir + "/" + graphName + ".graph";
+    QString graphFileName = resultsDir + "/" + graphName + ".graph";
 	{
 		QDir dir(resultsDir);
 		dir.mkpath(graphName + "-matlab");

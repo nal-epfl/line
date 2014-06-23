@@ -260,7 +260,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 		foreach (PointerSsh ssh, sshCores) {
 			QString emulatorCmd;
 			if (!runParams.realRouting) {
-                emulatorCmd = QString("LD_PRELOAD=/usr/lib/malloc_profile.so line-router %1.graph %2 %3 %4 %5 %6 %7 %8")
+				emulatorCmd = QString("LD_PRELOAD=/usr/lib/malloc_profile.so line-router %1.graph %2 %3 %4 %5 %6 %7 %8 %9 %10")
 							  .arg(runParams.graphName)
 							  .arg(testId)
 							  .arg(runParams.capture ?
@@ -268,6 +268,8 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 									   .arg(runParams.capturePacketLimit)
 									   .arg(runParams.captureEventLimit) :
 									   QString(""))
+							  .arg(runParams.takePathIntervalMeasurements ? "--take_path_interval_measurements" : "")
+							  .arg(runParams.takeFlowIntervalMeasurements ? "--take_flow_interval_measurements" : "")
 							  .arg(QString("--interval_size %1 --estimated_duration %2")
 								   .arg(runParams.intervalSize)
 								   .arg(runParams.estimatedDuration))

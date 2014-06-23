@@ -74,7 +74,9 @@ static struct timeval startTime;
 unsigned long long numPkts[MAX_NUM_THREADS] = { 0 }, numBytes[MAX_NUM_THREADS] = { 0 };
 
 RecordedData *recordedData;
+bool takePathIntervalMeasurements;
 ExperimentIntervalMeasurements *pathIntervalMeasurements;
+bool takeFlowIntervalMeasurements;
 ExperimentIntervalMeasurements *flowIntervalMeasurements;
 SampledPathFlowEvents *sampledPathFlowEvents;
 bool flowTracking;
@@ -823,6 +825,8 @@ int runPacketFilter(int argc, char **argv) {
 	qosBufferScaling = QosBufferScalingNone;
 	gQueuingDiscipline = QueuingDisciplineDropTail;
 	flowTracking = false;
+	takePathIntervalMeasurements = false;
+	takeFlowIntervalMeasurements = false;
 
 	while (argc > 0) {
 		if (QString(argv[0]) == "--record") {
@@ -844,6 +848,14 @@ int runPacketFilter(int argc, char **argv) {
 			}
 			recordedData->recordedPacketData.reserve(recordPacketMaxCount);
 			recordedData->recordedQueuedPacketData.reserve(recordPacketQueuedMaxCount);
+		} else if (QString(argv[0]) == "--path_interval_measurements") {
+			takePathIntervalMeasurements = true;
+			argc--, argv++;
+			argc--, argv++;
+		} else if (QString(argv[0]) == "--flow_interval_measurements") {
+			takeFlowIntervalMeasurements = true;
+			argc--, argv++;
+			argc--, argv++;
 		} else if (QString(argv[0]) == "--estimated_duration") {
 			bool ok;
 			estimatedDuration = QString(argv[1]).toLongLong(&ok);
@@ -920,7 +932,7 @@ int runPacketFilter(int argc, char **argv) {
 
     pathIntervalMeasurements = new ExperimentIntervalMeasurements();
     pathIntervalMeasurements->initialize(get_current_time(),
-                                         estimatedDuration,
+										 takePathIntervalMeasurements ? estimatedDuration : 1,
                                          intervalSize,
                                          netGraph->edges.count(),
                                          netGraph->paths.count(),
@@ -929,7 +941,7 @@ int runPacketFilter(int argc, char **argv) {
 
     flowIntervalMeasurements = new ExperimentIntervalMeasurements();
     flowIntervalMeasurements->initialize(get_current_time(),
-                                         estimatedDuration,
+										 takeFlowIntervalMeasurements ? estimatedDuration : 1,
                                          intervalSize,
                                          netGraph->edges.count(),
                                          netGraph->connections.count(),

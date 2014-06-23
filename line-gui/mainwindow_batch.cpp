@@ -43,6 +43,8 @@ bool MainWindow::getRunParams(RunParams &params, QPlainTextEdit *log)
 					   ui->checkCapture->isChecked(),
 					   ui->spinCapturePacketCount->value(),
 					   ui->spinCaptureEventCount->value(),
+					   ui->checkPathIntervalMeasurements->isChecked(),
+					   ui->checkFlowIntervalMeasurements->isChecked(),
 					   intervalSize,
 					   duration * 1000000000ULL,
 					   ui->spinBufferBloadFactor->value(),

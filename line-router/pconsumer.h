@@ -148,7 +148,9 @@ public:
 };
 
 extern RecordedData *recordedData;
+extern bool takePathIntervalMeasurements;
 extern ExperimentIntervalMeasurements *pathIntervalMeasurements;
+extern bool takeFlowIntervalMeasurements;
 extern ExperimentIntervalMeasurements *flowIntervalMeasurements;
 extern SampledPathFlowEvents *sampledPathFlowEvents;
 extern NetGraph *netGraph;

@@ -29,6 +29,8 @@ public:
 					 bool capture = false,
 					 int capturePacketLimit = 0,
 					 int captureEventLimit = 0,
+					 bool takePathIntervalMeasurements = false,
+					 bool takeFlowIntervalMeasurements = false,
 					 quint64 intervalSize = 5000000000ULL,
 					 quint64 estimatedDuration = 10000000000ULL,
 					 qreal bufferBloatFactor = 1.0,
@@ -70,6 +72,8 @@ public:
 		  capture(capture),
 		  capturePacketLimit(capturePacketLimit),
 		  captureEventLimit(captureEventLimit),
+		  takePathIntervalMeasurements(takePathIntervalMeasurements),
+		  takeFlowIntervalMeasurements(takeFlowIntervalMeasurements),
 		  intervalSize(intervalSize),
 		  estimatedDuration (estimatedDuration),
 		  bufferBloatFactor(bufferBloatFactor),
@@ -113,6 +117,8 @@ public:
 	bool capture;
 	qint64 capturePacketLimit;
 	qint64 captureEventLimit;
+	bool takePathIntervalMeasurements;
+	bool takeFlowIntervalMeasurements;
 	quint64 intervalSize;
 	quint64 estimatedDuration;
 	qreal bufferBloatFactor;

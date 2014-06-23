@@ -436,11 +436,15 @@ class QOPlotGroup : public QObject {
 	Q_OBJECT
 
 public:
+	QOPlotGroup();
+
 	void addPlot(QOPlotWidget *plot);
 	void clear();
+	void setSyncEnabled(bool syncEnabled);
 
 protected:
 	QSet<QOPlotWidget*> plots;
+	bool syncEnabled;
 
 public slots:
 	void viewportChanged(qreal xmin, qreal ymin, qreal xmax, qreal ymax, QOPlotWidget *sender);

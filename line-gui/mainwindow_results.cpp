@@ -151,6 +151,7 @@ void MainWindow::loadSimulation()
 	}
 
 	resultsPlotGroup.clear();
+	resultsPlotGroup.setSyncEnabled(ui->checkSyncPlots->isChecked());
 	foreach (QObject *obj, ui->scrollPlotsWidgetContents->children()) {
 		delete obj;
 	}
@@ -2240,6 +2241,11 @@ void MainWindow::loadSimulation()
 
 	ui->scrollPlotsWidgetContents->layout()->addWidget(accordion);
 	emit tabChanged(ui->tabResults);
+}
+
+void MainWindow::on_checkSyncPlots_toggled(bool )
+{
+	resultsPlotGroup.setSyncEnabled(ui->checkSyncPlots->isChecked());
 }
 
 void MainWindow::on_cmbSimulation_currentIndexChanged(int index)

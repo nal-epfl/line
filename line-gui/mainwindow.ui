@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -1788,6 +1788,13 @@ For performance reasons, the number of packets that can be captured is limited b
             <widget class="QPushButton" name="btnResultsRename">
              <property name="text">
               <string>Rename</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkSyncPlots">
+             <property name="text">
+              <string>Sync plots</string>
              </property>
             </widget>
            </item>

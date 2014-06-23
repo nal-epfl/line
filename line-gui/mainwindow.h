@@ -336,6 +336,8 @@ private slots:
 
     void on_cmbExpType_currentIndexChanged(const QString &arg1);
 
+	void on_checkSyncPlots_toggled(bool);
+
 signals:
 	void logInformation(QPlainTextEdit *log, QString message);
 	void logError(QPlainTextEdit *log, QString message);

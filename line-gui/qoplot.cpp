@@ -2499,6 +2499,11 @@ void QOPlotWidget::emitViewportChanged()
 
 
 
+QOPlotGroup::QOPlotGroup()
+{
+	syncEnabled = true;
+}
+
 void QOPlotGroup::addPlot(QOPlotWidget *plot)
 {
 	plots.insert(plot);
@@ -2510,8 +2515,15 @@ void QOPlotGroup::clear()
 	plots.clear();
 }
 
+void QOPlotGroup::setSyncEnabled(bool syncEnabled)
+{
+	this->syncEnabled = syncEnabled;
+}
+
 void QOPlotGroup::viewportChanged(qreal xmin, qreal ymin, qreal xmax, qreal ymax, QOPlotWidget *sender)
 {
+	if (!syncEnabled)
+		return;
 	foreach (QOPlotWidget *plot, plots) {
 		if (plot != sender) {
 			if (plot->plot.zoom_x_enabled && plot->plot.zoom_y_enabled) {

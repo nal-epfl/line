@@ -91,7 +91,8 @@ SOURCES += main.cpp\
     flowevent.cpp \
     ../util/ovector.cpp \
     ../util/bitarray.cpp \
-    traffictrace.cpp
+    traffictrace.cpp \
+    ../tomo/pcap-qt.cpp
 
 HEADERS  += mainwindow.h \
     netgraph.h \

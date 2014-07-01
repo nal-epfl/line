@@ -40,6 +40,28 @@ typedef struct {
 		quint32 orig_len;       // actual length of packet
 } PcapPacketHeader;
 
+class PcapReader {
+public:
+	PcapReader(QString fileName);
+	PcapReader(QIODevice *device);
+
+	bool isOk();
+	bool atEnd();
+	bool readPacket(PcapPacketHeader &packetHeader, QByteArray &packet);
+
+	PcapHeader getPcapHeader();
+
+protected:
+	bool read(void *p, qint64 len);
+	bool readHeader();
+
+	bool ok;
+	QIODevice *device;
+	bool ownDevice;
+	PcapHeader header;
+	bool mustSwap;
+};
+
 // Link type constants described on http://www.tcpdump.org/linktypes.html
 
 #define LINKTYPE_NULL 0

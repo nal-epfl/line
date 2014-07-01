@@ -1431,7 +1431,7 @@ void NetGraphEditor::updateTraces()
 
 	for (int i = 0; i < graph()->trafficTraces.count(); i++) {
 		ui->tableTraces->setItem(i, 0, new QTableWidgetItem(QString("%1").arg(graph()->trafficTraces[i].link + 1)));
-		ui->tableTraces->setItem(i, 1, new QTableWidgetItem(QString("imported from pcap file")));
+		ui->tableTraces->setItem(i, 1, new QTableWidgetItem(QString("%1 packets").arg(graph()->trafficTraces[i].packets.count())));
 	}
 }
 

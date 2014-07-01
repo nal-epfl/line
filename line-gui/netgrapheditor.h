@@ -136,6 +136,7 @@ private slots:
     void on_checkConnectionOnOff_toggled(bool checked);
     void on_btnAddConnections100_clicked();
     void updateStats();
+	void updateTraces();
     void on_btnEditHost_toggled(bool checked);
     void on_checkHostWeb_toggled(bool checked);
     void on_checkHostP2P_toggled(bool checked);
@@ -241,6 +242,12 @@ private slots:
     void on_btnTCPDashBufferingTime_clicked();
 
     void on_btnTCPDashStreamingPeriod_clicked();
+
+	void on_btnInjectTraffic_toggled(bool checked);
+
+	void on_btnAddTrace_clicked();
+
+	void on_btnClearTraces_clicked();
 
 protected:
 	virtual void resizeEvent(QResizeEvent* event);

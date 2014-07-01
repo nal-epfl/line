@@ -67,6 +67,7 @@
         <file>extra-resources/host-darkyellow_32.png</file>
         <file>extra-resources/host-red.svg</file>
         <file>extra-resources/host-red_32.png</file>
+        <file>extra-resources/debug-execute-to-cursor.png</file>
     </qresource>
     <qresource prefix="/css">
         <file>style.css</file>

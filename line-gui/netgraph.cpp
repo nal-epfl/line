@@ -286,7 +286,7 @@ void NetGraph::setFileName(QString newFileName)
 
 QDataStream& operator<<(QDataStream& s, const NetGraph& n)
 {
-	qint32 ver = 1;
+	qint32 ver = 2;
 
 	if (!unversionedStreams) {
 		s << ver;
@@ -304,6 +304,10 @@ QDataStream& operator<<(QDataStream& s, const NetGraph& n)
 		s << n.rootId;
 		s << n.viewportCenter;
 		s << n.viewportZoom;
+	}
+
+	if (ver >= 2) {
+		s << n.trafficTraces;
 	}
 
 	return s;
@@ -328,6 +332,11 @@ QDataStream& operator>>(QDataStream& s, NetGraph& n)
 		s >> n.viewportCenter;
 		s >> n.viewportZoom;
 	}
+
+	if (ver >= 2) {
+		s >> n.trafficTraces;
+	}
+
 	return s;
 }
 

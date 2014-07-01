@@ -27,6 +27,7 @@
 #include "netgraphpath.h"
 #include "netgraphas.h"
 #include "netgraphconnection.h"
+#include "traffictrace.h"
 #include "util.h"
 
 #ifndef LINE_EMULATOR
@@ -56,6 +57,7 @@ public:
 
 	// not updated by anything
 	QList<NetGraphPath> paths;
+	QList<TrafficTrace> trafficTraces;
 	QString fileName;
 
 	qint32 rootId;

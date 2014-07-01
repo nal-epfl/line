@@ -90,7 +90,8 @@ SOURCES += main.cpp\
     ../line-runner/run_experiment_params.cpp \
     flowevent.cpp \
     ../util/ovector.cpp \
-    ../util/bitarray.cpp
+    ../util/bitarray.cpp \
+    traffictrace.cpp
 
 HEADERS  += mainwindow.h \
     netgraph.h \
@@ -146,7 +147,8 @@ HEADERS  += mainwindow.h \
     ../line-runner/run_experiment_params.h \
     flowevent.h \
     ../util/ovector.h \
-    ../util/bitarray.h
+    ../util/bitarray.h \
+    traffictrace.h
 
 FORMS    += mainwindow.ui \
     ../util/qswiftprogressdialog.ui \

@@ -554,6 +554,35 @@
                </property>
               </widget>
              </item>
+             <item row="0" column="4">
+              <widget class="QToolButton" name="btnInjectTraffic">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inject traffic&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/icons/extra-resources/debug-execute-to-cursor.png</normaloff>:/icons/extra-resources/debug-execute-to-cursor.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>24</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="popupMode">
+                <enum>QToolButton::InstantPopup</enum>
+               </property>
+               <property name="autoRaise">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>
@@ -1078,7 +1107,7 @@
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>-692</y>
+              <y>0</y>
               <width>352</width>
               <height>1240</height>
              </rect>
@@ -1114,7 +1143,7 @@
                 <string notr="true"/>
                </property>
                <property name="currentIndex">
-                <number>8</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="pageAddEditLink">
                 <property name="sizePolicy">
@@ -1667,6 +1696,103 @@ Click an existing link to edit its properties.</string>
                     </item>
                    </layout>
                   </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageInjectTrace">
+                <layout class="QVBoxLayout" name="verticalLayout_35">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QGroupBox" name="groupBox_30">
+                   <property name="title">
+                    <string>Inject traffic</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="verticalLayout_34">
+                    <item>
+                     <widget class="QWidget" name="widget_26" native="true">
+                      <layout class="QHBoxLayout" name="horizontalLayout_26">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QPushButton" name="btnAddTrace">
+                         <property name="text">
+                          <string>Add trace...</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="btnClearTraces">
+                         <property name="text">
+                          <string>Clear</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_7">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>40</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QTableWidget" name="tableTraces">
+                      <column>
+                       <property name="text">
+                        <string>Link</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Trace</string>
+                       </property>
+                      </column>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>611</height>
+                    </size>
+                   </property>
+                  </spacer>
                  </item>
                 </layout>
                </widget>
@@ -4959,8 +5085,8 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>350</width>
-                      <height>1234</height>
+                      <width>114</width>
+                      <height>705</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_41">

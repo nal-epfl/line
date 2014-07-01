@@ -28,6 +28,7 @@
 #include "../tomo/tomodata.h"
 #include "util.h"
 #include "qoplot.h"
+#include "traffictrace.h"
 
 QSwiftProgressDialog *progressDialog = NULL;
 
@@ -339,6 +340,7 @@ void NetGraphEditor::on_btnNew_clicked()
 	scene->netGraph->clear();
 	scene->reload();
     updateStats();
+	updateTraces();
 }
 
 void NetGraphEditor::on_btnOpen_clicked()
@@ -404,6 +406,7 @@ bool NetGraphEditor::loadGraph(QString fileName)
 
 	resetScene();
     updateStats();
+	updateTraces();
 	on_btnFit_clicked();
 	return true;
 }
@@ -421,6 +424,7 @@ void NetGraphEditor::resetScene()
 	ui->spinZoom->setValue(scene->graph()->viewportZoom * 100.0);
 	updateZoom();
     updateStats();
+	updateTraces();
 }
 
 void NetGraphEditor::reloadScene()
@@ -429,6 +433,7 @@ void NetGraphEditor::reloadScene()
 	ui->spinZoom->setValue(scene->graph()->viewportZoom * 100.0);
 	updateZoom();
 	updateStats();
+	updateTraces();
 }
 
 void NetGraphEditor::setModified()
@@ -1417,6 +1422,17 @@ void NetGraphEditor::updateStats()
     ui->txtStatsNumConnections->setText(QString("%1 flows, %2% (f.m. %3), %4 flows/link")
                                         .arg(numFlows).arg(int(100 * flowsPerFullMeshRatio)).arg(fullMeshSize)
                                         .arg(flowsPerEdgeRatio, 0, 'f', 1));
+}
+
+void NetGraphEditor::updateTraces()
+{
+	ui->tableTraces->clearContents();
+	ui->tableTraces->setRowCount(graph()->trafficTraces.count());
+
+	for (int i = 0; i < graph()->trafficTraces.count(); i++) {
+		ui->tableTraces->setItem(i, 0, new QTableWidgetItem(QString("%1").arg(graph()->trafficTraces[i].link + 1)));
+		ui->tableTraces->setItem(i, 1, new QTableWidgetItem(QString("imported from pcap file")));
+	}
 }
 
 void NetGraphEditor::on_btnAddConnectionsF_clicked()
@@ -2720,5 +2736,31 @@ void NetGraphEditor::on_btnAddExtraHosts_clicked()
     reloadScene();
 }
 
+void NetGraphEditor::on_btnInjectTraffic_toggled(bool)
+{
+	setRightPanelPage(ui->pageInjectTrace);
+}
 
+void NetGraphEditor::on_btnAddTrace_clicked()
+{
+	bool ok;
+	int link = QInputDialog::getInt(this, "Select link", "Link on which to inject traffic", 1, 1, graph()->edges.count(), 1, &ok);
+	if (!ok)
+		return;
+	QString pcapFile = QFileDialog::getOpenFileName(this, "Select trace file", ".", "Pcap files (*.pcap)");
+	if (pcapFile.isEmpty())
+		return;
+	TrafficTrace trace = TrafficTrace::generateFromPcap(pcapFile, link - 1, ok);
+	if (!ok)
+		return;
+	graph()->trafficTraces.append(trace);
+	setModified();
+	reloadScene();
+}
 
+void NetGraphEditor::on_btnClearTraces_clicked()
+{
+	graph()->trafficTraces.clear();
+	setModified();
+	reloadScene();
+}

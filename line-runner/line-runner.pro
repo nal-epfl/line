@@ -47,7 +47,9 @@ SOURCES += main.cpp \
     ../tomo/tomodata.cpp \
     simulate_experiment.cpp \
     export_matlab.cpp \
-    ../util/bitarray.cpp
+    ../util/bitarray.cpp \
+    ../line-gui/traffictrace.cpp \
+    ../tomo/pcap-qt.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -81,7 +83,9 @@ HEADERS += \
     simulate_experiment.h \
     export_matlab.h \
     result_processing.h \
-    ../util/bitarray.h
+    ../util/bitarray.h \
+    ../line-gui/traffictrace.h \
+    ../tomo/pcap-qt.h
 
 exists(result_processing.cpp) {
     SOURCES += result_processing.cpp

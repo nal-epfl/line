@@ -120,4 +120,8 @@ exists( ../line.pro ) {
 HEADERS += \
     ../util/readerwriterqueue.h \
     ../util/waitfreequeuemoody.h \
-    ../util/waitfreequeuedvyukov.h
+    ../util/waitfreequeuedvyukov.h \
+    ../line-gui/traffictrace.h
+
+SOURCES += \
+    ../line-gui/traffictrace.cpp

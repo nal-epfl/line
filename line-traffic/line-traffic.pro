@@ -100,7 +100,11 @@ exists( ../line.pro ) {
 }
 
 HEADERS += \
-    tcpdashsource.h
+    tcpdashsource.h \
+    ../line-gui/traffictrace.h \
+    ../tomo/pcap-qt.h
 
 SOURCES += \
-    tcpdashsource.cpp
+    tcpdashsource.cpp \
+    ../line-gui/traffictrace.cpp \
+    ../tomo/pcap-qt.cpp

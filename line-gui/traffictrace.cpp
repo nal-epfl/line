@@ -38,6 +38,7 @@ TrafficTrace::TrafficTrace(qint32 link)
 
 TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, bool &ok)
 {
+#ifndef LINE_EMULATOR
 	ok = true;
 	TrafficTrace trace(link);
 
@@ -64,6 +65,12 @@ TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, b
 	}
 
 	return trace;
+#else
+    Q_UNUSED(pcapFileName);
+    TrafficTrace trace(link);
+    ok = false;
+    return trace;
+#endif
 }
 
 QDataStream& operator<<(QDataStream& s, const TrafficTrace& d)

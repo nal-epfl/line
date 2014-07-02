@@ -331,15 +331,23 @@ void NetGraph::prepareEmulation()
     flattenConnections();
     assignPorts();
 
+    // An extra path is used for recording dummy statistics for injected traffic
+
+    for (int i = 0; i < edges.count(); i++) {
+        edges[i].prepareEmulation(paths.count() + 1);
+    }
+
 	edgeCache.clear();
 	for (int i = 0; i < edges.count(); i++) {
-		edges[i].prepareEmulation(paths.count());
 		edgeCache.insert(QPair<qint32,qint32>(edges[i].source, edges[i].dest), i);
 	}
 
+    for (int i = 0; i < paths.count(); i++) {
+        paths[i].prepareEmulation();
+    }
+
 	pathCache.clear();
-	for (int i = 0; i < paths.count(); i++) {
-		paths[i].prepareEmulation();
+    for (int i = 0; i < paths.count(); i++) {
 		pathCache.insert(QPair<qint32,qint32>(paths[i].source, paths[i].dest), i);
 	}
 
@@ -472,8 +480,8 @@ bool TokenBucket::filter(Packet *p, quint64 ts_now, bool forcePass)
 	packets_in++;
 	bytes += p->length;
 
-	packets_in_perpath[p->path_id]++;
-	bytes_in_perpath[p->path_id] += p->length;
+    packets_in_perpath[p->path_id]++;
+    bytes_in_perpath[p->path_id] += p->length;
 
 #if POLICING_ENABLED
 	if (forcePass)
@@ -484,7 +492,7 @@ bool TokenBucket::filter(Packet *p, quint64 ts_now, bool forcePass)
 		return true;
 	} else {
 		drops++;
-		drops_perpath[p->path_id]++;
+        drops_perpath[p->path_id]++;
 		return false;
 	}
 #else
@@ -799,23 +807,25 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		}
 	}
 
-	pathIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);
-	flowIntervalMeasurements->countPacketInFLightEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1);
-	// It is currently possible to have correct per-edge event recording only for tail-drop.
-	// For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops.
-	pathIntervalMeasurements->recordPacketEventEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1, queued);
-	flowIntervalMeasurements->recordPacketEventEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1, queued);
-	if (!queued) {
-        pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-        flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-		pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-        flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-		pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, queued);
-        flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, queued);
-        if (flowTracking) {
-            sampledPathFlowEvents->handlePacket(p, ts_now);
+    if (!p->injected) {
+        pathIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);
+        flowIntervalMeasurements->countPacketInFLightEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1);
+        // It is currently possible to have correct per-edge event recording only for tail-drop.
+        // For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops.
+        pathIntervalMeasurements->recordPacketEventEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1, queued);
+        flowIntervalMeasurements->recordPacketEventEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1, queued);
+        if (!queued) {
+            pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+            flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
+            pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, p->ts_start_proc, ts_now, p->length, 1);
+            flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
+            pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, queued);
+            flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, queued);
+            if (flowTracking) {
+                sampledPathFlowEvents->handlePacket(p, ts_now);
+            }
         }
-	}
+    }
 
 	if (recordSampledTimeline) {
 		quint64 overallQload = 0;
@@ -863,6 +873,31 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 #define BYPASS_SCHEDULER 0
 int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 {
+    if (p->injected) {
+        // Special path for these ones
+
+        NetGraphEdge &e = netGraph->edges[p->injection_link_index];
+
+        // Is this a new packet?
+        if (p->trace.isEmpty()) {
+            // Yes
+            p->src_id = e.source;
+            p->dst_id = e.dest;
+            p->trace.append(p->src_id);
+            p->trace.append(p->dst_id);
+            if (e.enqueue(p, ts_now, ts_next)) {
+                return PKT_QUEUED;
+            } else {
+                return PKT_DROPPED;
+            }
+        } else {
+            // No, we are done with it
+            p->ts_start_send = ts_now;
+            return PKT_FORWARDED;
+        }
+        // This point cannot be reached
+    }
+
 	if (p->path_id < 0) {
 		p->path_id = netGraph->pathCache[QPair<qint32,qint32>(p->src_id, p->dst_id)];
 	}
@@ -1403,7 +1438,6 @@ void* packet_scheduler_thread(void* )
 	maxEventInversionDelay = 0;
 	// last event that was processed
 	quint64 ts_last_event = 0;
-    tsStart = get_current_time();
 
 	OVector<Packet*> localPacketsToSend;
 	localPacketsToSend.reserve(10000);
@@ -1416,8 +1450,23 @@ void* packet_scheduler_thread(void* )
 	OVector<Packet*> newPackets;
 	newPackets.reserve(10000);
 
+    OVector<int> trafficTraceIndices;
+    trafficTraceIndices.resize(netGraph->trafficTraces.count());
+
+    OVector<Packet*> injectedPacketPool;
+    qint64 numPackets = 0;
+    foreach (NetGraphEdge e, netGraph->edges) {
+        numPackets += e.queueLength * e.queueCount;
+    }
+    numPackets *= 4;
+    for (qint64 i = 0; i < numPackets; i++) {
+        injectedPacketPool.append(new Packet());
+    }
+
 	barrierInitDone.wait();
 	barrierStart.wait();
+
+    tsStart = get_current_time();
 
 #if DUMP_STACKTRACE_ON_MALLOC
 	malloc_profile_set_trace_cpu_wrapper(1);
@@ -1438,6 +1487,33 @@ void* packet_scheduler_thread(void* )
 		// process new packets
 		packetsIn.dequeueAll(newPackets/*, 1ULL * MSEC_TO_NSEC*/);
 
+        // Inject extra packets if configured
+        for (int iTrace = 0; iTrace < netGraph->trafficTraces.count(); iTrace++) {
+            int& iPacket = trafficTraceIndices[iTrace];
+            while (iPacket < netGraph->trafficTraces[iTrace].packets.count()) {
+                if (ts_now < tsStart + netGraph->trafficTraces[iTrace].packets[iPacket].timestamp)
+                    break;
+                // Create a new packet and inject it
+                Packet *p;
+                if (!injectedPacketPool.isEmpty()) {
+                    p = injectedPacketPool.takeFirst();
+                    p->init();
+                } else {
+                    p = new Packet();
+                }
+                p->injected = true;
+                p->id = (1ULL << 63) | (quint64(iTrace) << 48) | quint64(iPacket);
+                p->ts_driver_rx = tsStart + netGraph->trafficTraces[iTrace].packets[iPacket].timestamp;
+                p->ts_userspace_rx = ts_now;
+                p->length = netGraph->trafficTraces[iTrace].packets[iPacket].size;
+                p->traffic_class = 0;
+                p->path_id = netGraph->paths.count();
+                p->injection_link_index = netGraph->trafficTraces[iTrace].link;
+                newPackets.append(p);
+                iPacket++;
+            }
+        }
+
 		quint64 ts_after_sync = get_current_time();
 		max_sync_delay = qMax(max_sync_delay, ts_after_sync - ts_now);
 		ts_now = ts_after_sync;
@@ -1456,8 +1532,9 @@ void* packet_scheduler_thread(void* )
 			Packet *p = newPackets[iPacket];
 			p->ts_start_proc = ts_now;
 			p->ts_expected_exit = 0;
-			if (p->src_id < 0 || p->src_id >= netGraph->nodes.count() ||
-				p->dst_id < 0 || p->dst_id >= netGraph->nodes.count()) {
+            if (!p->injected &&
+                (p->src_id < 0 || p->src_id >= netGraph->nodes.count() ||
+                 p->dst_id < 0 || p->dst_id >= netGraph->nodes.count())) {
 				// foreign packet
 				if (DEBUG_PACKETS)
 					printf("Bad packet %d.%d.%d.%d -> %d.%d.%d.%d (src = %d, dst = %d)\n",
@@ -1486,9 +1563,17 @@ void* packet_scheduler_thread(void* )
 						   NIPQUAD(p->dst_ip));
 				packetsQdropped++;
 				p->dropped = true;
-				localPacketsToSend.append(p);
+                if (!p->injected) {
+                    localPacketsToSend.append(p);
+                } else {
+                    injectedPacketPool.append(p);
+                }
 			} else if (pkt_state == PKT_FORWARDED) {
-				localPacketsToSend.append(p);
+                if (!p->injected) {
+                    localPacketsToSend.append(p);
+                } else {
+                    injectedPacketPool.append(p);
+                }
 			}
 		}
 		newPackets.clear();
@@ -1532,9 +1617,17 @@ void* packet_scheduler_thread(void* )
 							   NIPQUAD(p->dst_ip));
 					packetsQdropped++;
 					p->dropped = true;
-					localPacketsToSend.append(p);
+                    if (!p->injected) {
+                        localPacketsToSend.append(p);
+                    } else {
+                        injectedPacketPool.append(p);
+                    }
 				} else if (pkt_state == PKT_FORWARDED) {
-					localPacketsToSend.append(p);
+                    if (!p->injected) {
+                        localPacketsToSend.append(p);
+                    } else {
+                        injectedPacketPool.append(p);
+                    }
 				}
 			}
 		}
@@ -1621,6 +1714,8 @@ void print_scheduler_stats()
 		   withCommas(packetsQdropped));
 	printf("Active queues: %s\n",
 		   withCommas(numActiveQueues));
+    printf("Number of queuing events: %s\n",
+           withCommas(numQueuingEvents));
 	printf("Queuing events per second: %s\n",
 		   withCommas(qreal(numQueuingEvents) * 1.0e9 / emulationDuration));
 

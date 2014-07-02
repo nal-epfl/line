@@ -5,7 +5,7 @@ set -x #echo on
 eval "$(/bin/sh ../remote-config.sh)"
 
 PROJECT=line-traffic
-EXTRA_SOURCES='line-gui util remote_config.h'
+EXTRA_SOURCES='line-gui util tomo remote_config.h'
 BUILD_DIR=$PWD
 SRC_DIR=$SVN_DIR/$PROJECT
 REMOTE_USER=$REMOTE_USER_HOSTS

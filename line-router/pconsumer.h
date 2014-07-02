@@ -80,6 +80,7 @@ public:
 		ts_expected_exit = 0;
 		dropped = false;
 		ecn_bit_set = false;
+        injected = false;
 	}
 
 	void generateNewId() {
@@ -139,9 +140,13 @@ public:
 	quint64 ts_expected_exit;
     // The index of the connection in the graph or -1 if not available
     qint32 connection_index;
+    // The index of the link on which to inject the packet, defined only if injected == true
+    qint32 injection_link_index;
 	// True if the packet is dropped, important if it happens after queuing (e.g. with drop-head)
 	bool dropped;
 	bool ecn_bit_set;
+    bool injected;
+
 
     // Global counter used to generate unique packet IDs.
 	static quint64 next_packet_unique_id;

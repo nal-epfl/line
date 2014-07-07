@@ -158,6 +158,7 @@ extern ExperimentIntervalMeasurements *pathIntervalMeasurements;
 extern bool takeFlowIntervalMeasurements;
 extern ExperimentIntervalMeasurements *flowIntervalMeasurements;
 extern SampledPathFlowEvents *sampledPathFlowEvents;
+extern TrafficTraceRecord *trafficTraceRecord;
 extern NetGraph *netGraph;
 
 extern quint64 estimatedDuration;

@@ -893,6 +893,15 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
         } else {
             // No, we are done with it
             p->ts_start_send = ts_now;
+
+            TrafficTracePacketRecord event;
+            event.traceIndex = (p->id & ~(1ULL << 63)) >> 48;
+            event.packetIndex = (p->id & ~(1ULL << 63)) & 0xffFFffFFffFF;
+            event.injectionTime = p->ts_userspace_rx;
+            event.exitTime = p->ts_start_send;
+            event.theoreticalDelay = p->theoretical_delay;
+            trafficTraceRecord->events.append(event);
+
             return PKT_FORWARDED;
         }
         // This point cannot be reached
@@ -1452,6 +1461,11 @@ void* packet_scheduler_thread(void* )
 
     OVector<int> trafficTraceIndices;
     trafficTraceIndices.resize(netGraph->trafficTraces.count());
+    int numInjectionEvents = 0;
+    for (int iTrace = 0; iTrace < netGraph->trafficTraces.count(); iTrace++) {
+        numInjectionEvents += netGraph->trafficTraces[iTrace].packets.count();
+    }
+    trafficTraceRecord->events.reserve(numInjectionEvents);
 
     OVector<Packet*> injectedPacketPool;
     qint64 numPackets = 0;

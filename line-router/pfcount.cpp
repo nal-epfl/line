@@ -80,6 +80,7 @@ bool takeFlowIntervalMeasurements;
 ExperimentIntervalMeasurements *flowIntervalMeasurements;
 SampledPathFlowEvents *sampledPathFlowEvents;
 bool flowTracking;
+TrafficTraceRecord *trafficTraceRecord;
 
 /* *************************************** */
 /*
@@ -827,6 +828,7 @@ int runPacketFilter(int argc, char **argv) {
 	flowTracking = false;
 	takePathIntervalMeasurements = false;
 	takeFlowIntervalMeasurements = false;
+    trafficTraceRecord = new TrafficTraceRecord();
 
 	while (argc > 0) {
 		if (QString(argv[0]) == "--record") {
@@ -996,6 +998,10 @@ int runPacketFilter(int argc, char **argv) {
 	// save sampledPathFlowEvents
 	sampledPathFlowEvents->save("sampled-path-flows.data");
 	delete sampledPathFlowEvents;
+
+    // save recorded packet injection data
+    trafficTraceRecord->save("injection.data");
+    delete trafficTraceRecord;
 
 	OVector<Packet*> packets;
 	packetPool.dequeueAll(packets);

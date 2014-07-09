@@ -51,7 +51,7 @@ TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, b
 		QByteArray packet;
 		if (pcapReader.readPacket(packetHeader, packet)) {
 			quint64 ts = quint64(packetHeader.ts_sec) * 1000ULL * 1000ULL * 1000ULL +
-						 quint64(packetHeader.ts_usec) * 1000ULL;
+						 quint64(packetHeader.ts_nsec);
 			if (tsStart == 0) {
 				tsStart = ts;
 			}
@@ -66,10 +66,10 @@ TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, b
 
 	return trace;
 #else
-    Q_UNUSED(pcapFileName);
-    TrafficTrace trace(link);
-    ok = false;
-    return trace;
+	Q_UNUSED(pcapFileName);
+	TrafficTrace trace(link);
+	ok = false;
+	return trace;
 #endif
 }
 
@@ -110,105 +110,105 @@ QDataStream& operator>>(QDataStream& s, TrafficTrace& d)
 
 QDataStream& operator<<(QDataStream& s, const TrafficTracePacketRecord& d)
 {
-    qint8 ver = 1;
+	qint8 ver = 1;
 
-    s << ver;
+	s << ver;
 
-    s << d.traceIndex;
-    s << d.packetIndex;
-    s << d.injectionTime;
-    s << d.exitTime;
-    s << d.theoreticalDelay;
+	s << d.traceIndex;
+	s << d.packetIndex;
+	s << d.injectionTime;
+	s << d.exitTime;
+	s << d.theoreticalDelay;
 
-    return s;
+	return s;
 }
 
 QDataStream& operator>>(QDataStream& s, TrafficTracePacketRecord& d)
 {
-    qint8 ver = 0;
+	qint8 ver = 0;
 
-    s >> ver;
+	s >> ver;
 
-    if (ver <= 1) {
-        s >> d.traceIndex;
-        s >> d.packetIndex;
-        s >> d.injectionTime;
-        s >> d.exitTime;
-        s >> d.theoreticalDelay;
-    }
+	if (ver <= 1) {
+		s >> d.traceIndex;
+		s >> d.packetIndex;
+		s >> d.injectionTime;
+		s >> d.exitTime;
+		s >> d.theoreticalDelay;
+	}
 
-    if (ver > 1) {
-        qDebug() << __FILE__ << __LINE__ << "read error";
-        s.setStatus(QDataStream::ReadCorruptData);
-    }
-    return s;
+	if (ver > 1) {
+		qDebug() << __FILE__ << __LINE__ << "read error";
+		s.setStatus(QDataStream::ReadCorruptData);
+	}
+	return s;
 }
 
 QDataStream& operator<<(QDataStream& s, const TrafficTraceRecord& d)
 {
-    qint8 ver = 1;
+	qint8 ver = 1;
 
-    s << ver;
+	s << ver;
 
-    s << d.events;
+	s << d.events;
 
-    return s;
+	return s;
 }
 
 QDataStream& operator>>(QDataStream& s, TrafficTraceRecord& d)
 {
-    qint8 ver = 0;
+	qint8 ver = 0;
 
-    s >> ver;
+	s >> ver;
 
-    if (ver <= 1) {
-        s >> d.events;
-    }
+	if (ver <= 1) {
+		s >> d.events;
+	}
 
-    if (ver > 1) {
-        qDebug() << __FILE__ << __LINE__ << "read error";
-        s.setStatus(QDataStream::ReadCorruptData);
-    }
-    return s;
+	if (ver > 1) {
+		qDebug() << __FILE__ << __LINE__ << "read error";
+		s.setStatus(QDataStream::ReadCorruptData);
+	}
+	return s;
 }
 
 
 bool TrafficTraceRecord::save(QString fileName)
 {
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
-        return false;
-    }
+	QFile file(fileName);
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+		return false;
+	}
 
-    QDataStream out(&file);
-    out.setVersion(QDataStream::Qt_4_0);
+	QDataStream out(&file);
+	out.setVersion(QDataStream::Qt_4_0);
 
-    out << *this;
+	out << *this;
 
-    if (out.status() != QDataStream::Ok) {
-        qDebug() << __FILE__ << __LINE__ << "Error writing file:" << file.fileName();
-        return false;
-    }
-    return true;
+	if (out.status() != QDataStream::Ok) {
+		qDebug() << __FILE__ << __LINE__ << "Error writing file:" << file.fileName();
+		return false;
+	}
+	return true;
 }
 
 bool TrafficTraceRecord::load(QString fileName)
 {
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
-        return false;
-    }
+	QFile file(fileName);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+		return false;
+	}
 
-    QDataStream in(&file);
-    in.setVersion(QDataStream::Qt_4_0);
+	QDataStream in(&file);
+	in.setVersion(QDataStream::Qt_4_0);
 
-    in >> *this;
+	in >> *this;
 
-    if (in.status() != QDataStream::Ok) {
-        qDebug() << __FILE__ << __LINE__ << "Error reading file:" << file.fileName();
-        return false;
-    }
-    return true;
+	if (in.status() != QDataStream::Ok) {
+		qDebug() << __FILE__ << __LINE__ << "Error reading file:" << file.fileName();
+		return false;
+	}
+	return true;
 }

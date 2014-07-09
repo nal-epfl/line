@@ -24,26 +24,32 @@
 // Pcap format described in http://wiki.wireshark.org/Development/LibpcapFileFormat
 
 typedef struct {
-		quint32 magic_number;   // magic number
-		quint16 version_major;  // major version number
-		quint16 version_minor;  // minor version number
-		qint32  thiszone;       // GMT to local correction
-		quint32 sigfigs;        // accuracy of timestamps
-		quint32 snaplen;        // ax length of captured packets, in octets
-		quint32 network;        // data link type, one of the LINKTYPE_* constants defined below
+	quint32 magic_number;   // magic number
+	quint16 version_major;  // major version number
+	quint16 version_minor;  // minor version number
+	qint32  thiszone;       // GMT to local correction
+	quint32 sigfigs;        // accuracy of timestamps
+	quint32 snaplen;        // ax length of captured packets, in octets
+	quint32 network;        // data link type, one of the LINKTYPE_* constants defined below
 } PcapHeader;
 
 typedef struct {
-		quint32 ts_sec;         // timestamp seconds
-		quint32 ts_usec;        // timestamp microseconds
-		quint32 incl_len;       // number of octets of packet saved in file
-		quint32 orig_len;       // actual length of packet
+	quint32 ts_sec;         // timestamp seconds
+	quint32 ts_nsec;        // timestamp nanoseconds
+	quint32 incl_len;       // number of octets of packet saved in file
+	quint32 orig_len;       // actual length of packet
 } PcapPacketHeader;
+
+#define kPcapMagicNativeNanosec 0xa1b23c4d
+#define kPcapMagicSwappedNanosec 0x4d3cb2a1
+#define kPcapMagicNativeMicrosec 0xa1b2c3d4
+#define kPcapMagicSwappedMicrosec 0xd4c3b2a1
 
 class PcapReader {
 public:
 	PcapReader(QString fileName);
 	PcapReader(QIODevice *device);
+	~PcapReader();
 
 	bool isOk();
 	bool atEnd();
@@ -57,9 +63,32 @@ protected:
 
 	bool ok;
 	QIODevice *device;
-	bool ownDevice;
+	bool ownsDevice;
 	PcapHeader header;
 	bool mustSwap;
+	quint32 tsFracMultiplier;
+};
+
+class PcapWriter {
+public:
+	// Network is one of the LINKTYPE_* constants (typically LINKTYPE_RAW for IP captures and LINKTYPE_ETHERNET for
+	// Ethernet).
+	PcapWriter(QString fileName, quint32 network);
+	PcapWriter(QIODevice *device, quint32 network);
+	~PcapWriter();
+
+	bool isOk();
+	bool writePacket(quint64 timestampNanosec, int originalLength, QByteArray packet);
+	bool writePacket(PcapPacketHeader pcapPacketHeader, QByteArray packet);
+	void close();
+
+protected:
+	bool write(const void *p, qint64 len);
+	bool writeHeader(quint32 network);
+
+	bool ok;
+	QIODevice *device;
+	bool ownsDevice;
 };
 
 // Link type constants described on http://www.tcpdump.org/linktypes.html

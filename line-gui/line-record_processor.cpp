@@ -69,7 +69,7 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 		QByteArray pcapBytesDrop;
 
 		PcapHeader pcapHeader;
-		pcapHeader.magic_number = 0xa1b2c3d4;
+		pcapHeader.magic_number = kPcapMagicNativeNanosec;
 		pcapHeader.version_major = 2;
 		pcapHeader.version_minor = 4;
 		pcapHeader.thiszone = 0;
@@ -92,8 +92,8 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 				continue;
 			}
 			PcapPacketHeader pcapPacketHeader;
-			pcapPacketHeader.ts_usec = quint32((qe.ts_enqueue / 1000ULL) % 1000000ULL);
-			pcapPacketHeader.ts_sec = quint32((qe.ts_enqueue / 1000ULL) / 1000000ULL);
+			pcapPacketHeader.ts_nsec = quint32(qe.ts_enqueue % 1000000000ULL);
+			pcapPacketHeader.ts_sec = quint32(qe.ts_enqueue / 1000000000ULL);
 			pcapPacketHeader.incl_len = CAPTURE_LENGTH;
 			IPHeader iph;
 			TCPHeader tcph;
@@ -114,16 +114,16 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 				pcapBytesDrop.append((const char*)p.buffer, CAPTURE_LENGTH);
 			} else {
 				// output
-				pcapPacketHeader.ts_usec = quint32((qe.ts_exit / 1000ULL) % 1000000ULL);
-				pcapPacketHeader.ts_sec = quint32((qe.ts_exit / 1000ULL) / 1000000ULL);
+				pcapPacketHeader.ts_nsec = quint32(qe.ts_exit % 1000000000ULL);
+				pcapPacketHeader.ts_sec = quint32(qe.ts_exit / 1000000000ULL);
 				pcapBytesOut.append((const char*)&pcapPacketHeader, sizeof(PcapPacketHeader));
 				pcapBytesOut.append((const char*)p.buffer, CAPTURE_LENGTH);
 			}
 		}
 
-        saveFile(expPath + "/" + QString("edge-%1-in.pcap").arg(e.index + 1), pcapBytesIn);
-        saveFile(expPath + "/" + QString("edge-%1-out.pcap").arg(e.index + 1), pcapBytesOut);
-        saveFile(expPath + "/" + QString("edge-%1-drop.pcap").arg(e.index + 1), pcapBytesDrop);
+		saveFile(expPath + "/" + QString("edge-%1-in.pcap").arg(e.index + 1), pcapBytesIn);
+		saveFile(expPath + "/" + QString("edge-%1-out.pcap").arg(e.index + 1), pcapBytesOut);
+		saveFile(expPath + "/" + QString("edge-%1-drop.pcap").arg(e.index + 1), pcapBytesDrop);
 	}
 
 	// Create one global pcap file with everything that entered the emulator
@@ -131,7 +131,7 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 		QByteArray pcapBytesIn;
 
 		PcapHeader pcapHeader;
-		pcapHeader.magic_number = 0xa1b2c3d4;
+		pcapHeader.magic_number = kPcapMagicNativeNanosec;
 		pcapHeader.version_major = 2;
 		pcapHeader.version_minor = 4;
 		pcapHeader.thiszone = 0;
@@ -146,8 +146,8 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 				return false;
 			}
 			PcapPacketHeader pcapPacketHeader;
-			pcapPacketHeader.ts_usec = quint32((p.ts_userspace_rx / 1000ULL) % 1000000ULL);
-			pcapPacketHeader.ts_sec = quint32((p.ts_userspace_rx / 1000ULL) / 1000000ULL);
+			pcapPacketHeader.ts_nsec = quint32(p.ts_userspace_rx % 1000000000ULL);
+			pcapPacketHeader.ts_sec = quint32(p.ts_userspace_rx / 1000000000ULL);
 			pcapPacketHeader.incl_len = CAPTURE_LENGTH;
 			IPHeader iph;
 			TCPHeader tcph;
@@ -170,7 +170,7 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 		QByteArray pcapBytesOut;
 
 		PcapHeader pcapHeader;
-		pcapHeader.magic_number = 0xa1b2c3d4;
+		pcapHeader.magic_number = kPcapMagicNativeNanosec;
 		pcapHeader.version_major = 2;
 		pcapHeader.version_minor = 4;
 		pcapHeader.thiszone = 0;
@@ -200,8 +200,8 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 				queueEvents.last().edge_index == path.edgeList.last().index) {
 				// transmitted
 				PcapPacketHeader pcapPacketHeader;
-				pcapPacketHeader.ts_usec = quint32((queueEvents.last().ts_exit / 1000ULL) % 1000000ULL);
-				pcapPacketHeader.ts_sec = quint32((queueEvents.last().ts_exit / 1000ULL) / 1000000ULL);
+				pcapPacketHeader.ts_nsec = quint32(queueEvents.last().ts_exit % 1000000000ULL);
+				pcapPacketHeader.ts_sec = quint32(queueEvents.last().ts_exit / 1000000000ULL);
 				pcapPacketHeader.incl_len = CAPTURE_LENGTH;
 				IPHeader iph;
 				TCPHeader tcph;
@@ -787,7 +787,7 @@ QList<FlowIntDataItem> computeReceivedRawThroughputForFlow(Flow flow,
 
 	for (int i = 0; i < receivedRaw.count(); i++) {
 		qreal received = receivedRaw[i].value - (i > 0 ? receivedRaw[i-1].value : 0);
-        qreal duration = window;
+		qreal duration = window;
 		for (int j = i - 1; j >= 0; j--) {
 			if (receivedRaw[j].time < receivedRaw[i].time - window) {
 				break;

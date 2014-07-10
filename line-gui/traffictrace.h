@@ -21,6 +21,12 @@ public:
 	QVector<TrafficTracePacket> packets;
 	qint32 link;
 
+	QString pcapFileName;
+	QString pcapFullFilePath;
+
+	bool loadFromPcap();
+	void setPcapFilePath(QString pcapFilePath);
+
 	static TrafficTrace generateFromPcap(QString pcapFileName, qint32 link, bool &ok);
 };
 

@@ -56,6 +56,7 @@
 #include "../util/ovector.h"
 #include "../util/util.h"
 #include "../tomo/tomodata.h"
+#include "../util/tinyhistogram.h"
 
 /// topology stuff
 
@@ -376,6 +377,13 @@ void NetGraph::prepareEmulation()
 			}
 		}
 	}
+
+	for (int iTrace = 0; iTrace < trafficTraces.count(); iTrace++) {
+		if (!trafficTraces[iTrace].loadFromPcap()) {
+			qDebug() << "Could not open pcap file";
+			exit(-1);
+		}
+	}
 }
 
 void loadTopology(QString graphFileName)
@@ -458,6 +466,9 @@ void TokenBucket::init(quint64 ts_now)
 
 void TokenBucket::update(quint64 ts_now)
 {
+	if (ts_now < tsLastUpdate) {
+		qDebug() << ts_now << tsLastUpdate << currentLevel << packets_in;
+	}
 	Q_ASSERT_FORCE(ts_now >= tsLastUpdate);
 	if (tsLastUpdate == 0) {
 		init(ts_now);
@@ -534,14 +545,7 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 	bytes += p->length;
 	bytes_in_perpath[p->path_id] += p->length;
 
-	if (ts_now < qts_head) {
-		// This should never happen
-		if (DEBUG_PACKETS) {
-			printf("Moving clock forward by %s ns\n",
-				   withCommas(qts_head - ts_now));
-		}
-		ts_now = qts_head;
-	}
+	Q_ASSERT_FORCE(ts_now >= qts_head);
 
 	// update the queue
 	if (qload > 0) {
@@ -1378,21 +1382,19 @@ void saveRecordedData()
 	saveEdgeTimelinesBinary(tomoData.tsMin, tomoData.tsMax);
 }
 
-static quint64 max_loop_delay;
-static quint64 max_sync_delay;
-static quint64 max_packet_init_delay;
 static quint64 total_loop_delay;
 static quint64 total_loops;
-static quint64 max_event_delay;
 static quint64 total_event_delay;
 static quint64 packetsQdropped;
 static quint64 numQueuingEvents;
-static quint64 numEventInversions;
-static quint64 totalEventInversionDelay;
-static quint64 maxEventInversionDelay;
 static quint64 tsStart;
 static quint64 emulationDuration;
 static quint64 numActiveQueues;
+static TinyHistogram syncDelays;
+static TinyHistogram initDelays;
+static TinyHistogram eventDelays;
+static TinyHistogram loopDelays;
+
 // time
 static OVector<quint64> highLatencyEventsTs;
 // memory usage
@@ -1433,20 +1435,11 @@ void* packet_scheduler_thread(void* )
 
 	warmMallocCache();
 
-	max_loop_delay = 0;
 	total_loop_delay = 0;
 	total_loops = 0;
-	max_sync_delay = 0;
-	max_packet_init_delay = 0;
 	packetsQdropped = 0;
 	numQueuingEvents = 0;
-	max_event_delay = 0;
 	total_event_delay = 0;
-	numEventInversions = 0;
-	totalEventInversionDelay = 0;
-	maxEventInversionDelay = 0;
-	// last event that was processed
-	quint64 ts_last_event = 0;
 
 	OVector<Packet*> localPacketsToSend;
 	localPacketsToSend.reserve(10000);
@@ -1531,7 +1524,7 @@ void* packet_scheduler_thread(void* )
 		}
 
 		quint64 ts_after_sync = get_current_time();
-		max_sync_delay = qMax(max_sync_delay, ts_after_sync - ts_now);
+		syncDelays.recordEvent(ts_after_sync - ts_now);
 		ts_now = ts_after_sync;
 
 #if BYPASS_SCHEDULER
@@ -1564,7 +1557,9 @@ void* packet_scheduler_thread(void* )
 			}
 			numQueuingEvents++;
 			quint64 ts_next_event;
-			int pkt_state = routePacket(p, p->ts_userspace_rx, ts_next_event);
+			//int pkt_state = routePacket(p, p->ts_userspace_rx, ts_next_event);
+			initDelays.recordEvent(ts_now - p->ts_userspace_rx);
+			int pkt_state = routePacket(p, ts_now, ts_next_event);
 			if (pkt_state == PKT_QUEUED) {
 				if (DEBUG_PACKETS)
 					printf("Enqueue: %d.%d.%d.%d -> %d.%d.%d.%d, for time = +%llu ns, tracelen = %d\n",
@@ -1594,8 +1589,6 @@ void* packet_scheduler_thread(void* )
 		}
 		newPackets.clear();
 
-		max_packet_init_delay = qMax(max_packet_init_delay, get_current_time() - ts_now);
-
 		// process events
 		bool receivedEvents = false;
 		for (drain(ts_now, events); !events.isEmpty(); drain(ts_now, events)) {
@@ -1605,20 +1598,13 @@ void* packet_scheduler_thread(void* )
 				if (!p->dropped) {
 					receivedEvents = true;
 					numQueuingEvents++;
-					ts_last_event = qMax(ts_last_event, event.second);
-					if (event.second < ts_last_event) {
-						// not good
-						numEventInversions++;
-						quint64 inversionDelay = ts_last_event - event.second;
-						maxEventInversionDelay = qMax(maxEventInversionDelay, inversionDelay);
-						totalEventInversionDelay += inversionDelay;
-					}
 					quint64 event_delay = ts_now - event.second;
-					max_event_delay = qMax(max_event_delay, event_delay);
+					eventDelays.recordEvent(event_delay);
 					total_event_delay += event_delay;
 				}
 				quint64 ts_next_event;
-				int pkt_state = routePacket(p, event.second, ts_next_event);
+				//int pkt_state = routePacket(p, event.second, ts_next_event);
+				int pkt_state = routePacket(p, ts_now, ts_next_event);
 				if (pkt_state == PKT_QUEUED) {
 					if (DEBUG_PACKETS)
 						printf("Enqueue: %d.%d.%d.%d -> %d.%d.%d.%d, for time = +%llu ns, tracelen = %d\n",
@@ -1657,7 +1643,7 @@ void* packet_scheduler_thread(void* )
 				quint64 ts_after = get_current_time();
 				quint64 loop_delay = ts_after - ts_now;
 				if (ts_after - tsFirstSentPacket > RECORD_STATS_DELAY) {
-					max_loop_delay = qMax(max_loop_delay, loop_delay);
+					loopDelays.recordEvent(loop_delay);
 					total_loop_delay += ts_after - ts_now;
 					total_loops++;
 				}
@@ -1684,7 +1670,6 @@ void* packet_scheduler_thread(void* )
 			}
 		}
 		// end stats
-		// qDebug() << "Loop took < " << max_loop_delay << "ns";
 	}
 
 	malloc_profile_pause_wrapper();
@@ -1712,20 +1697,15 @@ void* packet_scheduler_thread(void* )
 void print_scheduler_stats()
 {
 	printf("===== Scheduler stats ====\n");
-	printf("Scheduler non-idle loop took: avg  " TS_FORMAT " , max  " TS_FORMAT " \n",
-		   TS_FORMAT_PARAM(total_loop_delay / (total_loops ? total_loops : 1)),
-		   TS_FORMAT_PARAM(max_loop_delay));
-	printf("Event delay: avg  " TS_FORMAT " , max  " TS_FORMAT " \n",
-		   TS_FORMAT_PARAM(total_event_delay / (numQueuingEvents ? numQueuingEvents : 1)),
-		   TS_FORMAT_PARAM(max_event_delay));
-	printf("Sync delay: max  " TS_FORMAT " \n",
-		   TS_FORMAT_PARAM(max_sync_delay));
-	printf("Packet init delay: max  " TS_FORMAT " \n",
-		   TS_FORMAT_PARAM(max_packet_init_delay));
-	printf("Event inversions: %llu\n", numEventInversions);
-	printf("Event inversions delay: avg  " TS_FORMAT " , max  " TS_FORMAT " \n",
-		   TS_FORMAT_PARAM(totalEventInversionDelay / (numEventInversions ? numEventInversions : 1)),
-		   TS_FORMAT_PARAM(maxEventInversionDelay));
+	printf("Scheduler non-idle loop time:\n");
+	printf("%s\n", loopDelays.toString(&time2String).toLatin1().constData());
+	printf("Event delay:\n");
+	printf("%s\n", eventDelays.toString(&time2String).toLatin1().constData());
+	printf("Sync delay:\n");
+	printf("%s\n", syncDelays.toString(&time2String).toLatin1().constData());
+	printf("Init delay:\n");
+	printf("%s\n", initDelays.toString(&time2String).toLatin1().constData());
+
 	printf("Total packets qdropped: %s\n",
 		   withCommas(packetsQdropped));
 	printf("Active queues: %s\n",

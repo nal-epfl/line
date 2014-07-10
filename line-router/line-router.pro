@@ -121,7 +121,11 @@ HEADERS += \
     ../util/readerwriterqueue.h \
     ../util/waitfreequeuemoody.h \
     ../util/waitfreequeuedvyukov.h \
-    ../line-gui/traffictrace.h
+    ../line-gui/traffictrace.h \
+    ../tomo/pcap-qt.h \
+    ../util/tinyhistogram.h
 
 SOURCES += \
-    ../line-gui/traffictrace.cpp
+    ../line-gui/traffictrace.cpp \
+    ../tomo/pcap-qt.cpp \
+    ../util/tinyhistogram.cpp

@@ -157,6 +157,23 @@ bool deploy(NetGraph &g, const RunParams &params) {
 		return true;
 	}
 
+	foreach (TrafficTrace trace, g.trafficTraces) {
+		// rsync -avz --checksum -e 'ssh -p 22' /path/to/file root@host:/path/to/
+
+		description = QString("Uploading trace file %1 to the router emulator").arg(trace.pcapFileName);
+		command = "rsync";
+		args = QStringList() << "-avz"
+							 << "--checksum"
+							 << "-e"
+							 << QString("ssh -p %1").arg(corePort)
+							 << trace.pcapFullFilePath
+							 << QString("root@%1:~/").arg(core);
+		if (!runCommand(command, args, description)) {
+			qError() << "Deployment aborted.";
+			return false;
+		}
+	}
+
 	generateHostDeploymentScript(g, params.realRouting);
 
 	if (!params.realRouting) {

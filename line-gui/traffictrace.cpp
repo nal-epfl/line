@@ -36,16 +36,26 @@ TrafficTrace::TrafficTrace(qint32 link)
 	: link(link)
 {}
 
-TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, bool &ok)
+bool TrafficTrace::loadFromPcap()
 {
-#ifndef LINE_EMULATOR
-	ok = true;
-	TrafficTrace trace(link);
+	packets.clear();
 
-	PcapReader pcapReader(pcapFileName);
+	QString fileName;
+
+	if (QFile::exists(pcapFileName)) {
+		fileName = pcapFileName;
+	} else if (QFile::exists(pcapFullFilePath)) {
+		fileName = pcapFullFilePath;
+	} else if (QFile::exists(QDir::homePath() + "/" + pcapFileName)) {
+		fileName = QDir::homePath() + "/" + pcapFileName;
+	} else {
+		qDebug() << "Could not open pcap file" << pcapFileName << pcapFullFilePath;
+		return false;
+	}
+
+	PcapReader pcapReader(fileName);
 
 	quint64 tsStart = 0;
-
 	while (pcapReader.isOk() && !pcapReader.atEnd()) {
 		PcapPacketHeader packetHeader;
 		QByteArray packet;
@@ -60,27 +70,38 @@ TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, b
 			TrafficTracePacket tracePacket;
 			tracePacket.timestamp = ts;
 			tracePacket.size = packetHeader.orig_len;
-			trace.packets << tracePacket;
+			packets << tracePacket;
 		}
 	}
 
-	return trace;
-#else
-	Q_UNUSED(pcapFileName);
+	return pcapReader.isOk();
+}
+
+void TrafficTrace::setPcapFilePath(QString pcapFilePath)
+{
+	pcapFullFilePath = pcapFilePath;
+	pcapFileName = QString(pcapFilePath).split("/").last();
+}
+
+TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, bool &ok)
+{
+	ok = true;
 	TrafficTrace trace(link);
-	ok = false;
+	trace.setPcapFilePath(pcapFileName);
+	trace.loadFromPcap();
 	return trace;
-#endif
 }
 
 QDataStream& operator<<(QDataStream& s, const TrafficTrace& d)
 {
-	qint8 ver = 2;
+	qint8 ver = 3;
 
 	s << ver;
 
 	s << d.packets;
 	s << d.link;
+	s << d.pcapFileName;
+	s << d.pcapFullFilePath;
 
 	return s;
 }
@@ -101,7 +122,15 @@ QDataStream& operator>>(QDataStream& s, TrafficTrace& d)
 		d.link = 0;
 	}
 
-	if (ver > 2) {
+	if (ver >= 3) {
+		s >> d.pcapFileName;
+		s >> d.pcapFullFilePath;
+	} else {
+		d.pcapFileName.clear();
+		d.pcapFullFilePath.clear();
+	}
+
+	if (ver > 3) {
 		qDebug() << __FILE__ << __LINE__ << "read error";
 		s.setStatus(QDataStream::ReadCorruptData);
 	}

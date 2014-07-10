@@ -1431,7 +1431,7 @@ void NetGraphEditor::updateTraces()
 
 	for (int i = 0; i < graph()->trafficTraces.count(); i++) {
 		ui->tableTraces->setItem(i, 0, new QTableWidgetItem(QString("%1").arg(graph()->trafficTraces[i].link + 1)));
-		ui->tableTraces->setItem(i, 1, new QTableWidgetItem(QString("%1 packets").arg(graph()->trafficTraces[i].packets.count())));
+		ui->tableTraces->setItem(i, 1, new QTableWidgetItem(QString("%1").arg(graph()->trafficTraces[i].pcapFileName)));
 	}
 }
 
@@ -2750,9 +2750,8 @@ void NetGraphEditor::on_btnAddTrace_clicked()
 	QString pcapFile = QFileDialog::getOpenFileName(this, "Select trace file", ".", "Pcap files (*.pcap)");
 	if (pcapFile.isEmpty())
 		return;
-	TrafficTrace trace = TrafficTrace::generateFromPcap(pcapFile, link - 1, ok);
-	if (!ok)
-		return;
+	TrafficTrace trace(link - 1);
+	trace.setPcapFilePath(pcapFile);
 	graph()->trafficTraces.append(trace);
 	setModified();
 	reloadScene();

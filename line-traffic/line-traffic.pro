@@ -23,7 +23,7 @@ exists( ../line.pro ) {
 	INCLUDEPATH += /usr/include/libev
 	INCLUDEPATH += ../util
 	INCLUDEPATH += ../line-gui
-	LIBS += -lev
+	LIBS += -lev -lunwind
 
   QMAKE_CXXFLAGS += -std=c++0x
 

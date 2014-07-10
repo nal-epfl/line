@@ -20,6 +20,8 @@ TEMPLATE = app
 
 QMAKE_CXXFLAGS += -std=c++0x -Wno-unused-local-typedefs
 
+LIBS += -lunwind
+
 SOURCES += main.cpp \
     ../line-gui/route.cpp \
     ../line-gui/remoteprocessssh.cpp \

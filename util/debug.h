@@ -98,8 +98,10 @@
 #define orangevSilent(X) { orangeSilent(#X + " = " + X); } qt_noop()
 #endif
 
+void show_backtrace();
+
 // Qt's Q_ASSERT is removed in release mode, so use this instead
-#define Q_ASSERT_FORCE(cond) ((!(cond)) ? qt_assert(#cond,__FILE__,__LINE__) : qt_noop())
+#define Q_ASSERT_FORCE(cond) if (!(cond)) { show_backtrace(); qt_assert(#cond,__FILE__,__LINE__); }; qt_noop()
 
 
 #endif // DEBUG_H

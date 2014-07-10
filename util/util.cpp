@@ -36,9 +36,30 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+
 #include "debug.h"
 
 QList<QSharedPointer<QTextStream> > OutputStream::copies;
+
+void show_backtrace() {
+	unw_cursor_t cursor;
+	unw_context_t context;
+	unw_getcontext(&context);
+	unw_init_local(&cursor, &context);
+
+	fprintf(stderr, "Backtrace:\n");
+	while (unw_step(&cursor) > 0) {
+		unw_word_t offset;
+		char fname[128];
+		fname[0] = '\0';
+		(void) unw_get_proc_name(&cursor, fname, sizeof(fname), &offset);
+		fprintf(stderr, "%s\n", fname);
+	}
+
+	printBacktrace();
+}
 
 void writeNumberCompressed(QDataStream &s, qint64 d) {
 	bool positive = d > 0;

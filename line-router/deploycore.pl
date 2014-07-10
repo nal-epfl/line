@@ -22,8 +22,8 @@ foreach my $route (`netstat -rn | grep '^10.'`) {
 
 # Insert pf_ring driver, if necessary
 # Note: transparent_mode=1 is only possible with PF_RING-patched drivers
-#command("sh -c \'lsmod | grep pf_ring || modprobe pf-ring transparent_mode=1 enable_tx_capture=0\'");
-command("sh -c \'lsmod | grep pf_ring || modprobe pf-ring transparent_mode=0 enable_tx_capture=0\'");
+#command("sh -c \'lsmod | grep pf_ring || modprobe pf-ring transparent_mode=1 enable_tx_capture=0 min_num_slots=32768\'");
+command("sh -c \'lsmod | grep pf_ring || modprobe pf-ring transparent_mode=0 enable_tx_capture=0 min_num_slots=32768'");
 
 # enable routing
 command "sh -c \'echo 1 > /proc/sys/net/ipv4/ip_forward\'";

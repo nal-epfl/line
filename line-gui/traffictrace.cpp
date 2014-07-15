@@ -83,6 +83,11 @@ void TrafficTrace::setPcapFilePath(QString pcapFilePath)
 	pcapFileName = QString(pcapFilePath).split("/").last();
 }
 
+void TrafficTrace::clear()
+{
+	packets.clear();
+}
+
 TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, bool &ok)
 {
 	ok = true;
@@ -175,11 +180,12 @@ QDataStream& operator>>(QDataStream& s, TrafficTracePacketRecord& d)
 
 QDataStream& operator<<(QDataStream& s, const TrafficTraceRecord& d)
 {
-	qint8 ver = 1;
+	qint8 ver = 2;
 
 	s << ver;
 
 	s << d.events;
+	s << d.tsStart;
 
 	return s;
 }
@@ -190,11 +196,14 @@ QDataStream& operator>>(QDataStream& s, TrafficTraceRecord& d)
 
 	s >> ver;
 
-	if (ver <= 1) {
+	if (1 <= ver && ver <= 2) {
 		s >> d.events;
 	}
+	if (2 <= ver && ver <= 2) {
+		s >> d.tsStart;
+	}
 
-	if (ver > 1) {
+	if (ver > 2) {
 		qDebug() << __FILE__ << __LINE__ << "read error";
 		s.setStatus(QDataStream::ReadCorruptData);
 	}

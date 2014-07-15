@@ -92,7 +92,8 @@ SOURCES += main.cpp\
     ../util/ovector.cpp \
     ../util/bitarray.cpp \
     traffictrace.cpp \
-    ../tomo/pcap-qt.cpp
+    ../tomo/pcap-qt.cpp \
+    ../util/tinyhistogram.cpp
 
 HEADERS  += mainwindow.h \
     netgraph.h \
@@ -149,7 +150,8 @@ HEADERS  += mainwindow.h \
     flowevent.h \
     ../util/ovector.h \
     ../util/bitarray.h \
-    traffictrace.h
+    traffictrace.h \
+    ../util/tinyhistogram.h
 
 FORMS    += mainwindow.ui \
     ../util/qswiftprogressdialog.ui \

@@ -892,6 +892,14 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 			if (e.enqueue(p, ts_now, ts_next)) {
 				return PKT_QUEUED;
 			} else {
+				TrafficTracePacketRecord event;
+				event.traceIndex = (p->id & ~(1ULL << 63)) >> 48;
+				event.packetIndex = (p->id & ~(1ULL << 63)) & 0xffFFffFFffFF;
+				event.injectionTime = p->ts_userspace_rx;
+				event.exitTime = 0;
+				event.theoreticalDelay = 0;
+				trafficTraceRecord->events.append(event);
+
 				return PKT_DROPPED;
 			}
 		} else {
@@ -1474,6 +1482,7 @@ void* packet_scheduler_thread(void* )
 	barrierStart.wait();
 
 	tsStart = get_current_time();
+	trafficTraceRecord->tsStart = tsStart;
 
 #if DUMP_STACKTRACE_ON_MALLOC
 	malloc_profile_set_trace_cpu_wrapper(1);

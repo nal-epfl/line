@@ -2243,6 +2243,32 @@ void MainWindow::loadSimulation()
 	if (QFile::exists(simulations[currentSimulation].dir + "/" + QString("injection.data"))) {
 		TrafficTraceRecord traceRecord;
 		if (traceRecord.load(simulations[currentSimulation].dir + "/" + QString("injection.data"))) {
+			if (0) {
+				TrafficTraceRecord traceRecordRaw;
+				if (traceRecordRaw.rawLoad(QString(simulations[currentSimulation].dir + "/" + QString("injection.data")).toLatin1().constData())) {
+					if (traceRecordRaw.tsStart != traceRecord.tsStart) {
+						qDebug() << "different data!!!";
+						Q_ASSERT_FORCE(false);
+					}
+					if (traceRecordRaw.events.count() != traceRecord.events.count()) {
+						qDebug() << "different data!!!";
+						Q_ASSERT_FORCE(false);
+					}
+					for (int iEvent = 0; iEvent < traceRecord.events.count(); iEvent++) {
+						if (traceRecordRaw.events[iEvent].traceIndex != traceRecord.events[iEvent].traceIndex ||
+							traceRecordRaw.events[iEvent].packetIndex != traceRecord.events[iEvent].packetIndex ||
+							traceRecordRaw.events[iEvent].injectionTime != traceRecord.events[iEvent].injectionTime ||
+							traceRecordRaw.events[iEvent].exitTime != traceRecord.events[iEvent].exitTime ||
+							traceRecordRaw.events[iEvent].theoreticalDelay != traceRecord.events[iEvent].theoreticalDelay) {
+							qDebug() << "different data!!!";
+							Q_ASSERT_FORCE(false);
+						}
+					}
+				} else {
+					qDebug() << "raw load error!!!";
+					Q_ASSERT_FORCE(false);
+				}
+			}
 			for (int iTrace = 0; iTrace < editor->graph()->trafficTraces.count(); iTrace++) {
 				editor->graph()->trafficTraces[iTrace].loadFromPcap();
 			}

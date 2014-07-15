@@ -61,6 +61,7 @@ public:
 
     bool save(QString fileName);
     bool load(QString fileName);
+	bool rawLoad(const char *fileName);
 };
 
 QDataStream& operator>>(QDataStream& s, TrafficTraceRecord& d);

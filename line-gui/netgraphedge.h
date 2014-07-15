@@ -42,7 +42,7 @@
 #include "../util/ovector.h"
 #endif
 
-#include <qrgb-line.h>
+#include "qrgb-line.h"
 
 class Packet;
 class NetGraph;

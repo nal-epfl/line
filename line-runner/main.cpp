@@ -103,6 +103,10 @@ void checkTrace(QString recordedFileName, QStringList pcapFileNames)
 		QVector<qint32> drops;
 
 		qint64 tsStart = (qint64)traceRecord.tsStart;
+		// debug
+		if (1) {
+			qDebug() << "Simulation starts at" << tsStart;
+		}
 		for (int iEvent = 0; iEvent < traceRecord.events.count(); iEvent++) {
 			qint32 iTrace = traceRecord.events[iEvent].traceIndex;
 			qint32 iPacket = traceRecord.events[iEvent].packetIndex;
@@ -140,6 +144,20 @@ void checkTrace(QString recordedFileName, QStringList pcapFileNames)
 					qint64 relativeDelayError = (absoluteDelayError * 100) / qMax(1ULL, traceRecord.events[iEvent].theoreticalDelay);
 					relativeDelayErrors[iSplit].recordEvent(relativeDelayError);
 					theoreticalDelays[iSplit].recordEvent(traceRecord.events[iEvent].theoreticalDelay);
+				}
+
+				// debug
+				if (1) {
+					if (iPacket < 100) {
+						qDebug() << "Packet in trace" << iTrace << "at index" << iPacket;
+						qDebug() << "Ideal injection time (relative, from .pcap):" << idealInjectionTime;
+						qDebug() << "Real injection time (relative, from .data):" << realInjectionTime;
+						qDebug() << "Delay:" << delta;
+						qDebug() << "Real injection time (absolute, from .data):" << traceRecord.events[iEvent].injectionTime;
+						qDebug() << "Real exit time (absolute, from .data):" << traceRecord.events[iEvent].exitTime;
+						qDebug() << "Theoretical delay (from .data):" << traceRecord.events[iEvent].theoreticalDelay;
+						qDebug() << "";
+					}
 				}
 			} else {
 				qDebug() << __FILE__ << __LINE__ << "bad index";

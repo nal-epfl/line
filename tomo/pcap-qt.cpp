@@ -192,7 +192,9 @@ bool PcapReader::readPacket(PcapPacketHeader &packetHeader, QByteArray &packet)
 		return false;
 
 	if (!read(&packetHeader, sizeof(packetHeader))) {
-		qDebug() << __FILE__ << __LINE__ << "Read error";
+		if (!atEnd()) {
+			qDebug() << __FILE__ << __LINE__ << "Read error";
+		}
 		ok = false;
 		return false;
 	}

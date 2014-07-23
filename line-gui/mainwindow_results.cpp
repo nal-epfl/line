@@ -24,6 +24,7 @@
 #include "../tomo/tomodata.h"
 #include "../line-gui/intervalmeasurements.h"
 #include "flowevent.h"
+#include "../util/tinyhistogram.h"
 
 Simulation::Simulation()
 {
@@ -2239,7 +2240,114 @@ void MainWindow::loadSimulation()
 		}
 	}
 
-	//
+	if (QFile::exists(simulations[currentSimulation].dir + "/" + QString("injection.data"))) {
+		TrafficTraceRecord traceRecord;
+		if (traceRecord.load(simulations[currentSimulation].dir + "/" + QString("injection.data"))) {
+			if (0) {
+				TrafficTraceRecord traceRecordRaw;
+				if (traceRecordRaw.rawLoad(QString(simulations[currentSimulation].dir + "/" + QString("injection.data")).toLatin1().constData())) {
+					if (traceRecordRaw.tsStart != traceRecord.tsStart) {
+						qDebug() << "different data!!!";
+						Q_ASSERT_FORCE(false);
+					}
+					if (traceRecordRaw.events.count() != traceRecord.events.count()) {
+						qDebug() << "different data!!!";
+						Q_ASSERT_FORCE(false);
+					}
+					for (int iEvent = 0; iEvent < traceRecord.events.count(); iEvent++) {
+						if (traceRecordRaw.events[iEvent].traceIndex != traceRecord.events[iEvent].traceIndex ||
+							traceRecordRaw.events[iEvent].packetIndex != traceRecord.events[iEvent].packetIndex ||
+							traceRecordRaw.events[iEvent].injectionTime != traceRecord.events[iEvent].injectionTime ||
+							traceRecordRaw.events[iEvent].exitTime != traceRecord.events[iEvent].exitTime ||
+							traceRecordRaw.events[iEvent].theoreticalDelay != traceRecord.events[iEvent].theoreticalDelay) {
+							qDebug() << "different data!!!";
+							Q_ASSERT_FORCE(false);
+						}
+					}
+				} else {
+					qDebug() << "raw load error!!!";
+					Q_ASSERT_FORCE(false);
+				}
+			}
+			for (int iTrace = 0; iTrace < editor->graph()->trafficTraces.count(); iTrace++) {
+				editor->graph()->trafficTraces[iTrace].loadFromPcap();
+			}
+
+			qint64 splitInterval = 60ULL * 1000ULL * 1000ULL * 1000ULL;
+			QVector<TinyHistogram> injectionDelays;
+			QVector<TinyHistogram> theoreticalDelays;
+			QVector<TinyHistogram> processingDelays;
+			QVector<TinyHistogram> relativeDelayErrors;
+			QVector<qint32> packets;
+			QVector<qint32> drops;
+
+			qint64 tsStart = (qint64)traceRecord.tsStart;
+			for (int iEvent = 0; iEvent < traceRecord.events.count(); iEvent++) {
+				qint32 iTrace = traceRecord.events[iEvent].traceIndex;
+				qint32 iPacket = traceRecord.events[iEvent].packetIndex;
+				if (0 <= iTrace && iTrace < editor->graph()->trafficTraces.count() &&
+					0 <= iPacket && iPacket < editor->graph()->trafficTraces[iTrace].packets.count()) {
+					// Origin: 0
+					qint64 idealInjectionTime = (qint64)editor->graph()->trafficTraces[iTrace].packets[iPacket].timestamp;
+					int iSplit = idealInjectionTime / splitInterval;
+					while (iSplit >= injectionDelays.count()) {
+						injectionDelays << TinyHistogram(32);
+						theoreticalDelays << TinyHistogram(32);
+						processingDelays << TinyHistogram(32);
+						relativeDelayErrors << TinyHistogram(32);
+						packets << 0;
+						drops << 0;
+					}
+
+					qint64 realInjectionTime = (qint64)traceRecord.events[iEvent].injectionTime - tsStart;
+
+					qint64 delta = realInjectionTime - idealInjectionTime;
+
+					if (delta < 0) {
+						qDebug() << __FILE__ << __LINE__ << "negative delay";
+						Q_ASSERT_FORCE(false);
+					}
+
+					injectionDelays[iSplit].recordEvent(delta);
+					packets[iSplit]++;
+					if (traceRecord.events[iEvent].exitTime == 0) {
+						drops[iSplit]++;
+					} else {
+						qint64 absoluteDelayError = traceRecord.events[iEvent].exitTime - traceRecord.events[iEvent].injectionTime
+													- traceRecord.events[iEvent].theoreticalDelay;
+						processingDelays[iSplit].recordEvent(absoluteDelayError);
+						qint64 relativeDelayError = (absoluteDelayError * 100) / qMax(1ULL, traceRecord.events[iEvent].theoreticalDelay);
+						relativeDelayErrors[iSplit].recordEvent(relativeDelayError);
+						theoreticalDelays[iSplit].recordEvent(traceRecord.events[iEvent].theoreticalDelay);
+					}
+				} else {
+					qDebug() << __FILE__ << __LINE__ << "bad index";
+					Q_ASSERT_FORCE(false);
+				}
+			}
+
+			qDebug() << __FILE__ << __LINE__ << "===============================================";
+			for (int iSplit = 0; iSplit < injectionDelays.count(); iSplit++) {
+				qDebug() << __FILE__ << __LINE__ << "-----------------------------------------------";
+				qDebug() << __FILE__ << __LINE__ << "Interval:" << time2String(iSplit * splitInterval) << "to" << time2String((iSplit + 1) * splitInterval);
+				qDebug() << __FILE__ << __LINE__ << "Packets:" << intWithCommas2String(packets[iSplit]);
+				qDebug() << __FILE__ << __LINE__ << "Drops:" << intWithCommas2String(drops[iSplit]);
+				qDebug() << __FILE__ << __LINE__ << "Injection delays:" << injectionDelays[iSplit].toString(time2String);
+				qDebug() << __FILE__ << __LINE__ << "Theoretical delays:" << theoreticalDelays[iSplit].toString(time2String);
+				qDebug() << __FILE__ << __LINE__ << "Processing delays:" << processingDelays[iSplit].toString(time2String);
+				qDebug() << __FILE__ << __LINE__ << "Relative delay errors (%):" << relativeDelayErrors[iSplit].toString(intWithCommas2String);
+			}
+			qDebug() << __FILE__ << __LINE__ << "===============================================";
+
+			for (int iTrace = 0; iTrace < editor->graph()->trafficTraces.count(); iTrace++) {
+				editor->graph()->trafficTraces[iTrace].clear();
+			}
+		} else {
+			qDebug() << "Could not load injection.data";
+		}
+	} else {
+		qDebug() << "No injection.data";
+	}
 
 	ui->scrollPlotsWidgetContents->layout()->addWidget(accordion);
 	emit tabChanged(ui->tabResults);

@@ -26,6 +26,7 @@ public:
 
 	bool loadFromPcap();
 	void setPcapFilePath(QString pcapFilePath);
+	void clear();
 
 	static TrafficTrace generateFromPcap(QString pcapFileName, qint32 link, bool &ok);
 };
@@ -56,9 +57,11 @@ class TrafficTraceRecord
 {
 public:
     QVector<TrafficTracePacketRecord> events;
+	quint64 tsStart;
 
     bool save(QString fileName);
     bool load(QString fileName);
+	bool rawLoad(const char *fileName);
 };
 
 QDataStream& operator>>(QDataStream& s, TrafficTraceRecord& d);

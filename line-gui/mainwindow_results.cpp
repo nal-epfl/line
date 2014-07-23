@@ -2239,6 +2239,8 @@ void MainWindow::loadSimulation()
 		}
 	}
 
+	//
+
 	ui->scrollPlotsWidgetContents->layout()->addWidget(accordion);
 	emit tabChanged(ui->tabResults);
 }

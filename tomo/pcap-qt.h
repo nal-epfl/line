@@ -54,6 +54,7 @@ public:
 	bool isOk();
 	bool atEnd();
 	bool readPacket(PcapPacketHeader &packetHeader, QByteArray &packet);
+	int getIPv4Offset(QByteArray &packet);
 
 	PcapHeader getPcapHeader();
 
@@ -61,6 +62,7 @@ protected:
 	bool read(void *p, qint64 len);
 	bool readHeader();
 
+	bool end;
 	bool ok;
 	QIODevice *device;
 	bool ownsDevice;

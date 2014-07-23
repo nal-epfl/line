@@ -7,6 +7,7 @@
 PcapReader::PcapReader(QString fileName)
 {
 	ok = true;
+	end = false;
 	this->device = NULL;
 	QFile *file = new QFile(fileName);
 	this->device = file;
@@ -24,6 +25,7 @@ PcapReader::PcapReader(QIODevice *device)
 	this->device = device;
 	ownsDevice = false;
 	ok = true;
+	end = false;
 	readHeader();
 }
 
@@ -42,9 +44,10 @@ bool PcapReader::isOk()
 
 bool PcapReader::atEnd()
 {
+	// Note: we do not call device->atEnd(), that function is utter crap.
 	if (!ok)
 		return true;
-	return device->atEnd();
+	return end;
 }
 
 void bswap(quint8 &) {}
@@ -73,6 +76,61 @@ void bswap(quint64 &x) {
 
 void bswap(qint64 &x) {
 	x = __bswap_64(x);
+}
+
+bool machineIsBigEndian()
+{
+	union {
+		quint32 i;
+		char c[4];
+	} value = {0x01020304};
+
+	return value.c[0] == 0x01;
+}
+
+bool machineIsNetowrkOrder()
+{
+	return machineIsBigEndian();
+}
+
+void ntoh(quint8 &) {}
+
+void ntoh(qint8 &) {}
+
+void ntoh(quint16 &x) {
+	if (machineIsNetowrkOrder())
+		return;
+	bswap(x);
+}
+
+void ntoh(qint16 &x) {
+	if (machineIsNetowrkOrder())
+		return;
+	bswap(x);
+}
+
+void ntoh(quint32 &x) {
+	if (machineIsNetowrkOrder())
+		return;
+	bswap(x);
+}
+
+void ntoh(qint32 &x) {
+	if (machineIsNetowrkOrder())
+		return;
+	bswap(x);
+}
+
+void ntoh(quint64 &x) {
+	if (machineIsNetowrkOrder())
+		return;
+	bswap(x);
+}
+
+void ntoh(qint64 &x) {
+	if (machineIsNetowrkOrder())
+		return;
+	bswap(x);
 }
 
 bool PcapReader::readHeader()
@@ -165,6 +223,33 @@ bool PcapReader::readPacket(PcapPacketHeader &packetHeader, QByteArray &packet)
 	return true;
 }
 
+int PcapReader::getIPv4Offset(QByteArray &packet)
+{
+	if (getPcapHeader().network == LINKTYPE_RAW)
+		return 0;
+	if (getPcapHeader().network == LINKTYPE_LINUX_SLL) {
+		const int sllLength = 16;
+		if (packet.length() < sllLength)
+			return -1;
+		quint16 proto = *(const quint16 *)(packet.constData() + 14);
+		ntoh(proto);
+		if (proto == 0x0800)
+			return 16;
+		return -1;
+	}
+	if (getPcapHeader().network == LINKTYPE_ETHERNET) {
+		const int ethLength = 14;
+		if (packet.length() < ethLength)
+			return -1;
+		quint16 proto = *(const quint16 *)(packet.constData() + 12);
+		ntoh(proto);
+		if (proto == 0x0800)
+			return 14;
+		return -1;
+	}
+	return -1;
+}
+
 PcapHeader PcapReader::getPcapHeader()
 {
 	return header;
@@ -180,6 +265,9 @@ bool PcapReader::read(void *p, qint64 len)
 		if (count < 0) {
 			qDebug() << __FILE__ << __LINE__ << "Read error";
 			ok = false;
+			return false;
+		} else if (count == 0) {
+			end = true;
 			return false;
 		}
 		b += count;
@@ -208,7 +296,7 @@ PcapWriter::PcapWriter(QIODevice *device, quint32 network)
 {
 	this->device = device;
 	ownsDevice = false;
-	ok = true;
+	ok = device != NULL;
 	writeHeader(network);
 }
 
@@ -260,7 +348,8 @@ bool PcapWriter::writeHeader(quint32 network)
 
 void PcapWriter::close()
 {
-	device->close();
+	if (device)
+		device->close();
 }
 
 bool PcapWriter::write(const void *p, qint64 len)

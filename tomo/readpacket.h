@@ -26,6 +26,9 @@ public:
 	quint8 source[4];
 	quint8 dest[4];
 
+	quint32 sourceAddr;
+	quint32 destAddr;
+
 	QString sourceString;
 	QString destString;
 

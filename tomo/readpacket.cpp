@@ -43,12 +43,14 @@ bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &
 
 	const struct iphdr *ip = (const struct iphdr *)buffer.constData();
 
+	iph.sourceAddr = ip->saddr;
 	iph.source[3] = (ip->saddr >> 24) & 0xFF;
 	iph.source[2] = (ip->saddr >> 16) & 0xFF;
 	iph.source[1] = (ip->saddr >> 8) & 0xFF;
 	iph.source[0] = (ip->saddr >> 0) & 0xFF;
 	iph.sourceString = QString("%1.%2.%3.%4").arg(iph.source[0]).arg(iph.source[1]).arg(iph.source[2]).arg(iph.source[3]);
 
+	iph.destAddr = ip->daddr;
 	iph.dest[3] = (ip->daddr >> 24) & 0xFF;
 	iph.dest[2] = (ip->daddr >> 16) & 0xFF;
 	iph.dest[1] = (ip->daddr >> 8) & 0xFF;

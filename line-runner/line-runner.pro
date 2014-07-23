@@ -51,7 +51,8 @@ SOURCES += main.cpp \
     export_matlab.cpp \
     ../util/bitarray.cpp \
     ../line-gui/traffictrace.cpp \
-    ../tomo/pcap-qt.cpp
+    ../tomo/pcap-qt.cpp \
+    ../util/tinyhistogram.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -87,7 +88,8 @@ HEADERS += \
     result_processing.h \
     ../util/bitarray.h \
     ../line-gui/traffictrace.h \
-    ../tomo/pcap-qt.h
+    ../tomo/pcap-qt.h \
+    ../util/tinyhistogram.h
 
 exists(result_processing.cpp) {
     SOURCES += result_processing.cpp

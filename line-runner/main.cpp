@@ -104,7 +104,7 @@ void checkTrace(QString recordedFileName, QStringList pcapFileNames)
 
 		qint64 tsStart = (qint64)traceRecord.tsStart;
 		// debug
-		if (1) {
+		if (0) {
 			qDebug() << "Simulation starts at" << tsStart;
 		}
 		for (int iEvent = 0; iEvent < traceRecord.events.count(); iEvent++) {
@@ -147,7 +147,7 @@ void checkTrace(QString recordedFileName, QStringList pcapFileNames)
 				}
 
 				// debug
-				if (1) {
+				if (0) {
 					if (iPacket < 100) {
 						qDebug() << "Packet in trace" << iTrace << "at index" << iPacket;
 						qDebug() << "Ideal injection time (relative, from .pcap):" << idealInjectionTime;

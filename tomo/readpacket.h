@@ -82,6 +82,29 @@ public:
 	quint16 payloadLength;
 };
 
-bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &udph);
+class ICMPHeader {
+public:
+	quint8 type;
+	quint8 code;
+
+	// At most one of the following flags canbe true at a time
+	bool echoRequest;
+	bool echoReply;
+	bool ttlExpired;
+
+	// Defined iff echoRequest || echoReply
+	quint16 icmpId;
+	quint16 icmpSeqNo;
+
+	// Defined iff ttlExpired: the (partial) header of the packet that expired
+	bool decodedPacketFragment;
+	IPHeader iph;
+	TCPHeader tcph;
+	UDPHeader udph;
+	// there is exactly one element!
+	QList<ICMPHeader> icmph;
+};
+
+bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &udph, ICMPHeader &icmph);
 
 #endif // READPACKET_H

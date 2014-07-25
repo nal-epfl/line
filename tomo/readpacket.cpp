@@ -35,7 +35,7 @@ QString ipProto2name(quint8 proto)
 	return QString();
 }
 
-bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &udph)
+bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &udph, ICMPHeader &icmph)
 {
 	if (buffer.count() < (int)sizeof(struct iphdr)) {
 		return false;
@@ -259,8 +259,37 @@ bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &
 		udph.payloadLength = udph.totalLength - udph.headerLength;
 		return true;
 	} else if (iph.protocolString == "ICMP") {
-		// not implemented
-		return false;
+		if (iph.payloadLength < (quint16)sizeof(icmphdr)) {
+			return false;
+		}
+		const struct icmphdr *icmp = (const struct icmphdr *)ip_payload;
+
+		icmph.type = icmp->type;
+		icmph.code = icmp->code;
+
+		icmph.echoRequest = false;
+		icmph.echoReply = false;
+		icmph.ttlExpired = false;
+
+		if (icmp->type == ICMP_ECHO) {
+			icmph.echoRequest = true;
+			icmph.icmpId = ntohs(icmp->un.echo.id);
+			icmph.icmpSeqNo = ntohs(icmp->un.echo.sequence);
+		} else if (icmp->type == ICMP_ECHOREPLY) {
+			icmph.echoReply = true;
+			icmph.icmpId = ntohs(icmp->un.echo.id);
+			icmph.icmpSeqNo = ntohs(icmp->un.echo.sequence);
+		} else if (icmp->type == ICMP_TIME_EXCEEDED && icmp->code == ICMP_EXC_TTL) {
+			icmph.ttlExpired = true;
+			icmph.icmph.append(ICMPHeader());
+			icmph.decodedPacketFragment = decodePacket(buffer.mid((char*)icmp - (char*)ip + sizeof(struct icmphdr)),
+													   icmph.iph,
+													   icmph.tcph,
+													   icmph.udph,
+													   icmph.icmph[0]);
+		}
+
+		return true;
 	} else {
 		return false;
 	}

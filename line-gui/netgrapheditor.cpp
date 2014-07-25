@@ -1127,6 +1127,8 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
 	if (hosts.count() < 2)
 		return;
 
+	bool allowOverlaps = ui->checkAddConnectionsBatchOverlaps->isChecked();
+
     QSet<QPair<qint32, qint32> > existingConnections;
     foreach (NetGraphConnection c, graph()->connections) {
         existingConnections.insert(QPair<qint32, qint32>(c.source, c.dest));
@@ -1167,7 +1169,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
                 if (i == j)
                     continue;
                 QPair<qint32, qint32> c = QPair<qint32, qint32>(hosts[i].index, hosts[j].index);
-                if (existingConnections.contains(c))
+				if (!allowOverlaps && existingConnections.contains(c))
                     continue;
                 possibleConnections << c;
             }
@@ -1200,11 +1202,11 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
         for (int i = 0; i < servers.count(); i++) {
             for (int j = 0; j < clients.count(); j++) {
                 QPair<qint32, qint32> cDownload = QPair<qint32, qint32>(servers[i].index, clients[j].index);
-                if (!existingConnections.contains(cDownload)) {
+				if (allowOverlaps || !existingConnections.contains(cDownload)) {
                     possibleDownloadConnections << cDownload;
                 }
                 QPair<qint32, qint32> cUpload = QPair<qint32, qint32>(clients[j].index, servers[i].index);
-                if (!existingConnections.contains(cUpload)) {
+				if (allowOverlaps || !existingConnections.contains(cUpload)) {
                     possibleUploadConnections << cUpload;
                 }
             }
@@ -1238,7 +1240,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
                 if (i == j)
                     continue;
                 QPair<qint32, qint32> c = QPair<qint32, qint32>(peers[i].index, peers[j].index);
-                if (!existingConnections.contains(c)) {
+				if (allowOverlaps || !existingConnections.contains(c)) {
                     possibleConnections << c;
                 }
             }
@@ -1266,7 +1268,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
 			qShuffle(chatters);
             for (int i = 0; i < numOneOnOne && chatters.count() >= 2; i++) {
                 QPair<qint32, qint32> c01 = QPair<qint32, qint32>(chatters[0].index, chatters[1].index);
-                if (!existingConnections.contains(c01)) {
+				if (allowOverlaps || !existingConnections.contains(c01)) {
 					graph()->addConnection(NetGraphConnection(chatters[0].index,
 															  chatters[1].index,
 															  ui->txtConnectionType->text(),
@@ -1274,7 +1276,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
                     numConnections--;
                 }
                 QPair<qint32, qint32> c10 = QPair<qint32, qint32>(chatters[1].index, chatters[0].index);
-                if (!existingConnections.contains(c10)) {
+				if (allowOverlaps || !existingConnections.contains(c10)) {
 					graph()->addConnection(NetGraphConnection(chatters[1].index,
 															  chatters[0].index,
 															  ui->txtConnectionType->text(),
@@ -1292,7 +1294,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
 						if (i == j)
 							continue;
                         QPair<qint32, qint32> cij = QPair<qint32, qint32>(chatters[i].index, chatters[j].index);
-                        if (!existingConnections.contains(cij)) {
+						if (allowOverlaps || !existingConnections.contains(cij)) {
 							graph()->addConnection(NetGraphConnection(chatters[i].index,
 																	  chatters[j].index,
 																	  ui->txtConnectionType->text(),
@@ -1329,7 +1331,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
         for (int i = 0; i < servers.count(); i++) {
             for (int j = 0; j < clients.count(); j++) {
                 QPair<qint32, qint32> c = QPair<qint32, qint32>(servers[i].index, clients[j].index);
-                if (!existingConnections.contains(c)) {
+				if (allowOverlaps || !existingConnections.contains(c)) {
                     possibleConnections << c;
 				} else {
 					nodeDegrees[c.second]++;
@@ -1359,7 +1361,7 @@ void NetGraphEditor::on_btnAddConnectionsBatch_clicked()
 				if ((hosts[i].heavy && !(hosts[j].web || hosts[j].iptv || hosts[j].p2p || hosts[j].vvoip)) ||
 						(hosts[j].heavy && !(hosts[i].web || hosts[i].iptv || hosts[i].p2p || hosts[i].vvoip))) {
 					QPair<qint32, qint32> c = QPair<qint32, qint32>(hosts[i].index, hosts[j].index);
-					if (existingConnections.contains(c))
+					if (!allowOverlaps && existingConnections.contains(c))
 						continue;
 					possibleConnections << c;
 				}

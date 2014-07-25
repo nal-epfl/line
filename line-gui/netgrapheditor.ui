@@ -1107,9 +1107,9 @@
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>0</y>
+              <y>-762</y>
               <width>352</width>
-              <height>1240</height>
+              <height>1336</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1143,7 +1143,7 @@
                 <string notr="true"/>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>11</number>
                </property>
                <widget class="QWidget" name="pageAddEditLink">
                 <property name="sizePolicy">
@@ -4995,6 +4995,13 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                         </spacer>
                        </item>
                       </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkAddConnectionsBatchOverlaps">
+                      <property name="text">
+                       <string>Allow overlapping connections</string>
+                      </property>
                      </widget>
                     </item>
                    </layout>

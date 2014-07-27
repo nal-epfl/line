@@ -905,11 +905,11 @@ int runPacketFilter(int argc, char **argv) {
 			}
 			argc--, argv++;
 			argc--, argv++;
-		} else if (QString(argv[0]) == "--init_done_file_path") {
+		} /*else if (QString(argv[0]) == "--init_done_file_path") {
 			// initDoneFilePath = QString(argv[1]);
 			argc--, argv++;
 			argc--, argv++;
-		} else {
+		} */ else {
 			break;
 		}
 	}

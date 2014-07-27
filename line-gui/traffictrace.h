@@ -20,7 +20,7 @@ class TrafficTrace
 public:
 	TrafficTrace(qint32 link = -1);
 
-	OVector<TrafficTracePacket> packets;
+	OVector<TrafficTracePacket, qint64> packets;
 	qint32 link;
 
 	QString pcapFileName;
@@ -58,7 +58,7 @@ QDataStream& operator<<(QDataStream& s, const TrafficTracePacket& d);
 class TrafficTraceRecord
 {
 public:
-    QVector<TrafficTracePacketRecord> events;
+	OVector<TrafficTracePacketRecord, qint32> events;
 	quint64 tsStart;
 
     bool save(QString fileName);

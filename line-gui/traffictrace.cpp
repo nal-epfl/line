@@ -69,9 +69,7 @@ bool TrafficTrace::loadFromPcap()
 		}
 	}
 
-	qDebug() << "numPackets" << numPackets;
-	qDebug() << "size" << numPackets * sizeof(TrafficTracePacket);
-	qDebug() << "size (int)" << (int)numPackets * (int)sizeof(TrafficTracePacket);
+	qDebug() << "Loading trace with numPackets" << numPackets;
 
 	packets.reserve(numPackets);
 
@@ -121,7 +119,7 @@ TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, b
 
 QDataStream& operator<<(QDataStream& s, const TrafficTrace& d)
 {
-	qint8 ver = 3;
+	qint8 ver = 4;
 
 	s << ver;
 
@@ -139,7 +137,12 @@ QDataStream& operator>>(QDataStream& s, TrafficTrace& d)
 
 	s >> ver;
 
-	if (ver >= 1) {
+	if (ver >= 1 && ver <= 3) {
+		QVector<TrafficTracePacket> packets;
+		s >> packets;
+		d.packets = OVector<TrafficTracePacket, qint64>::fromVector(packets);
+	}
+	if (3 < ver && ver <= 4) {
 		s >> d.packets;
 	}
 

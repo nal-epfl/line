@@ -95,7 +95,7 @@ public:
     }
 
 	// Constructs a copy of other. Complexity: O(count).
-    inline OVector(const OVector<T> &other)
+	inline OVector(const OVector<T, INT> &other)
         : data_(nullptr),
           first_(0),
           count_(other.count_) {
@@ -138,7 +138,7 @@ public:
     }
 
 	// Assigns other to this vector and returns a reference to this vector. Complexity: O(count).
-    OVector<T> &operator=(const OVector<T> &other) {
+	OVector<T, INT> &operator=(const OVector<T, INT> &other) {
         clear();
         reallocate(other.size_);
         first_ = 0;
@@ -151,14 +151,14 @@ public:
 
 #ifdef Q_COMPILER_RVALUE_REFS
 	// Assigns other to this vector and returns a reference to this vector. Complexity: O(1).
-    inline OVector<T> operator=(OVector<T> &&other) {
+	inline OVector<T, INT> operator=(OVector<T, INT> &&other) {
         swap(other);
         return *this;
     }
 #endif
 
 	// Swaps vector other with this vector. Complexity: O(1).
-    inline void swap(OVector<T> &other) {
+	inline void swap(OVector<T, INT> &other) {
         qSwap(data_, other.data_);
         qSwap(first_, other.first_);
         qSwap(count_, other.count_);
@@ -168,7 +168,7 @@ public:
 	// Returns true if other is equal to this vector; otherwise returns false.
 	// Two vectors are considered equal if they contain the same values in the same order.
 	// This function requires the value type to have an implementation of operator==().
-    bool operator==(const OVector<T> &other) const {
+	bool operator==(const OVector<T, INT> &other) const {
         if (this->count_ != other.count_)
             return false;
 		for (INT i = first_; i < count_; i++) {
@@ -180,7 +180,7 @@ public:
     }
 
 	// Returns true if other is not equal to this vector; otherwise returns false. See operator==().
-    inline bool operator!=(const OVector<T> &other) const {
+	inline bool operator!=(const OVector<T, INT> &other) const {
         return !(*this == other);
     }
 
@@ -412,7 +412,7 @@ public:
 
 	// Assigns value to all items in the vector.
 	// If count is different from -1 (the default), the vector is resized to size count beforehand.
-	OVector<T> &fill(const T &value, INT count = -1) {
+	OVector<T, INT> &fill(const T &value, INT count = -1) {
         if (count > 0) {
             while (count < count_) {
                 remove(count_ - 1);
@@ -823,10 +823,10 @@ public:
 	// Returns a vector whose elements are copied from this vector, starting at position pos.
 	// If length is -1 (the default), all elements after pos are copied; otherwise length elements
 	// (or all remaining elements if there are less than length elements) are copied.
-	OVector<T> mid(INT pos, INT length = -1) const {
+	OVector<T, INT> mid(INT pos, INT length = -1) const {
         if (length == -1)
             length = count_;
-        OVector<T> other;
+		OVector<T, INT> other;
         other.reserve(length);
 		for (INT i = pos; i < count_ && length > 0; i++, length--) {
             other.append(data_[offset(i)]);
@@ -914,7 +914,7 @@ public:
     }
 
 	// Appends the items of the other vector to this vector and returns a reference to this vector.
-    OVector<T> &operator+=(const OVector<T> &other) {
+	OVector<T, INT> &operator+=(const OVector<T, INT> &other) {
 		for (INT i = 0; i < other.count(); i++) {
             append(other[i]);
         }
@@ -922,26 +922,26 @@ public:
     }
 
 	// Appends the items of the other vector to a copy of this vector and returns the result.
-    inline OVector<T> operator+(const OVector<T> &l) const {
+	inline OVector<T, INT> operator+(const OVector<T, INT> &l) const {
         OVector n(*this);
         n += l;
         return n;
     }
 
 	// Appends an element to this vector and returns a reference to this vector.
-	inline OVector<T> &operator+=(const T &element) {
+	inline OVector<T, INT> &operator+=(const T &element) {
 		append(element);
         return *this;
     }
 
 	// Appends an element to this vector and returns a reference to this vector.
-	inline OVector<T> &operator<<(const T &element) {
+	inline OVector<T, INT> &operator<<(const T &element) {
 		append(element);
         return *this;
     }
 
 	// Appends the items of the other vector to this vector and returns a reference to this vector.
-	inline OVector<T> &operator<<(const OVector<T> &element) {
+	inline OVector<T, INT> &operator<<(const OVector<T, INT> &element) {
 		*this += element;
         return *this;
     }
@@ -956,8 +956,8 @@ public:
     }
 
 	// Returns an OVector containing the same elements as the QVector.
-	static OVector<T> fromVector(const QVector<T> &other) {
-        OVector<T> result;
+	static OVector<T, INT> fromVector(const QVector<T> &other) {
+		OVector<T, INT> result;
         result.reserve(other.count());
 		for (INT i = 0; i < other.count(); i++) {
             result.append(other[i]);
@@ -975,8 +975,8 @@ public:
     }
 
 	// Returns an OVector containing the same elements as the QList.
-    static OVector<T> fromList(const QList<T> &other) {
-        OVector<T> result;
+	static OVector<T, INT> fromList(const QList<T> &other) {
+		OVector<T, INT> result;
         result.reserve(other.count());
 		for (INT i = 0; i < other.count(); i++) {
             result.append(other[i]);
@@ -993,8 +993,8 @@ public:
 	}
 
 	// Returns an OVector containing the same elements as the std::vector.
-    static inline OVector<T> fromStdVector(const std::vector<T> &vector) {
-        OVector<T> tmp;
+	static inline OVector<T, INT> fromStdVector(const std::vector<T> &vector) {
+		OVector<T, INT> tmp;
         tmp.reserve(vector.size());
         qCopy(vector.begin(), vector.end(), std::back_inserter(tmp));
         return tmp;
@@ -1033,7 +1033,7 @@ protected:
 		if (newSize <= size_ && !allowSqueeze) {
 			return;
 		}
-		T *newData = static_cast<T*>(malloc(newSize * sizeof(T)));
+		T *newData = static_cast<T*>(malloc(size_t(newSize) * sizeof(T)));
 		for (INT i = 0; i < count_; i++) {
 			if (i < newSize) {
 				new (&newData[i]) T(data_[offset(i)]);
@@ -1083,7 +1083,7 @@ protected:
 			minSize = size_ + 1;
 		}
 		if (minSize < 1000000LL)
-			return qMax(minSize + minSize, 1024);
+			return qMax(minSize + minSize, (INT)1024);
 		if (minSize < 100000000LL)
 			return minSize + minSize / 2;
 		if (minSize < 1000000000LL)
@@ -1093,28 +1093,28 @@ protected:
 };
 
 #if defined(FORCE_UREF)
-template <typename T>
-inline QDebug &operator<<(QDebug debug, const OVector<T> &vec)
+template <typename T, typename INT = qint32>
+inline QDebug &operator<<(QDebug debug, const OVector<T, INT> &vec)
 #else
-template <typename T>
-inline QDebug operator<<(QDebug debug, const OVector<T> &vec)
+template <typename T, typename INT = qint32>
+inline QDebug operator<<(QDebug debug, const OVector<T, INT> &vec)
 #endif
 {
 	debug.nospace() << "OVector";
 	return operator<<(debug, vec.toList());
 }
 
-template<typename T>
-QDataStream& operator<<(QDataStream& s, const OVector<T>& v)
+template<typename T, typename INT = qint32>
+QDataStream& operator<<(QDataStream& s, const OVector<T, INT>& v)
 {
-	s << quint32(v.size());
-	for (typename OVector<T>::const_iterator it = v.begin(); it != v.end(); ++it)
+	s << qint64(v.size());
+	for (typename OVector<T, INT>::const_iterator it = v.begin(); it != v.end(); ++it)
 		s << *it;
 	return s;
 }
 
-template<typename T>
-QDataStream& operator>>(QDataStream& s, OVector<T>& v)
+template<typename T, typename INT = qint32>
+QDataStream& operator>>(QDataStream& s, OVector<T, INT>& v)
 {
 	v.clear();
 	qint64 c;

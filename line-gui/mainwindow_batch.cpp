@@ -253,7 +253,6 @@ void MainWindow::on_btnQueueStartAll_clicked()
         if (ui->checkQueuePaused->isChecked()) {
             QApplication::processEvents();
             usleep(50 * 1000);
-            blinkTaskbar();
             continue;
         }
 

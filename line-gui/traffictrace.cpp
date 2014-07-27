@@ -55,6 +55,26 @@ bool TrafficTrace::loadFromPcap()
 		return false;
 	}
 
+	int numPackets = 0;
+	// First pass: get the number of packets
+	{
+		PcapReader pcapReader(fileName);
+
+		while (pcapReader.isOk() && !pcapReader.atEnd()) {
+			PcapPacketHeader packetHeader;
+			QByteArray packet;
+			if (pcapReader.readPacket(packetHeader, packet)) {
+				numPackets++;
+			}
+		}
+	}
+
+	qDebug() << "numPackets" << numPackets;
+	qDebug() << "size" << numPackets * sizeof(TrafficTracePacket);
+	qDebug() << "size (int)" << (int)numPackets * (int)sizeof(TrafficTracePacket);
+
+	packets.reserve(numPackets);
+
 	PcapReader pcapReader(fileName);
 
 	quint64 tsStart = 0;
@@ -87,7 +107,7 @@ void TrafficTrace::setPcapFilePath(QString pcapFilePath)
 
 void TrafficTrace::clear()
 {
-	packets.clear();
+	packets.resize(0);
 }
 
 TrafficTrace TrafficTrace::generateFromPcap(QString pcapFileName, qint32 link, bool &ok)

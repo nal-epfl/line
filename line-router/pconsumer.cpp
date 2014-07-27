@@ -53,6 +53,8 @@ extern "C" {
 
 quint64 Packet::next_packet_unique_id = 0;
 
+QString initDoneFilePath;
+
 SyncQueueType<Packet*> packetsIn;
 SyncQueueType<Packet*> packetPool;
 QBarrier barrierInit(3);
@@ -108,6 +110,11 @@ void* packet_consumer_thread(void* ) {
 #endif
 
     barrierInitDone.wait();
+	/*if (!initDoneFilePath.isEmpty()) {
+		QFile fileInitDone(initDoneFilePath);
+		fileInitDone.open(QIODevice::WriteOnly | QIODevice::Truncate);
+		fileInitDone.close();
+	}*/
     malloc_profile_reset_wrapper();
     barrierStart.wait();
 

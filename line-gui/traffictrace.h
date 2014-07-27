@@ -3,6 +3,8 @@
 
 #include <QtCore>
 
+#include "../util/ovector.h"
+
 class TrafficTracePacket
 {
 public:
@@ -18,7 +20,7 @@ class TrafficTrace
 public:
 	TrafficTrace(qint32 link = -1);
 
-	QVector<TrafficTracePacket> packets;
+	OVector<TrafficTracePacket> packets;
 	qint32 link;
 
 	QString pcapFileName;

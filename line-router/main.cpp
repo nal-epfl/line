@@ -21,18 +21,30 @@
 #include "pconsumer.h"
 #include <QtCore>
 #include "qpairingheap.h"
+#include "util.h"
 // This is defined in the .pro file
 // #define USE_TC_MALLOC
 #ifdef USE_TC_MALLOC
 #include "google/malloc_extension.h"
 #endif
 
+#include <cstdlib>
+#include <exception>
+
 void warmMallocCache()
 {
 }
 
+void terminateWithTrace()
+{
+	show_backtrace();
+	abort();
+}
+
 int main(int argc, char *argv[])
 {
+	std::set_terminate(terminateWithTrace);
+
 #ifdef USE_TC_MALLOC
 	// Don't release memory to the OS
 	// MallocExtension::instance()->SetMemoryReleaseRate(0);

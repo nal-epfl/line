@@ -98,7 +98,8 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 			IPHeader iph;
 			TCPHeader tcph;
 			UDPHeader udph;
-			if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph)) {
+			ICMPHeader icmph;
+			if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
 				pcapPacketHeader.orig_len = iph.totalLength;
 			} else {
 				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse the IP header for a packet";
@@ -152,7 +153,8 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 			IPHeader iph;
 			TCPHeader tcph;
 			UDPHeader udph;
-			if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph)) {
+			ICMPHeader icmph;
+			if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
 				pcapPacketHeader.orig_len = iph.totalLength;
 			} else {
 				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
@@ -206,7 +208,8 @@ bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
 				IPHeader iph;
 				TCPHeader tcph;
 				UDPHeader udph;
-				if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph)) {
+				ICMPHeader icmph;
+				if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
 					pcapPacketHeader.orig_len = iph.totalLength;
 				} else {
 					qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
@@ -251,8 +254,9 @@ bool extractConversations(RecordedData rec,
 		IPHeader iph;
 		TCPHeader tcph;
 		UDPHeader udph;
+		ICMPHeader icmph;
 
-		if (!decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph)) {
+		if (!decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
 			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not decode packet";
 			continue;
 		}

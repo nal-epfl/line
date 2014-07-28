@@ -303,7 +303,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 		// Check that the processes are running
 		sleep(5);
 		bool allGood = true;
-		foreach (PointerSsh ssh, sshAll) {
+		foreach (PointerSsh ssh, sshCores) {
 			if (!ssh->isProcessRunning(allKeys[ssh.data()])) {
 				qError() << "Early abort: machine down";
 				allGood = false;
@@ -379,7 +379,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 			if (i >= 10 && i % 10 == 0) {
 				foreach (PointerSsh ssh, sshAll) {
 					if (!ssh->isProcessRunning(allKeys[ssh.data()])) {
-						qError() << "Early abort: machine down";
+						qError() << __FILE__ << __LINE__ << "Early abort: machine down";
 						allGood = false;
 						break;
 					}

@@ -160,7 +160,7 @@ QDataStream& operator>>(QDataStream& s, TrafficTrace& d)
 		d.pcapFullFilePath.clear();
 	}
 
-	if (ver > 3) {
+	if (ver > 4) {
 		qDebug() << __FILE__ << __LINE__ << "read error";
 		s.setStatus(QDataStream::ReadCorruptData);
 	}

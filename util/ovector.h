@@ -205,7 +205,7 @@ public:
 	// If size is less than the current size, elements are removed from the end.
 	void resize(INT size) {
 		if (size < count_) {
-			remove(count_ - size, count_ - size);
+			remove(size, count_ - size);
 		}
         reallocate(size);
         while (count_ < size) {

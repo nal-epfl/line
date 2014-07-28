@@ -110,11 +110,12 @@ void* packet_consumer_thread(void* ) {
 #endif
 
     barrierInitDone.wait();
-	/*if (!initDoneFilePath.isEmpty()) {
+	if (!initDoneFilePath.isEmpty()) {
 		QFile fileInitDone(initDoneFilePath);
 		fileInitDone.open(QIODevice::WriteOnly | QIODevice::Truncate);
+		fileInitDone.write("1");
 		fileInitDone.close();
-	}*/
+	}
     malloc_profile_reset_wrapper();
     barrierStart.wait();
 

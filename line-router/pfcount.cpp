@@ -829,7 +829,7 @@ int runPacketFilter(int argc, char **argv) {
 	takePathIntervalMeasurements = false;
 	takeFlowIntervalMeasurements = false;
     trafficTraceRecord = new TrafficTraceRecord();
-	// initDoneFilePath = QString();
+	initDoneFilePath = QString();
 
 	while (argc > 0) {
 		if (QString(argv[0]) == "--record") {
@@ -905,11 +905,11 @@ int runPacketFilter(int argc, char **argv) {
 			}
 			argc--, argv++;
 			argc--, argv++;
-		} /*else if (QString(argv[0]) == "--init_done_file_path") {
-			// initDoneFilePath = QString(argv[1]);
+		} else if (QString(argv[0]) == "--init_done_file_path") {
+			initDoneFilePath = QString(argv[1]);
 			argc--, argv++;
 			argc--, argv++;
-		} */ else {
+		} else {
 			break;
 		}
 	}

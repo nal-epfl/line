@@ -255,12 +255,18 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 		}
 	}
 
+	QString initDoneFileName = "/root/init.done";
+
 	if (!mustStop) {
 		// Start the emulator
 		foreach (PointerSsh ssh, sshCores) {
+			QString key = ssh->startProcess("rm", QStringList() << "-f" << initDoneFileName);
+			while (!mustStop && ssh->isProcessRunning(key)) {}
+		}
+		foreach (PointerSsh ssh, sshCores) {
 			QString emulatorCmd;
 			if (!runParams.realRouting) {
-				emulatorCmd = QString("LD_PRELOAD=/usr/lib/malloc_profile.so line-router %1.graph %2 %3 %4 %5 %6 %7 %8 %9 %10")
+				emulatorCmd = QString("LD_PRELOAD=/usr/lib/malloc_profile.so line-router %1.graph %2 %3 %4 %5 %6 %7 %8 %9 %10 %11")
 							  .arg(runParams.graphName)
 							  .arg(testId)
 							  .arg(runParams.capture ?
@@ -281,12 +287,41 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
                                    .arg(runParams.queuingDiscipline))
                               .arg(runParams.flowTracking ?
                                        QString("--track_flows") :
-                                       QString(""));
+									   QString(""))
+							  .arg(QString("----init_done_file_path %1")
+								   .arg(initDoneFileName));
 			} else {
 				emulatorCmd = QString("bash -c 'echo real; while true ; do sleep 5; done'");
 			}
 			qDebug() << QString("Emulator command: %1").arg(emulatorCmd);
 			allKeys[ssh.data()] = emulatorKeys[ssh.data()] = ssh->startProcess(emulatorCmd);
+		}
+	}
+
+	while (!mustStop) {
+		qDebug() << QString("Waiting for the emulator to initialize...");
+		// Check that the processes are running
+		sleep(5);
+		bool allGood = true;
+		foreach (PointerSsh ssh, sshAll) {
+			if (!ssh->isProcessRunning(allKeys[ssh.data()])) {
+				qError() << "Early abort: machine down";
+				allGood = false;
+				break;
+			}
+		}
+		if (!allGood)
+			break;
+		allGood = true;
+		// Check that the emulator is ready to route
+		foreach (PointerSsh ssh, sshCores) {
+			QString key = ssh->startProcess("cat", QStringList() << initDoneFileName);
+			while (!mustStop && ssh->isProcessRunning(key)) {}
+			QString output = ssh->readAllStdout(key).trimmed();
+			if (output.isEmpty()) {
+				allGood = false;
+				break;
+			}
 		}
 	}
 

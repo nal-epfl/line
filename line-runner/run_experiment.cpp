@@ -288,7 +288,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
                               .arg(runParams.flowTracking ?
                                        QString("--track_flows") :
 									   QString(""))
-							  .arg(QString("----init_done_file_path %1")
+							  .arg(QString("--init_done_file_path %1")
 								   .arg(initDoneFileName));
 			} else {
 				emulatorCmd = QString("bash -c 'echo real; while true ; do sleep 5; done'");

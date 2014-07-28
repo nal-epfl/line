@@ -1107,7 +1107,7 @@ inline QDebug operator<<(QDebug debug, const OVector<T, INT> &vec)
 template<typename T, typename INT = qint32>
 QDataStream& operator<<(QDataStream& s, const OVector<T, INT>& v)
 {
-	s << qint64(v.size());
+	s << (INT)(v.size());
 	for (typename OVector<T, INT>::const_iterator it = v.begin(); it != v.end(); ++it)
 		s << *it;
 	return s;
@@ -1117,10 +1117,10 @@ template<typename T, typename INT = qint32>
 QDataStream& operator>>(QDataStream& s, OVector<T, INT>& v)
 {
 	v.clear();
-	qint64 c;
+	INT c;
 	s >> c;
 	v.resize(c);
-	for (qint64 i = 0; i < c; ++i) {
+	for (INT i = 0; i < c; ++i) {
 		T t;
 		s >> t;
 		v[i] = t;

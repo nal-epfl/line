@@ -311,18 +311,17 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 			}
 		}
 		if (!allGood)
-			break;
-		allGood = true;
+			continue;
+		bool initialized = true;
 		// Check that the emulator is ready to route
 		foreach (PointerSsh ssh, sshCores) {
-			QString key = ssh->startProcess("cat", QStringList() << initDoneFileName);
-			while (!mustStop && ssh->isProcessRunning(key)) {}
-			QString output = ssh->readAllStdout(key).trimmed();
-			if (output.isEmpty()) {
-				allGood = false;
+			if (!ssh->fileExists(initDoneFileName)) {
+				initialized = false;
 				break;
 			}
 		}
+		if (initialized)
+			break;
 	}
 
 	if (!mustStop) {

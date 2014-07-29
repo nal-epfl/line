@@ -111,6 +111,8 @@ public:
 
 	QString getHostname();
 
+	bool fileExists(QString fileName);
+
 protected:
 	// Used to keep track of whether we tried to connect.
 	bool connected;

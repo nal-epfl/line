@@ -144,6 +144,29 @@ bool RemoteProcessSsh::isProcessRunning(QString key)
 	return false;
 }
 
+bool RemoteProcessSsh::fileExists(QString fileName)
+{
+	if (DBG_SSH) qDebug() << __FILE__ << __FUNCTION__;
+
+	// flush current output
+	flush();
+
+	// send command
+	QString command = QString("[ -f %1 ] && echo Y || echo N").arg(fileName);
+	if (!sendCommand(command)) {
+		return false;
+	}
+
+	QString result = readLine().trimmed();
+	if (result == "Y")
+		return true;
+	if (result == "N")
+		return false;
+
+	qDebug() << __FILE__ << __FUNCTION__ <<  __LINE__ << "problem, result is:" << result;
+	return false;
+}
+
 bool RemoteProcessSsh::runCommand(QString command,
 								  int *exitCode, QString *exitCodeStr,
 								  QString *stdoutStr, QString *stderrStr)

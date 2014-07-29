@@ -504,6 +504,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 
 		// Zip everything
 		key = ssh->startProcess("zip", QStringList() <<
+								QString("-0") <<
 								QString("-r") <<
 								QString("%1.zip").arg(testId) <<
 								QString("%1").arg(testId));

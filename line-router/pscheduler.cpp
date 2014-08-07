@@ -646,6 +646,9 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 			decision = DECISION_QDROP;
 			p->dropped = true;
 			p->ts_send = ts_now;
+			// ts_exit is the time at which the packet would have exited the link, had it been queued
+			qdelay = (qload * SEC_TO_NSEC) / rate_Bps;
+			ts_exit = qts_head + qdelay;
 			goto stats;
 		}
 	}

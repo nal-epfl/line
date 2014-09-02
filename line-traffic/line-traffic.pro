@@ -108,3 +108,6 @@ SOURCES += \
     tcpdashsource.cpp \
     ../line-gui/traffictrace.cpp \
     ../tomo/pcap-qt.cpp
+
+OTHER_FILES += \
+    virtual-interfaces-howto.txt

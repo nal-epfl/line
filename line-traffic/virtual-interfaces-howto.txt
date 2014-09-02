@@ -1,0 +1,126 @@
+## Creating virtual Ethernet interfaces (i.e. have multiple MAC addresses for the same physical interface)
+#
+# The subnets must be partitioned at the IP level so that there is no overlap.
+# Applications just need to connect to the remote IP address (and optionally bind the the correct local IP address) and
+# the traffic will be sent through the correct interface.
+
+* Setup:
+
+# Machine 1:
+
+# Create virtual NICs:
+# Note: to specify the MAC address (otherwise it will be randomly generated):
+# ip link add link eth2 name mac1 address 12:34:56:78:90:ab type macvlan mode private
+
+ip link add link eth2 name mac1 type macvlan mode private
+ip link add link eth2 name mac2 type macvlan mode private
+
+# Bring them up:
+
+ip link set up mac1
+ip link set up mac2
+
+# Check NICs:
+
+ip -o link
+
+# Assign IPs:
+
+ip addr add 10.0.1.1/24 dev mac1
+ip addr add 10.0.2.1/24 dev mac2
+
+# Check IPs:
+
+ip -o -4 addr
+ip route
+
+
+# Machine 2:
+
+ip link add link eth2 name mac1 type macvlan mode private
+ip link add link eth2 name mac2 type macvlan mode private
+ip link set up mac1
+ip link set up mac2
+ip addr add 10.0.1.2/24 dev mac1
+ip addr add 10.0.2.2/24 dev mac2
+
+
+* Test:
+
+# Machine 1
+
+ping 10.0.1.2
+ping 10.0.2.2
+
+# Check the ARP table:
+ip neigh | grep REACH
+
+
+* Cleanup:
+
+# Machine 1:
+
+ip link del link eth2 dev mac1
+ip link del link eth2 dev mac2
+
+# Machine 2:
+
+ip link del link eth2 dev mac1
+ip link del link eth2 dev mac2
+
+
+## Creating virtual IP interfaces (i.e. have one MAC address and multiple IP addresses for the same physical interface)
+#
+# The subnets must be partitioned at the IP level so that there is no overlap.
+# Applications must connect to the remote IP address and must also bind the the correct local IP address so that the
+# traffic will be sent through the correct interface.
+
+* Setup:
+
+# Machine 1:
+
+ip link set up eth2
+
+# Check NICs:
+
+ip -o link
+
+# Assign IPs:
+
+ip addr add 10.0.1.1/24 dev eth2
+ip addr add 10.0.2.1/24 dev eth2
+
+# Check IPs:
+
+ip -o -4 addr
+ip route
+
+
+# Machine 2:
+ip link set up eth2
+ip addr add 10.0.1.2/24 dev eth2
+ip addr add 10.0.2.2/24 dev eth2
+
+
+* Test:
+
+# Machine 1
+
+ping 10.0.1.2
+ping 10.0.2.2
+
+# Check the ARP table:
+ip neigh | grep REACH
+
+
+* Cleanup:
+
+# Machine 1
+
+ip addr del 10.0.1.1/24 dev eth2
+ip addr del 10.0.2.1/24 dev eth2
+
+# Machine 2
+
+ip addr del 10.0.1.2/24 dev eth2
+ip addr del 10.0.2.2/24 dev eth2

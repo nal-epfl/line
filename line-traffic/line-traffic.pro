@@ -110,4 +110,5 @@ SOURCES += \
     ../tomo/pcap-qt.cpp
 
 OTHER_FILES += \
-    virtual-interfaces-howto.txt
+    virtual-interfaces-howto.txt \
+    config-file-howto.txt

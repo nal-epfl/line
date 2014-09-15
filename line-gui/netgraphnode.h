@@ -39,7 +39,7 @@
 #define IP_OFFSET 1
 
 #ifdef LINE_CLIENT
-#include "../remote_config.h"
+//#include "../remote_config.h"
 #endif
 
 class NetGraphNode

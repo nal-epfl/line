@@ -9,7 +9,8 @@
 # Machine 1:
 
 # Create virtual NICs:
-
+# Note: if you want to have traffic between subnets, remove mode private; but make sure you have the MAC address you
+# expect in the frames.
 ip link add link eth2 name mac1 address 12:34:0a:00:00:00 type macvlan mode private
 ip link add link eth2 name mac2 address 12:34:0a:00:00:02 type macvlan mode private
 

@@ -99,8 +99,8 @@ ip -o link
 
 # Assign IPs:
 
-ip addr add 10.0.1.1/24 dev eth2
-ip addr add 10.0.2.1/24 dev eth2
+ip addr add 10.0.0.0/31 dev eth2
+ip addr add 10.0.0.2/31 dev eth2
 
 # Check IPs:
 
@@ -110,16 +110,16 @@ ip route
 
 # Machine 2:
 ip link set up eth2
-ip addr add 10.0.1.2/24 dev eth2
-ip addr add 10.0.2.2/24 dev eth2
+ip addr add 10.0.0.1/31 dev eth2
+ip addr add 10.0.0.3/31 dev eth2
 
 
 * Test:
 
 # Machine 1
 
-ping 10.0.1.2
-ping 10.0.2.2
+ping 10.0.0.1
+ping 10.0.0.3
 
 # Check the ARP table:
 ip neigh | grep REACH
@@ -129,10 +129,10 @@ ip neigh | grep REACH
 
 # Machine 1
 
-ip addr del 10.0.1.1/24 dev eth2
-ip addr del 10.0.2.1/24 dev eth2
+ip addr del 10.0.0.0/31 dev eth2
+ip addr del 10.0.0.2/31 dev eth2
 
 # Machine 2
 
-ip addr del 10.0.1.2/24 dev eth2
-ip addr del 10.0.2.2/24 dev eth2
+ip addr del 10.0.0.1/31 dev eth2
+ip addr del 10.0.0.3/31 dev eth2

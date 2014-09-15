@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 
 #include <QtCore>
+#include <QHostAddress>
 
 #include "netgraph.h"
 #include "evtcp.h"
@@ -47,17 +48,6 @@
 #undef DEBUG
 #endif
 #define DEBUG 0
-
-void sigint_cb(struct ev_loop *loop, struct ev_signal *w, int revents)
-{
-	Q_UNUSED(w);
-	Q_UNUSED(revents);
-	fprintf(stderr, "\nKeyboard interrupt: closing all connections...\n\n");
-	tcp_close_all();
-	udp_close_all();
-
-	ev_unloop(loop, EVUNLOOP_ALL);
-}
 
 NetGraph netGraph;
 QHash<ev_timer *, int> onOffTimer2Connection;
@@ -324,15 +314,44 @@ void connectionTransferCompletedHandler(void *arg)
 	connectionTransferCompleted(c);
 }
 
+bool start = false;
+bool stop = false;
 bool stopMaster = false;
-void masterSignalCallback(int ) {
+void masterSignalCallback(int s) {
+	if (s == SIGUSR1) {
+		start = true;
+		return;
+	}
 	stopMaster = true;
+}
+
+void childSignalCallback(int s) {
+	if (s == SIGUSR1) {
+		start = true;
+		return;
+	} else if (s == SIGINT) {
+		stop = true;
+		return;
+	}
+}
+
+void sigint_cb(struct ev_loop *loop, struct ev_signal *w, int revents)
+{
+	Q_UNUSED(w);
+	Q_UNUSED(revents);
+	stop = true;
+	fprintf(stderr, "\nKeyboard interrupt: closing all connections...\n\n");
+	tcp_close_all();
+	udp_close_all();
+
+	ev_unloop(loop, EVUNLOOP_ALL);
 }
 
 void runMaster(int argc, char **argv)
 {
 	signal(SIGINT, masterSignalCallback);
 	signal(SIGTERM, masterSignalCallback);
+	signal(SIGUSR1, masterSignalCallback);
 
 	long numCpu = sysconf(_SC_NPROCESSORS_ONLN) / 2;
 	qDebug() << "Spawning" << numCpu << "processes...";
@@ -353,17 +372,128 @@ void runMaster(int argc, char **argv)
 	}
 
 	while (!stopMaster) {
+		if (start) {
+			for (int iChild = 0; iChild < numCpu; iChild++) {
+				kill(children[iChild]->pid(), SIGUSR1);
+			}
+		}
 		sleep(1);
 	}
 
 	for (int iChild = 0; iChild < numCpu; iChild++) {
-		kill(children[iChild]->pid(), 2); // SIGINT
+		kill(children[iChild]->pid(), SIGINT);
 	}
 
 	for (int iChild = 0; iChild < numCpu; iChild++) {
 		children[iChild]->waitForFinished();
 		qDebug() << children[iChild]->readAll();
 	}
+}
+
+bool isValidIPv4Address(QString s)
+{
+	QHostAddress address;
+	if (!address.setAddress(s) || address.protocol() != QAbstractSocket::IPv4Protocol) {
+		return false;
+	}
+	return true;
+}
+
+void runWithTextConfig(int argc, char **argv)
+{
+	if (argc != 1) {
+		qDebug() << __FILE__ << __LINE__ << "wrong args, expecting file name";
+		exit(-1);
+	}
+	QString configFileName(argv[0]);
+	QFile configFile(configFileName);
+	argc--, argv++;
+	if (!configFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+		qDebug() << __FILE__ << __LINE__ << "Cannot open file name:" << configFile.fileName();
+		exit(-1);
+	}
+
+	NetGraph g;
+	g.setFileName(QString("/tmp/%1.graph").arg(QCoreApplication::applicationPid()));
+
+	QTextStream stream(&configFile);
+	int lineNumber = 0;
+	QHash<QString, int> ip2node;
+	while (true) {
+		lineNumber++;
+		QString line = stream.readLine();
+		if (line.isNull())
+			break;
+		if (line.isEmpty() || line.startsWith("#"))
+			continue;
+		QStringList tokens = line.split(' ', QString::SkipEmptyParts);
+		if (tokens.isEmpty())
+			continue;
+
+		QString cmd = tokens.takeFirst();
+		if (cmd == "connection") {
+			if (tokens.isEmpty()) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing first ip";
+				exit(-1);
+			}
+			QString ip1 = tokens.takeFirst().trimmed();
+			if (!isValidIPv4Address(ip1)) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: bad first ip";
+			}
+			if (tokens.isEmpty()) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing second ip";
+				exit(-1);
+			}
+			QString ip2 = tokens.takeFirst().trimmed();
+			if (!isValidIPv4Address(ip2)) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: bad second ip";
+			}
+
+			if (!ip2node.contains(ip1)) {
+				int n = g.addNode(NETGRAPH_NODE_HOST);
+				g.nodes[n].customIp = g.nodes[n].customIpForeign = ip1;
+				ip2node[ip1] = n;
+			}
+
+			if (!ip2node.contains(ip2)) {
+				int n = g.addNode(NETGRAPH_NODE_HOST);
+				g.nodes[n].customIp = g.nodes[n].customIpForeign = ip2;
+				ip2node[ip2] = n;
+			}
+
+			if (tokens.isEmpty()) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing connection params";
+			}
+			g.addConnection(NetGraphConnection(ip2node[ip1], ip2node[ip2], tokens.join(" "), QByteArray()));
+		}
+	}
+
+	/*
+	g.addNode(NETGRAPH_NODE_HOST);
+	g.addNode(NETGRAPH_NODE_HOST);
+	g.addNode(NETGRAPH_NODE_HOST);
+	g.addNode(NETGRAPH_NODE_HOST);
+
+	g.nodes[0].customIp = g.nodes[0].customIpForeign = "10.0.0.0";
+	g.nodes[1].customIp = g.nodes[1].customIpForeign = "10.0.0.1";
+	g.nodes[2].customIp = g.nodes[2].customIpForeign = "10.0.0.2";
+	g.nodes[3].customIp = g.nodes[3].customIpForeign = "10.0.0.3";
+
+	g.addConnection(NetGraphConnection(0, 1, "TCP", QByteArray()));
+	g.addConnection(NetGraphConnection(2, 3, "TCP", QByteArray()));
+	*/
+
+	if (!g.saveToFile()) {
+		qDebug() << __FILE__ << __LINE__ << "Cannot save file:" << g.fileName;
+		exit(-1);
+	}
+
+	char **argv2 = new char*[1];
+	argv2[0] = strdup(g.fileName.toLatin1().data());
+	runMaster(1, argv2);
+	free(argv2[0]);
+	delete [] argv2;
+	exit(0);
 }
 
 int main(int argc, char **argv)
@@ -377,6 +507,12 @@ int main(int argc, char **argv)
 	if (argc < 1) {
 		fprintf(stderr, "Wrong args\n");
 		exit(-1);
+	}
+
+	if (QString(argv[0]) == "--text-config") {
+		argc--, argv++;
+		runWithTextConfig(argc, argv);
+		exit(0);
 	}
 
 	if (QString(argv[0]) == "--master") {
@@ -428,6 +564,8 @@ int main(int argc, char **argv)
 	// important to ignore SIGPIPE....who designed read/write this way?!
 	signal(SIGPIPE, SIG_IGN);
 
+	signal(SIGUSR1, childSignalCallback);
+
 	struct ev_loop *loop = ev_default_loop(0);
     QString backendName;
     int backendCode = ev_backend(loop);
@@ -454,10 +592,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	struct ev_signal signal_watcher;
-    ev_signal_init(&signal_watcher, sigint_cb, SIGINT);
-	ev_signal_start(loop, &signal_watcher);
-
 	fprintf(stderr, "Connection count: %d\n", netGraph.connections.count());
 
 	// Create servers
@@ -469,11 +603,23 @@ int main(int argc, char **argv)
 		initConnection(loop, netGraph.connections[c.index]);
 	}
 
+	signal(SIGINT, childSignalCallback);
+
+	while (!start && !stop) {
+		usleep(1000);
+	}
+
 	// Generate on-off events
 	createOnOffTimers();
 
+	struct ev_signal signal_watcher;
+	ev_signal_init(&signal_watcher, sigint_cb, SIGINT);
+	ev_signal_start(loop, &signal_watcher);
+
 	// Start infinite loop
-	ev_loop(loop, 0);
+	if (!stop) {
+		ev_loop(loop, 0);
+	}
 
 	tcp_close_all();
 	udp_close_all();

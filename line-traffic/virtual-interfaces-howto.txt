@@ -9,11 +9,15 @@
 # Machine 1:
 
 # Create virtual NICs:
-# Note: to specify the MAC address (otherwise it will be randomly generated):
-# ip link add link eth2 name mac1 address 12:34:56:78:90:ab type macvlan mode private
 
-ip link add link eth2 name mac1 type macvlan mode private
-ip link add link eth2 name mac2 type macvlan mode private
+ip link add link eth2 name mac1 address 12:34:0a:00:00:00 type macvlan mode private
+ip link add link eth2 name mac2 address 12:34:0a:00:00:02 type macvlan mode private
+
+# Add static ARP entries for the IPs of the other machine(s), to make sure packets are forwarded through macX and not
+# eth2:
+
+ip neigh add 10.0.0.1 lladdr 12:34:0a:00:00:01 dev mac1
+ip neigh add 10.0.0.3 lladdr 12:34:0a:00:00:03 dev mac2
 
 # Bring them up:
 
@@ -26,8 +30,8 @@ ip -o link
 
 # Assign IPs:
 
-ip addr add 10.0.1.1/24 dev mac1
-ip addr add 10.0.2.1/24 dev mac2
+ip addr add 10.0.0.0/31 dev mac1
+ip addr add 10.0.0.2/31 dev mac2
 
 # Check IPs:
 
@@ -37,23 +41,25 @@ ip route
 
 # Machine 2:
 
-ip link add link eth2 name mac1 type macvlan mode private
-ip link add link eth2 name mac2 type macvlan mode private
+ip link add link eth2 name mac1 address 12:34:0a:00:00:01 type macvlan mode private
+ip link add link eth2 name mac2 address 12:34:0a:00:00:03 type macvlan mode private
+ip neigh add 10.0.0.0 lladdr 12:34:0a:00:00:00 dev mac1
+ip neigh add 10.0.0.2 lladdr 12:34:0a:00:00:02 dev mac2
 ip link set up mac1
 ip link set up mac2
-ip addr add 10.0.1.2/24 dev mac1
-ip addr add 10.0.2.2/24 dev mac2
+ip addr add 10.0.0.1/31 dev mac1
+ip addr add 10.0.0.3/31 dev mac2
 
 
 * Test:
 
 # Machine 1
 
-ping 10.0.1.2
-ping 10.0.2.2
+ping 10.0.0.1
+ping 10.0.0.3
 
 # Check the ARP table:
-ip neigh | grep REACH
+ip neigh
 
 
 * Cleanup:
@@ -62,11 +68,17 @@ ip neigh | grep REACH
 
 ip link del link eth2 dev mac1
 ip link del link eth2 dev mac2
+ip neigh del 10.0.0.1 lladdr 12:34:0a:00:00:01 dev mac1
+ip neigh del 10.0.0.3 lladdr 12:34:0a:00:00:03 dev mac2
+ip neigh flush all
 
 # Machine 2:
 
 ip link del link eth2 dev mac1
 ip link del link eth2 dev mac2
+ip neigh del 10.0.0.0 lladdr 12:34:0a:00:00:00 dev mac1
+ip neigh del 10.0.0.2 lladdr 12:34:0a:00:00:02 dev mac2
+ip neigh flush all
 
 
 ## Creating virtual IP interfaces (i.e. have one MAC address and multiple IP addresses for the same physical interface)

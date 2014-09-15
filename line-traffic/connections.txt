@@ -1,0 +1,157 @@
+# Documentation for the config file for line-traffic, with examples below.
+#
+# You can use line-traffic after you have configured the network on all the machines which will be used to exchange
+# traffic.
+#
+# This file is used to configure how the machines will open TCP/UDP sockets and send traffic.
+# Each line is of the form:
+#
+#   connection ip1 ip2 param1 [param]...
+#
+# Generally, traffic will flow from a client socket bound to ip1 to a server socket bound to ip2. A socket to be bound
+# to an IP address is opened on a machine iff there is a network interface on that machine with an IP addess matching
+# the socket's IP address. This means that you can use the same config file on all the machines, and line-traffic will
+# figure out automatically on which machine it needs to open each socket.
+#
+# Connection types:
+#
+#   TCP [on-off onDurationMin onDurationMax offDurationMin ofDurationMax] [class diffServ] [cc congestionControlAlg] [x multiplier]
+#
+#     TCP transfer, by default continuous (i.e. infinite), unless the on-off parameter is present.
+#
+#     Parameters:
+#
+#       on-off onDurationMin onDurationMax offDurationMin ofDurationMax
+#
+#         Keep the connection open for a random number of seconds between [onDurationMin, onDurationMax], then close the
+#         connection and keep it closed for a random number of seconds between [offDurationMin, offDurationMax], then
+#         repeat.
+#         The durations are generated randomly once, by sampling from a uniform distribution, and then are reused.
+#         The parameters are read as floating point numbers, the unit is seconds.
+#
+#       class diffServ
+#
+#         Set the diffServ field in the IP header to the given value (read as a decimal number). By default, set to 0.
+#
+#       cc congestionControlAlg
+#
+#         Set the TCP congestion control algorithm for the socket to the given value.
+#         Valid values are the ones in: /proc/sys/net/ipv4/tcp_available_congestion_control. You might have to modprobe
+#         the modules implementing other congestion control agorithms.
+#         By default, uses the system's default, i.e. the value in /proc/sys/net/ipv4/tcp_congestion_control.
+#
+#       x multiplier
+#
+#         Create multiple parallel connections with identical parameters.
+#         The multiplier is read as a positive integer decimal.
+#         By default, set to 1.
+#
+#
+#   TCP-Poisson-Pareto poissonRate paretoAlpha paretoScale [sequential]
+#
+#     Defines a TCP connection with a pause time between transfers, and the size of the transfers sampled from a Pareto
+#     distribution.
+#
+#     Parameters:
+#
+#       poissonRate
+#
+#         The rate of creating new connections per second, given as a positive floating point number.
+#         If the parameter "sequential" is present, only one connection can be open at a time. As long as the current
+#         transfer has not finished, no new connections are created. After a transfer finishes, it is followed by a
+#         pause time with the duration sampled from the exponential distribution corresponding to a Poisson process with
+#         average rate poissonRate. After the pause time, a new transfer is started.
+#         If the parameter "sequential" is not present, parallel connections are possible. New transfers are started by
+#         a Poisson process with average rate poissonRate.
+#
+#       paretoAlpha
+#
+#         The alpha parameter of the Pareto distribution of the transfer size. Positive floating point number.
+#         If you use 2.0, then the distribution will have a mean equal to paretoScale.
+#
+#       paretoScale
+#
+#         The scale parameter of the Pareto distribution of the transfer size.
+#         Given as a string with the format:
+#
+#           integer[multiplier]unit
+#
+#         where:
+#
+#           integer is a number given as decimal;
+#
+#           multiplier is a SI prefix, one of: kmgtpezyKMGTPEZY;
+#
+#           unit is either b for bits or B for Bytes.
+#
+#       sequential
+#
+#         Whtether to create parallel or sequential transfers. See the explanation for poissonRate above.
+#
+#
+#   TCP-DASH rate_Mbps bufferingRate_Mbps bufferingTime_s streamingPeriod_s
+#
+#     Defines a TCP DASH transfer.
+#
+#     Parameters:
+#
+#       rate_Mbps
+#
+#         Average data rate, floating point number in Mbps.
+#
+#       bufferingRate_Mbps
+#
+#         Buffering rate, floating point number in Mbps.
+#
+#       bufferingTime_s
+#
+#         Buffering time, floating point number in seconds. The transfer is throttled for bufferingTime_s seconds.
+#
+#       streamingPeriod_s
+#
+#         The period during which chunks are sent chunks without source-throttling during the streaming phase.
+#
+#
+#   UDP-CBR rate_Mbps [poisson] [on-off onDurationMin onDurationMax offDurationMin ofDurationMax]
+#
+#     Defines a constant (by default) or average bitrate UDP transfer.
+#
+#     Parameters:
+#
+#       rate_Mbps
+#
+#         The data rate, floating point number in Mbps.
+#
+#       poisson
+#
+#         If not present, this is a constant bitrate transfer.
+#         If present, this is an average bitrate transfer, with chunks sent according to a Poisson process with the given
+#         rate.
+#
+#       on-off onDurationMin onDurationMax offDurationMin ofDurationMax
+#
+#         See the description for TCP connections.
+#
+#
+# How to run line-traffic:
+#
+#   1. Start line-traffic on every machine which will generate traffic:
+#
+#      line-traffic --text-config configFileName
+#
+#   2. Sleep for a couple of seconds to give it time to open the server sockets.
+#
+#   3. Send the signal SIGUSR1 to every instance of line-traffic (this will start the transfers):
+#
+#      killall -SIGUSR1 line-traffic
+#
+#
+# Configuration examples:
+
+connection 10.0.0.0 10.0.0.1 TCP
+connection 10.0.0.2 10.0.0.3 TCP x 10
+connection 10.0.0.2 10.0.0.3 TCP on-off 5.0 5.0 1.0 10.0 x 3
+connection 10.0.0.2 10.0.0.3 TCP-Poisson-Pareto 0.1 2.0 10MB
+connection 10.0.0.2 10.0.0.3 TCP-DASH 10.0 20.0 30.0 900.0
+connection 10.0.0.2 10.0.0.3 UDP-CBR 1000.0
+connection 10.0.0.2 10.0.0.3 UDP-CBR 1000.0 poisson

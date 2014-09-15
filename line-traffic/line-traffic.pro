@@ -10,7 +10,7 @@ exists( ../line.pro ) {
 }
 
 !exists( ../line.pro ) {
-	QT += core xml
+	QT += core xml network
 
 	QT -= gui
 

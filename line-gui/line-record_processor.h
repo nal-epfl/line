@@ -48,7 +48,10 @@ public:
 
 class Flow {
 public:
-	Flow(quint16 sourcePort = 0, quint16 destPort = 0, QString protocolString = "");
+	Flow(quint16 sourcePort = 0, quint16 destPort = 0, QString protocolString = "")
+		: sourcePort(sourcePort),
+		  destPort(destPort),
+		  protocolString(protocolString) {}
 	quint16 sourcePort;
 	quint16 destPort;
 	QString protocolString;
@@ -58,7 +61,12 @@ public:
 
 class Conversation {
 public:
-	Conversation(quint16 sourcePort = 0, quint16 destPort = 0, QString protocolString = "");
+	Conversation(quint16 sourcePort = 0, quint16 destPort = 0, QString protocolString = "")
+		: fwdFlow(sourcePort, destPort, protocolString),
+		  retFlow(destPort, sourcePort, protocolString),
+		  sourcePort(sourcePort),
+		  destPort(destPort),
+		  protocolString(protocolString) {}
 	// fwdFlow is the initiator, i.e. the node that sends the first packet
 	Flow fwdFlow;
 	Flow retFlow;
@@ -71,7 +79,11 @@ public:
 
 class PathConversations {
 public:
-	PathConversations(qint32 sourceNodeId = -1, qint32 destNodeId = -1);
+	PathConversations(qint32 sourceNodeId = -1, qint32 destNodeId = -1)
+		: sourceNodeId(sourceNodeId),
+		  destNodeId(destNodeId),
+		  maxPossibleBandwidthFwd(0),
+		  maxPossibleBandwidthRet(0) {}
 	qint32 sourceNodeId;
 	qint32 destNodeId;
 	QHash<ProtoPortPair, QList<Conversation> > conversations;

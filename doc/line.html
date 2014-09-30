@@ -6,205 +6,340 @@
   <link rel="shortcut icon" type="image/png" href="data:image/png;base64,
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAN1wAADdcBQiibeAAAAAd0SU1FB94FAQ80AVPNu7YAAAIPSURBVDjL1ZM9aFNhFIbfc7+/2+Qm6fUnbYpIWogi1Qo6FBwUshhwFBwdG3B0im4uLh2cg5MgjhahIK5S7VJQbNUhrUWDiW2aNP/33tyfz0GqFDo46pnO9L485+EA//3QwTJ///EEi+RNQF8HcB6ABUCAoKHRJqAeQb8igy29fXh741DAlXtP7kLrB+OWaV29kMXQ9bHb7uPD9g5yU8dxbS6LVs/B8zefACAC8Ex7sYXVR7ccNrtQPm2OsZcApDsKUKk14QUBZiaPQUmO6Ukbm7UW1irf4fnhQekcM6Otb6+X3hvd6qZw+oOPADQAZNM2bsyfheAMW7UWVj9XETMF8hdncPnMFIgAJvh2JpdLAgAHgGa1PhsbT3YSdvLHl3ozWV5uZQ4YPT/AysZXENE+k2InlU5byfSJaSmV/zsAAHzHS/WiTkooBWFKCFOBSwkuJaRSEGPKFkrZQknQn9vD8IToH6VH61+4RAQQHeFPdwHAuHNJsrRlLBL08K/Ea0QicF6ca7xbAQCWz+ezp8ZG7Yxy18MgCBiF3DBIGASDDEaCoojrwJHhoBEbNtbsZuXpxO76Mty+WygUXB5FUTUeN0E08hNytOv7vZOeV7fDQWjpvuZEFHBuDIQQ+0KYDdMUO1KpulKqWiqVOofgyuVybG/PSfi+Ewe0GYYBY4yHSpHLGBumUqlusVgc/lvP9BNYu8h7Iyl+nAAAAABJRU5ErkJggg==">
   <style type="text/css">
-  html {
-          width:100%;
-          height:100%;
-          font-family: sans-serif;
-          font-size: 14px;
-          line-height: 1.4;
-          color: #333;
-          text-align: justify;
-      }
-      .page {
-          margin-left: auto;
-          margin-right: auto;
-          max-width: 1000px;
-      }
-      div#toc {
-          zdisplay: inline-block;
-          padding: 0.5rem;
-          border: 1px solid #59c;
-          background-color: #fafcfe;
-      }
-      div#toc h2 {
-          border: none;
-          padding: 0;
-          margin-top: 0;
-      }
-      div#toc > div > ul {
-          list-style-type: none;
-          padding-left: 0;
-          margin-top: 0.5rem;
-          margin-bottom: 0.5rem;
-      }
-      div#toc ul ul {
-          list-style-type: none;
-          padding-left: 1rem;
-          margin-left: 0;
-      }
-      div#toc li {
-          margin-top: 0.1rem;
-          margin-bottom: 0.1rem;
-      }
-      a, a:visited {
-          color: #249;
-          text-decoration: none;
-      }
-      a:hover {
-          text-decoration: underline;
-      }
-      a.clonehandle {
-          color: #aaa;
-          font-size: 1rem;
-          text-decoration: none !important;
-          font-weight: normal;
-          float: right;
-      }
-      .clonehandle svg {
-          fill: #aaa;
-      }
-      .svgicon {
-          height: 1rem;
-          width: 1.47rem;
-          vertical-align: middle;
-      }
-      ul {
-          list-style-type: disc;
-      }
-      li, li p {
-          margin-top: 0.25rem;
-          margin-bottom: 0.25rem;
-      }
-      .section {
-          zmargin-top: 2rem;
-      }
-      h1, .h1 {
-          color: #000;
-          font-weight: normal;
-          font-size: 2.0rem;
-          margin-top: 1rem;
-          padding-top: 0.5rem;
-          border-bottom: 1px solid #777;
-          margin-bottom: 1.5rem;
-          padding-bottom: 0;
-      }
-      h2, .h2 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.7rem;
-          margin-top: 3rem;
-          padding-top: 0;
-          border-bottom: 1px solid #999;
-          margin-bottom: 0.5rem;
-          padding-bottom: 0;
-      }
-      h3, .h3 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.4rem;
-          margin-top: 2.5rem;
-          border-bottom: 1px dashed #999;
-          margin-bottom: 0.5rem;
-      }
-      h4, .h4 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 2.0rem;
-          margin-bottom: -0.5rem;
-      }
-      h5, .h5 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 1rem;
-          margin-bottom: -0.7rem;
-      }
-      h6, .h6 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 1rem;
-          margin-bottom: -0.7rem;
-      }
-      .h7 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 1rem;
-          margin-bottom: -0.7rem;
-      }
-      .h8 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 1rem;
-          margin-bottom: -0.7rem;
-      }
-      .h9 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 1rem;
-          margin-bottom: -0.7rem;
-      }
-      .h10 {
-          color: #000;
-          font-weight: normal;
-          font-size: 1.2rem;
-          margin-top: 1rem;
-          margin-bottom: -0.7rem;
-      }
-      table, td, th {
-          border: 1px solid black;
-          border-collapse: collapse;
-          text-align: left;
-          padding: 0.35rem;
-      }
-      .vcenter {
-          text-align: center;
-      }
-      .big {
-          font-size: 1.3em;
-      }
-      pre, tt {
-          border: 1px solid #bbb;
-          background-color: #dadada;
-          color: #000;
-          font-family: monospace;
-          font-size: 0.9rem;
-      }
-      pre {
-          padding: 0.5rem;
-          overflow-x: auto;
-      }
-      tt {
-          padding: 0.1rem;
-      }
-      .ok {
-          color: #4c4;
-          fill: #4c4;
-      }
-      .warn {
-          color: #b21;
-          fill: #b21;
-      }
-      .todo {
-          color: #fd0;
-          fill: #fd0;
-      }
-      .err {
-          color: #c44;
-          fill: #c44;
-      }
-      ul, ol {
-          padding-left: 0;
-          margin-left: 0;
-      }
-      ul li, ol li {
-          list-style-position: outside;
-          margin-left: 1.1rem;
-      }
+    html {
+      width:100%;
+      height:100%;
+      font-family: sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #333;
+      text-align: justify;
+      margin: 0;
+      padding: 0;
+    }
+
+    body.fixedwidth {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 1000px;
+    }
+
+    body.fullWidth {
+      width:100%;
+      height:100%;
+
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    body {
+      line-height: inherit;
+    }
+
+    .page {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 1000px;
+    }
+    div#toc {
+      zdisplay: inline-block;
+      padding: 0.5rem;
+      border: 1px solid #59c;
+      background-color: #fafcfe;
+    }
+    div#toc h2 {
+      border: none;
+      padding: 0;
+      margin-top: 0;
+    }
+    div#toc > div > ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    div#toc ul ul {
+      list-style-type: none;
+      padding-left: 1rem;
+      margin-left: 0;
+    }
+    div#toc li {
+      margin-top: 0.1rem;
+      margin-bottom: 0.1rem;
+    }
+    a, a:visited {
+      color: #249;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    a.clonehandle {
+      color: #aaa;
+      font-size: 1rem;
+      text-decoration: none !important;
+      font-weight: normal;
+      float: right;
+    }
+    .clonehandle svg {
+      fill: #aaa;
+    }
+    .svgicon {
+      height: 1rem;
+      width: 1.47rem;
+      vertical-align: middle;
+    }
+    ul {
+      list-style-type: disc;
+    }
+    li, li p {
+      margin-top: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .section {
+      zmargin-top: 2rem;
+    }
+    h1, .h1 {
+      color: #000;
+      font-weight: normal;
+      font-size: 2.0rem;
+      margin-top: 1rem;
+      padding-top: 0.5rem;
+      border-bottom: 1px solid #777;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0;
+    }
+    h2, .h2 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.7rem;
+      margin-top: 3rem;
+      padding-top: 0;
+      border-bottom: 1px solid #999;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0;
+    }
+    h3, .h3 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.4rem;
+      margin-top: 2.5rem;
+      border-bottom: 1px dashed #999;
+      margin-bottom: 0.5rem;
+    }
+    h4, .h4 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 2.0rem;
+      margin-bottom: -0.5rem;
+    }
+    h5, .h5 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      margin-bottom: -0.7rem;
+    }
+    h6, .h6 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      margin-bottom: -0.7rem;
+    }
+    .h7 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      margin-bottom: -0.7rem;
+    }
+    .h8 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      margin-bottom: -0.7rem;
+    }
+    .h9 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      margin-bottom: -0.7rem;
+    }
+    .h10 {
+      color: #000;
+      font-weight: normal;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      margin-bottom: -0.7rem;
+    }
+    table, td, th {
+      border: 1px solid black;
+      border-collapse: collapse;
+      text-align: left;
+      padding: 0.35rem;
+    }
+    .vcenter {
+      text-align: center;
+    }
+    .big {
+      font-size: 1.3em;
+    }
+    pre, tt {
+      border: 1px solid #bbb;
+      background-color: #dadada;
+      color: #000;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    pre {
+      padding: 0.5rem;
+      overflow-x: auto;
+    }
+    tt {
+      padding: 0.1rem;
+    }
+    .ok {
+      color: #4c4;
+      fill: #4c4;
+    }
+    .warn {
+      color: #b21;
+      fill: #b21;
+    }
+    .todo {
+      color: #fd0;
+      fill: #fd0;
+    }
+    .err {
+      color: #c44;
+      fill: #c44;
+    }
+    ul, ol {
+      padding-left: 0;
+      margin-left: 0;
+    }
+    ul li, ol li {
+      list-style-position: outside;
+      margin-left: 1.1rem;
+    }
+
+    p {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    progress[role]:after {
+      background-image: none;
+    }
+
+    progress[role] strong {
+      display: none;
+    }
+
+    progress,
+    progress[role] {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      border: 1px solid #999;
+      background-size: auto;
+      display: block;
+
+      width: 100%;
+      height: 1rem;
+
+      background-color: #f3f3f3;
+    }
+
+    progress::-webkit-progress-bar {
+      background-color: #f3f3f3;
+    }
+
+    progress::-webkit-progress-value {
+      background: #8ebdec;
+      background: -moz-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #8ebdec), color-stop(100%, #5791ca));
+      background: -webkit-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: -o-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: -ms-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: linear-gradient(to bottom,  #8ebdec 0%, #5791ca 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8ebdec', endColorstr='#5791ca',GradientType=0 );
+    }
+    progress::-moz-progress-bar {
+      background: #8ebdec;
+      background: -moz-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #8ebdec), color-stop(100%, #5791ca));
+      background: -webkit-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: -o-linear-gradient(top,  #8ebdec 0%, #5791ca 100%);
+      background: -ms-linear-gradient(top,  #8ebdec 0% ,#5791ca 100%);
+      background: linear-gradient(to bottom,  #8ebdec 0%, #5791ca 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8ebdec', endColorstr='#5791ca',GradientType=0 );
+    }
+
+    fieldset {
+      border: 1px solid #c0c0c0;
+      padding: 0.35em 0.625em 0.75em;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    select {
+      display: inline-block;
+    }
+
+    legend {
+      border: 0;
+      padding: 0;
+      font-size: 1.2rem;
+    }
+
+    input, button {
+      margin-top: 0;
+      margin-bottom: 0;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    select,
+    input,
+    button {
+      font-size: inherit;
+    }
+
+    input[type="radio"] {
+      vertical-align: middle;
+      margin-top: -0.25rem;
+      margin-left: 0.2rem;
+      margin-right: 0.15rem;
+    }
+
+    input[type="checkbox"] {
+      position: relative;
+      vertical-align: middle;
+      bottom: 1px;
+      margin-right: 0.25rem;
+    }
+
+    .verticalContainer {
+      display: flex;
+      flex-flow: column;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    .verticalStretch {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .nobr {
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>

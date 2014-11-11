@@ -201,4 +201,7 @@ QDataStream& operator<<(QDataStream& s, const RunParams& d);
 QDataStream& operator>>(QDataStream& s, RunParams& d);
 QTextStream& operator<<(QTextStream& s, const RunParams& d);
 
+QString guessGraphName(QString workingDir);
+QString guessExperimentSuffix(QString workingDir);
+
 #endif // RUN_EXPERIMENT_PARAMS_H

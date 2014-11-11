@@ -851,11 +851,11 @@ int runPacketFilter(int argc, char **argv) {
 			}
 			recordedData->recordedPacketData.reserve(recordPacketMaxCount);
 			recordedData->recordedQueuedPacketData.reserve(recordPacketQueuedMaxCount);
-		} else if (QString(argv[0]) == "--path_interval_measurements") {
+		} else if (QString(argv[0]) == "--take_path_interval_measurements") {
 			takePathIntervalMeasurements = true;
 			argc--, argv++;
 			argc--, argv++;
-		} else if (QString(argv[0]) == "--flow_interval_measurements") {
+		} else if (QString(argv[0]) == "--take_flow_interval_measurements") {
 			takeFlowIntervalMeasurements = true;
 			argc--, argv++;
 			argc--, argv++;
@@ -910,7 +910,8 @@ int runPacketFilter(int argc, char **argv) {
 			argc--, argv++;
 			argc--, argv++;
 		} else {
-			break;
+			qDebug() << "Could not parse arg" << QString(argv[0]);
+			Q_ASSERT_FORCE(false);
 		}
 	}
 

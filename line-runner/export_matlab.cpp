@@ -26,16 +26,27 @@
 bool exportGraphToMatlab(QString graphFileName, QString dir);
 
 bool exportMatlab(QString paramsFileName) {
+	QString workingDir;
+	QString graphName;
+
 	RunParams runParams;
 	if (!loadRunParams(runParams, paramsFileName)) {
-		return false;
+		workingDir = paramsFileName;
+		graphName = guessGraphName(workingDir);
+
+		if (graphName.isEmpty()) {
+			return false;
+		}
+	} else {
+		workingDir = runParams.workingDir;
+		graphName = runParams.graphName;
 	}
 
 	qDebug() << QString("Exporting matlab files for graph %1, working dir %2")
-				.arg(runParams.graphName)
-				.arg(runParams.workingDir);
+				.arg(graphName)
+				.arg(workingDir);
 
-	if (!exportMatlab(runParams.workingDir, runParams.graphName)) {
+	if (!exportMatlab(workingDir, graphName)) {
 		return false;
 	}
 

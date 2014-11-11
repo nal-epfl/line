@@ -259,3 +259,29 @@ QTextStream& operator<<(QTextStream& s, const RunParams& d) {
 
 	return s;
 }
+
+QString guessGraphName(QString workingDir) {
+	QString simulationText;
+	if (!readFile(workingDir + "/" + "simulation.txt", simulationText)) {
+		return QString();
+	}
+	foreach (QString line, simulationText.split("\n")) {
+		QStringList tokens = line.split("=");
+		if (tokens.count() == 2) {
+			if (tokens[0] == "graph") {
+				return tokens[1];
+			}
+		}
+	}
+	return QString();
+}
+
+QString guessExperimentSuffix(QString workingDir) {
+	// quad.2014.04.14.17.43.46.418114995566664.1118666809-link-100Mbps-pareto-1Mb-pareto-1Mb-policing-1.0-0.3-buffers-large-none-1-drop-tail-rtt-48-120
+	workingDir = workingDir.split("/").last();
+	if (workingDir.contains("-")) {
+		workingDir = workingDir.mid(workingDir.indexOf('-') + 1);
+		return workingDir;
+	}
+	return "";
+}

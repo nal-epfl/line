@@ -311,7 +311,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 			}
 		}
 		if (!allGood)
-			continue;
+			break;
 		bool initialized = true;
 		// Check that the emulator is ready to route
 		foreach (PointerSsh ssh, sshCores) {
@@ -354,12 +354,25 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 	sleep(5);
 
 	if (!mustStop) {
-		// Start the clients
+		// Start the client server sockets
 		foreach (PointerSsh ssh, sshHosts) {
             QString multiplexerCmd = QString("line-traffic --master %1.graph").
 									 arg(runParams.graphName);
 			qDebug() << QString("Multiplexer command: %1").arg(multiplexerCmd);
 			allKeys[ssh.data()] = multiplexerKeys[ssh.data()] = ssh->startProcess(multiplexerCmd);
+		}
+	}
+
+	sleep(5);
+	if (!mustStop) {
+		// Start the client client apps
+		foreach (PointerSsh ssh, sshHosts) {
+			if (mustStop)
+				break;
+			if (!ssh->signalProcess(multiplexerKeys[ssh.data()], SIGUSR1)) {
+				qDebug() << "ERROR: Could not signal client app, this is very bad";
+				break;
+			}
 		}
 	}
 

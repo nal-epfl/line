@@ -854,10 +854,8 @@ int runPacketFilter(int argc, char **argv) {
 		} else if (QString(argv[0]) == "--take_path_interval_measurements") {
 			takePathIntervalMeasurements = true;
 			argc--, argv++;
-			argc--, argv++;
 		} else if (QString(argv[0]) == "--take_flow_interval_measurements") {
 			takeFlowIntervalMeasurements = true;
-			argc--, argv++;
 			argc--, argv++;
 		} else if (QString(argv[0]) == "--estimated_duration") {
 			bool ok;

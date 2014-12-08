@@ -48,7 +48,10 @@ void LinkIntervalMeasurement::clear()
 
 void LinkIntervalMeasurement::sample(int packetCount)
 {
-    if (packetCount > numPacketsInFlight)
+
+    // modified by Zhiyong:
+    //if (packetCount > numPacketsInFlight)
+    if (packetCount >= numPacketsInFlight)
         return;
 
     QVector<quint8> packetEvents = events.toVector();

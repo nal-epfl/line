@@ -628,7 +628,7 @@ bool MainWindow::runLongCommand(QString path, QStringList args, QPlainTextEdit *
 
 bool MainWindow::lineRunner(QStringList args, QPlainTextEdit *log)
 {
-    return runLongCommand(QString("%1/../build-line-runner-Desktop-Debug/line-runner").arg(qApp->applicationDirPath()),
+    return runLongCommand(QString("%1/../build-line-runner/line-runner").arg(qApp->applicationDirPath()),
 						  args, log);
 }
 

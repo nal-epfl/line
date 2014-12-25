@@ -2326,7 +2326,7 @@ void MainWindow::loadSimulation()
 				}
 			}
 
-			qDebug() << __FILE__ << __LINE__ << "===============================================";
+            //qDebug() << __FILE__ << __LINE__ << "===============================================";
 			for (int iSplit = 0; iSplit < injectionDelays.count(); iSplit++) {
 				qDebug() << __FILE__ << __LINE__ << "-----------------------------------------------";
 				qDebug() << __FILE__ << __LINE__ << "Interval:" << time2String(iSplit * splitInterval) << "to" << time2String((iSplit + 1) * splitInterval);
@@ -2337,7 +2337,7 @@ void MainWindow::loadSimulation()
 				qDebug() << __FILE__ << __LINE__ << "Processing delays:" << processingDelays[iSplit].toString(time2String);
 				qDebug() << __FILE__ << __LINE__ << "Relative delay errors (%):" << relativeDelayErrors[iSplit].toString(intWithCommas2String);
 			}
-			qDebug() << __FILE__ << __LINE__ << "===============================================";
+            //qDebug() << __FILE__ << __LINE__ << "===============================================";
 
 			for (int iTrace = 0; iTrace < editor->graph()->trafficTraces.count(); iTrace++) {
 				editor->graph()->trafficTraces[iTrace].clear();

@@ -31,6 +31,7 @@ public:
     // 1: forward, 0: drop
     BitArray events;
 	qreal successRate(bool *ok = NULL) const;
+    qreal successRate2(bool *ok = NULL) const;
 	void clear();
 
     void sample(int packetCount);

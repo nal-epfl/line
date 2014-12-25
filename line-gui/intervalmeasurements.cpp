@@ -39,6 +39,33 @@ qreal LinkIntervalMeasurement::successRate(bool *ok) const
 	return 1.0 - qreal(numPacketsDropped) / qreal(numPacketsInFlight);
 }
 
+//zhiyong: according to the sample function, there might be something wrong!
+qreal LinkIntervalMeasurement::successRate2(bool *ok) const
+{
+    Q_ASSERT(numPacketsInFlight == events.count());
+
+    // Reconstruct measurement
+    QVector<quint8> packetEvents = events.toVector();
+    Q_ASSERT(events.count() == packetEvents.count());
+
+    qint64 numPacketsInFlight_ = packetEvents.count();
+    qint64 numPacketsDropped_ = packetEvents.count(0);
+    if (numPacketsDropped != numPacketsDropped_) {
+        qDebug() << QString("Wrong!! events-->%1 and numPacketsDropped-->%2 are not consistent!!").arg(numPacketsDropped_).arg(numPacketsDropped);
+    }
+
+    if (numPacketsInFlight_ == 0) {
+        if (ok) {
+            *ok = false;
+        }
+        return 0.0;
+    }
+    if (ok) {
+        *ok = true;
+    }
+    return 1.0 - qreal(numPacketsDropped_) / qreal(numPacketsInFlight_);
+}
+
 void LinkIntervalMeasurement::clear()
 {
 	numPacketsInFlight = 0;

@@ -33,6 +33,8 @@ exists( ../line.pro ) {
 	#INCLUDEPATH += $$PF_RING_DIR/userland/c++ $$PF_RING_DIR/kernel $$PF_RING_DIR/kernel/plugins $$PF_RING_DIR/userland/libpcap-1.1.1-ring $$PF_RING_DIR/userland/lib
 	#QMAKE_LIBS += $$PF_RING_DIR/userland/c++/libpfring_cpp.a $$PF_RING_DIR/userland/lib/libpfring.a $$PF_RING_DIR/userland/libpcap-1.1.1-ring/libpcap.a
 	QMAKE_LIBS += /usr/local/lib/libpfring.a /usr/local/lib/libpcap.a -lunwind
+	
+	QMAKE_STRIP = echo
 
   QMAKE_CXXFLAGS += -std=c++0x -Wno-unused-local-typedefs
 

@@ -324,6 +324,9 @@ private slots:
 
 	void on_btnEnqueueAndStart_clicked();
 
+    //added by zhiyong: load run parameters from a file.
+    void on_btnImportParams_clicked();
+
 	void on_btnResultsRename_clicked();
 
 	void on_btnSelectNewSimulation_clicked();

@@ -131,6 +131,19 @@ void MainWindow::setUIToRunParams(const RunParams &params)
 	ui->spinFakeGLLossNoise->setValue(params.goodRateNoise * 100.0);
 }
 
+void MainWindow::on_btnImportParams_clicked()
+{
+    QString paramsFileName = QFileDialog::getOpenFileName(this,
+                                                    "Import running parameters", ".", "running parameter file (*.data)");
+    RunParams runParams;
+    if (loadRunParams(runParams, paramsFileName)) {
+        // these parameters do not affect graphName, workingDir, etc.
+        //runParams.graphName = getGraphName(editor->graph());
+        //runParams.workingDir = QString();
+        setUIToRunParams(runParams);
+    }
+}
+
 ///// Experiment queue handling
 void MainWindow::on_btnEnqueue_clicked(bool automatic)
 {

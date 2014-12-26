@@ -77,7 +77,8 @@ void LinkIntervalMeasurement::sample(int packetCount)
 {
 
     // modified by Zhiyong:
-    //if (packetCount > numPacketsInFlight)
+    // old:
+    //     if (packetCount > numPacketsInFlight)
     if (packetCount >= numPacketsInFlight)
         return;
 

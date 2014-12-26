@@ -652,7 +652,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1573</width>
+             <width>1622</width>
              <height>325</height>
             </rect>
            </property>
@@ -710,6 +710,13 @@
                 <widget class="QPushButton" name="btnEnqueueAndStart">
                  <property name="text">
                   <string>Enqueue and start</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnImportParams">
+                 <property name="text">
+                  <string>Import parameters</string>
                  </property>
                 </widget>
                </item>
@@ -1850,8 +1857,8 @@ For performance reasons, the number of packets that can be captured is limited b
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>1571</width>
+             <height>697</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13"/>

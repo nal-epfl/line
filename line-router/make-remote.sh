@@ -64,9 +64,10 @@ ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "sh -l -c \"set -x && (env | sort)
 
 echo "Make command is: $MAKE"
 
-cp $SRC_DIR/$PROJECT/deploycore-template.pl $SRC_DIR/$PROJECT/deploycore.pl && chmod +x $SRC_DIR/$PROJECT/deploycore.pl
+#cp $SRC_DIR/$PROJECT/deploycore-template.pl $SRC_DIR/$PROJECT/deploycore.pl && chmod +x $SRC_DIR/$PROJECT/deploycore.pl
 perl -pi -e "s/REMOTE_DEDICATED_IF_ROUTER/$REMOTE_DEDICATED_IF_ROUTER/g" $SRC_DIR/$PROJECT/deploycore.pl
 perl -pi -e "s/REMOTE_DEDICATED_IP_HOSTS/$REMOTE_DEDICATED_IP_HOSTS/g" $SRC_DIR/$PROJECT/deploycore.pl
+
 
 cd $BUILD_DIR || exit 1
 pwd; echo "Copying $PROJECT to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR..."

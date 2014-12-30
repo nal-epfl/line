@@ -652,7 +652,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1573</width>
+             <width>1622</width>
              <height>325</height>
             </rect>
            </property>
@@ -710,6 +710,13 @@
                 <widget class="QPushButton" name="btnEnqueueAndStart">
                  <property name="text">
                   <string>Enqueue and start</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnImportParams">
+                 <property name="text">
+                  <string>Import parameters</string>
                  </property>
                 </widget>
                </item>
@@ -831,6 +838,9 @@ For performance reasons, the number of packets that can be captured is limited b
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
+                 <property name="cursor">
+                  <cursorShape>ArrowCursor</cursorShape>
+                 </property>
                  <property name="toolTip">
                   <string>The maximum number of unique packets</string>
                  </property>
@@ -838,7 +848,7 @@ For performance reasons, the number of packets that can be captured is limited b
                   <string> u.p.</string>
                  </property>
                  <property name="maximum">
-                  <number>999999</number>
+                  <number>9999999</number>
                  </property>
                  <property name="singleStep">
                   <number>1000</number>
@@ -860,7 +870,7 @@ For performance reasons, the number of packets that can be captured is limited b
                   <string> p.</string>
                  </property>
                  <property name="maximum">
-                  <number>999999</number>
+                  <number>99999999</number>
                  </property>
                  <property name="singleStep">
                   <number>1000</number>

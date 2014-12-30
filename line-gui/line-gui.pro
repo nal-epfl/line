@@ -16,7 +16,21 @@ TEMPLATE = app
 
 LIBS += -lglpk -llzma -lunwind -lX11
 
-QMAKE_CXXFLAGS += -std=c++0x -Wno-unused-local-typedefs
+QMAKE_CFLAGS += -std=gnu99 -fno-strict-overflow -fno-strict-aliasing -Wno-unused-local-typedefs -gdwarf-2
+QMAKE_CXXFLAGS += -std=c++11 -fno-strict-overflow -fno-strict-aliasing -Wno-unused-local-typedefs -gdwarf-2
+QMAKE_LFLAGS += -flto -fno-strict-overflow -fno-strict-aliasing
+
+QMAKE_CFLAGS += -fstack-protector-all --param ssp-buffer-size=4
+QMAKE_CXXFLAGS += -fstack-protector-all --param ssp-buffer-size=4
+QMAKE_LFLAGS += -fstack-protector-all --param ssp-buffer-size=4
+
+QMAKE_CFLAGS += -fPIE -pie -rdynamic
+QMAKE_CXXFLAGS += -fPIE -pie -rdynamic
+QMAKE_LFLAGS += -fPIE -pie -rdynamic
+
+QMAKE_CFLAGS += -Wl,-z,relro,-z,now
+QMAKE_CXXFLAGS += -Wl,-z,relro,-z,now
+QMAKE_LFLAGS += -Wl,-z,relro,-z,now
 
 exists( /usr/include/glpk ) {
 	INCLUDEPATH += /usr/include/glpk

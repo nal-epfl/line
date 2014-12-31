@@ -42,11 +42,11 @@ qreal LinkIntervalMeasurement::successRate(bool *ok) const
 //zhiyong: according to the sample function, there might be something wrong!
 qreal LinkIntervalMeasurement::successRate2(bool *ok) const
 {
-    Q_ASSERT(numPacketsInFlight == events.count());
+	Q_ASSERT(numPacketsInFlight == (qint64)events.count());
 
     // Reconstruct measurement
     QVector<quint8> packetEvents = events.toVector();
-    Q_ASSERT(events.count() == packetEvents.count());
+	Q_ASSERT(events.count() == (quint64)packetEvents.count());
 
     qint64 numPacketsInFlight_ = packetEvents.count();
     qint64 numPacketsDropped_ = packetEvents.count(0);

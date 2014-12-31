@@ -115,12 +115,15 @@ exists( ../line.pro ) {
 HEADERS += \
     tcpdashsource.h \
     ../line-gui/traffictrace.h \
-    ../tomo/pcap-qt.h
+    ../tomo/pcap-qt.h \
+    ../util/embed-file.h \
+    ../util/gitinfo.h
 
 SOURCES += \
     tcpdashsource.cpp \
     ../line-gui/traffictrace.cpp \
-    ../tomo/pcap-qt.cpp
+    ../tomo/pcap-qt.cpp \
+    ../util/gitinfo.cpp
 
 OTHER_FILES += \
     virtual-interfaces-howto.txt

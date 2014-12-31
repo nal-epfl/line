@@ -22,6 +22,7 @@
 #include <QtCore>
 #include "qpairingheap.h"
 #include "util.h"
+#include "gitinfo.h"
 // This is defined in the .pro file
 // #define USE_TC_MALLOC
 #ifdef USE_TC_MALLOC
@@ -52,6 +53,8 @@ int main(int argc, char *argv[])
 	// Default: 16 MB, let's make it 128 MB
 	// MallocExtension::instance()->SetNumericProperty("tcmalloc.max_total_thread_cache_bytes", 1ULL << 27);
 #endif
+
+	showGitInfo();
 
 	printf("===== Log ===============\n");
 	unsigned int seed = clock() ^ time(NULL) ^ getpid();

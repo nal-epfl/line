@@ -43,6 +43,7 @@
 #include "udpcbr.h"
 #include "udpvbr.h"
 #include "util.h"
+#include "gitinfo.h"
 
 #ifdef DEBUG
 #undef DEBUG
@@ -501,6 +502,8 @@ int main(int argc, char **argv)
 	unsigned int seed = clock() ^ time(NULL) ^ getpid();
 	qDebug() << "seed:" << seed;
 	srand(seed);
+
+	showGitInfo();
 
 	argc--, argv++;
 

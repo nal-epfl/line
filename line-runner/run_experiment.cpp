@@ -55,6 +55,10 @@ bool runExperiment(QString paramsFileName) {
 	QFile::copy(paramsFileName, runParams.workingDir + "/run-params.data");
 	dumpRunParams(runParams, runParams.workingDir + "/run-params.txt");
 
+	system("git status 2>&1 1> git-status.txt");
+	system("git log --pretty=format:'%h %an %ae %s (%ci) %d%' -n 1  2>&1 1> git-log.txt");
+	system("git diff 2>&1 1> git-diff.txt");
+
 	NetGraph g;
 	if (!g.loadFromByteArray(qUncompress(runParams.graphSerializedCompressed))) {
 		g.setFileName(runParams.graphInputPath);

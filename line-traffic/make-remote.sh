@@ -5,7 +5,7 @@ set -x #echo on
 eval "$(/bin/sh ../remote-config.sh)"
 
 PROJECT=line-traffic
-EXTRA_SOURCES='line-gui util tomo remote_config.h'
+EXTRA_SOURCES='line-gui util tomo remote_config.h git-status.txt git-log.txt git-diff.txt'
 BUILD_DIR=$PWD
 SRC_DIR=$SVN_DIR/$PROJECT
 REMOTE_USER=$REMOTE_USER_HOSTS
@@ -15,13 +15,20 @@ REMOTE_DIR=$( [ "$REMOTE_USER" = "root" ] && echo "/root" || echo "/home/$REMOTE
 MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 ${BUILD_CONFIG_HOSTS} && make clean && make -w -j12 && install -m 755 -p line-traffic /usr/bin/"
 #MAKE="qmake $PROJECT.pro -r -spec linux-g++-64 CONFIG+=debug && make clean && make -w -j12 && install -m 755 -p line-traffic /usr/bin/"
 
+pushd .
+cd $BUILD_DIR/../
+git status 2>&1 1> git-status.txt
+git log --pretty=format:'%h %an %ae %s (%ci) %d%' -n 1  2>&1 1> git-log.txt
+git diff 2>&1 1> git-diff.txt
+popd
+
 echo "make-remote.sh:1: warning: Compiling on $REMOTE_HOST ($(host $REMOTE_HOST | cut -d ' ' -f 5))"
 
 cd $BUILD_DIR || exit 1
 pwd; echo "Copying $PROJECT to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR..."
 for DIR in $PROJECT $EXTRA_SOURCES
 do
-	rsync -aqcz --delete  -e "ssh -p $REMOTE_PORT" ../$DIR $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR || exit 1
+  rsync -aqcz --delete  -e "ssh -p $REMOTE_PORT" ../$DIR $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR || exit 1
 	ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "sh -l -c \"set -x && cd $REMOTE_DIR && touch $DIR && (cd $DIR 2>/dev/null && find . -exec touch {} \; || /bin/true)\""
 done
 rm -f stdoutfifo

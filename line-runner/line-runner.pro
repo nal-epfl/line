@@ -36,6 +36,16 @@ QMAKE_LFLAGS += -Wl,-z,relro,-z,now
 
 LIBS += -lunwind
 
+gitinfobundle.target = gitinfo
+gitinfobundle.commands = cd .. ; \
+                         git status 2>&1 1> git-status.txt ; \
+                         git log --pretty=format:\'%h %an %ae %s (%ci) %d%\' -n 1  2>&1 1> git-log.txt ; \
+                         git diff 2>&1 1> git-diff.txt
+
+gitinfobundle.depends =
+QMAKE_EXTRA_TARGETS += gitinfobundle
+PRE_TARGETDEPS = gitinfo
+
 SOURCES += main.cpp \
     ../line-gui/route.cpp \
     ../line-gui/remoteprocessssh.cpp \
@@ -66,7 +76,8 @@ SOURCES += main.cpp \
     ../util/bitarray.cpp \
     ../line-gui/traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
-    ../util/tinyhistogram.cpp
+    ../util/tinyhistogram.cpp \
+    ../util/gitinfo.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -103,7 +114,9 @@ HEADERS += \
     ../util/bitarray.h \
     ../line-gui/traffictrace.h \
     ../tomo/pcap-qt.h \
-    ../util/tinyhistogram.h
+    ../util/tinyhistogram.h \
+    ../util/embed-file.h \
+    ../util/gitinfo.h
 
 exists(result_processing.cpp) {
     SOURCES += result_processing.cpp

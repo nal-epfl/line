@@ -44,6 +44,16 @@ extralib.depends =
 QMAKE_EXTRA_TARGETS += extralib
 PRE_TARGETDEPS = extra
 
+gitinfobundle.target = gitinfo
+gitinfobundle.commands = cd .. ; \
+                         git status 2>&1 1> git-status.txt ; \
+                         git log --pretty=format:\'%h %an %ae %s (%ci) %d%\' -n 1  2>&1 1> git-log.txt ; \
+                         git diff 2>&1 1> git-diff.txt
+
+gitinfobundle.depends =
+QMAKE_EXTRA_TARGETS += gitinfobundle
+PRE_TARGETDEPS = gitinfo
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     netgraph.cpp \

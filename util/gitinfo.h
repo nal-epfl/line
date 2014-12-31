@@ -1,12 +1,6 @@
 #ifndef GITINFO_H
 #define GITINFO_H
 
-
-class gitinfo
-{
-public:
-	gitinfo();
-	~gitinfo();
-};
+void showGitInfo();
 
 #endif // GITINFO_H

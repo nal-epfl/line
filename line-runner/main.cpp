@@ -25,6 +25,7 @@
 #include "result_processing.h"
 #include "tinyhistogram.h"
 #include "util.h"
+#include "gitinfo.h"
 
 QString shiftCmdLineArg(int &argc, char **&argv, QString preceding = QString()) {
 	if (argc <= 0) {
@@ -186,6 +187,8 @@ int main(int argc, char **argv) {
     unsigned int seed = clock() ^ time(NULL) ^ getpid();
 	qDebug() << "Seed:" << seed;
 	srand(seed);
+
+	showGitInfo();
 
 	shiftCmdLineArg(argc, argv);
 

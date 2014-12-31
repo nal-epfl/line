@@ -141,9 +141,12 @@ HEADERS += \
     ../util/waitfreequeuedvyukov.h \
     ../line-gui/traffictrace.h \
     ../tomo/pcap-qt.h \
-    ../util/tinyhistogram.h
+    ../util/tinyhistogram.h \
+    ../util/embed-file.h \
+    ../util/gitinfo.h
 
 SOURCES += \
     ../line-gui/traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
-    ../util/tinyhistogram.cpp
+    ../util/tinyhistogram.cpp \
+    ../util/gitinfo.cpp

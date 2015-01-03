@@ -47,6 +47,6 @@ BINDATA(gitDiff, ../git-diff.txt)
 void showGitInfo()
 {
 	fprintf(stderr, "--- Git status ---\n%s\n------------------\n", &gitStatus);
-	fprintf(stderr, "--- Git log ---\n%s\n------------------\n", &gitLog);
-	fprintf(stderr, "--- Git diff ---\n%s\n------------------\n", &gitDiff);
+	fprintf(stderr, "--- Git log ------\n%s\n------------------\n", &gitLog);
+	fprintf(stderr, "--- Git diff -----\n%s\n------------------\n", &gitDiff);
 }

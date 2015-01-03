@@ -49,6 +49,8 @@ then
 		echo "make-remote.sh:1: error: See the Compile Output panel for details."
 		exit 1
 	fi
+else
+  ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "rmmod pf_ring 2> /dev/null || /bin/true"
 fi
 
 #exit 0

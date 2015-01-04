@@ -30,7 +30,15 @@ BitArray& BitArray::append(int bit) {
     }
     bits.last() = (bits.last() << 1) | (bit ? 1ULL : 0ULL);
     bitCount++;
-    return *this;
+	return *this;
+}
+
+BitArray &BitArray::append(const BitArray &other)
+{
+	foreach (quint8 bit, other.toVector()) {
+		this->append(bit);
+	}
+	return *this;
 }
 
 quint64 BitArray::count() const {

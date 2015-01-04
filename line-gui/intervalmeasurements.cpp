@@ -112,6 +112,7 @@ LinkIntervalMeasurement& LinkIntervalMeasurement::operator+=(LinkIntervalMeasure
 {
 	this->numPacketsInFlight += other.numPacketsInFlight;
 	this->numPacketsDropped += other.numPacketsDropped;
+	this->events.append(other.events);
 	return *this;
 }
 

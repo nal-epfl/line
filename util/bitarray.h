@@ -32,6 +32,10 @@ public:
     // Returns a reference to self.
     BitArray &append(int bit);
 
+	// Appends a bit array to the end of the array.
+	// Returns a reference to self.
+	BitArray &append(const BitArray &other);
+
     // Returns the number of bits in the array.
     quint64 count() const;
 

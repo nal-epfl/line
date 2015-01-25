@@ -43,13 +43,14 @@ void malloc_profile_reset();
 void malloc_profile_pause();
 void malloc_profile_resume();
 void malloc_profile_print_stats();
+void malloc_profile_set_trace(size_t size);
 void malloc_profile_set_trace_cpu(size_t size);
 qint64 malloc_profile_get_alloc_count();
 qint64 malloc_profile_get_alloc_count_cpu();
 qint64 malloc_profile_get_alloc_count_by_size(size_t size);
 qint64 malloc_profile_get_alloc_count_cpu_by_size();
 
-static void __attribute__ ((constructor)) malloc_profile_load();
+static int __attribute__ ((constructor(101))) malloc_profile_load();
 static void __attribute__ ((destructor)) malloc_profile_destroy();
 
 static void *(*calloc_original)(size_t count, size_t size) = NULL;
@@ -58,6 +59,8 @@ static void *(*malloc_original)(size_t size) = NULL;
 static void *(*free_original)(void *p) = NULL;
 static void *(*exit_original)(int status) __attribute__ ((__noreturn__)) = NULL;
 
+static int loaded = 0;
+static int reset = 0;
 static volatile int paused = 0;
 
 #define SEC_TO_NSEC  1000000000ULL
@@ -207,6 +210,7 @@ static quint32 size_counters[kMaxCPUs][kNumSizeCounters];
 static quint32 delay_counters[kMaxCPUs][kNumDelayCounters];
 
 static quint64 trace_masks[kMaxCPUs];
+static quint64 trace_mask_global;
 
 static void show_backtrace() {
 	unw_cursor_t cursor;
@@ -224,9 +228,28 @@ static void show_backtrace() {
 	}
 }
 
+static int called_by_dlsym() {
+	unw_cursor_t cursor;
+	unw_context_t context;
+	unw_getcontext(&context);
+	unw_init_local(&cursor, &context);
+
+	while (unw_step(&cursor) > 0) {
+		unw_word_t offset;
+		char fname[128];
+		fname[0] = '\0';
+		(void) unw_get_proc_name(&cursor, fname, sizeof(fname), &offset);
+		if (strcmp(fname, "dlsym") == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static void record_size(int cpu, quint64 size)
 {
-	if (trace_masks[cpu] && size >= trace_masks[cpu]) {
+	if ((trace_masks[cpu] && size >= trace_masks[cpu]) ||
+		(trace_mask_global && size >= trace_mask_global)) {
 		int old_paused = paused;
 		paused = 1;
 		show_backtrace();
@@ -254,6 +277,7 @@ void malloc_profile_print_stats()
 	fprintf(stderr, "Memory allocation profiling\n");
 	for (int cpu = 0; cpu < get_cpu_count() && cpu < kMaxCPUs; cpu++) {
 		fprintf(stderr, "CPU %2d: Requested size counters:\n", cpu);
+		quint64 total = 0;
 		for (int i = 0; i < kNumSizeCounters; i++) {
 			if (size_counters[cpu][i] == 0)
 				continue;
@@ -263,9 +287,14 @@ void malloc_profile_print_stats()
 			with_commas(size_counters[cpu][i], buffer3);
 			nice_power_of_2_to_str(i, buffer1);
 			nice_power_of_2_to_str(i + 1, buffer2);
-			fprintf(stderr, "%15sB  to  %15sB:  %15s\n",
+			fprintf(stderr, "%16sB  to  %16sB :  %16s\n",
 					buffer1, buffer2, buffer3);
+			total += size_counters[cpu][i] << i;
 		}
+		char buffer4[50];
+		with_commas(total, buffer4);
+		fprintf(stderr, "Total                                   <= %15s B\n",
+				buffer4);
 		fprintf(stderr, "CPU %2d: Delay counters:\n", cpu);
 		for (int i = 0; i < kNumDelayCounters; i++) {
 			if (delay_counters[cpu][i] == 0)
@@ -276,7 +305,60 @@ void malloc_profile_print_stats()
 			with_commas(delay_counters[cpu][i], buffer3);
 			nice_time_to_str(1ULL << i, buffer1);
 			nice_time_to_str(1ULL << (i + 1), buffer2);
-			fprintf(stderr, "%16s  to  %16s:  %15s\n",
+			fprintf(stderr, "%17s  to  %17s : %17s\n",
+					buffer1, buffer2, buffer3);
+		}
+		fprintf(stderr, "\n");
+		fflush(stderr);
+	}
+
+	static quint32 size_counters_global[kNumSizeCounters];
+	for (int i = 0; i < kNumSizeCounters; i++) {
+		size_counters_global[i] = 0;
+		for (int cpu = 0; cpu < get_cpu_count() && cpu < kMaxCPUs; cpu++) {
+			size_counters_global[i] += size_counters[cpu][i];
+		}
+	}
+
+	static quint32 delay_counters_global[kNumDelayCounters];
+	for (int i = 0; i < kNumDelayCounters; i++) {
+		delay_counters_global[i] = 0;
+		for (int cpu = 0; cpu < get_cpu_count() && cpu < kMaxCPUs; cpu++) {
+			delay_counters_global[i] += delay_counters[cpu][i];
+		}
+	}
+
+	{
+		fprintf(stderr, "Total: Requested size counters:\n");
+		quint64 total = 0;
+		for (int i = 0; i < kNumSizeCounters; i++) {
+			if (size_counters_global[i] == 0)
+				continue;
+			char buffer1[50];
+			char buffer2[50];
+			char buffer3[50];
+			with_commas(size_counters_global[i], buffer3);
+			nice_power_of_2_to_str(i, buffer1);
+			nice_power_of_2_to_str(i + 1, buffer2);
+			fprintf(stderr, "%16sB  to  %16sB :  %16s\n",
+					buffer1, buffer2, buffer3);
+			total += size_counters_global[i] << i;
+		}
+		char buffer4[50];
+		with_commas(total, buffer4);
+		fprintf(stderr, "Total                                   <= %15s B\n",
+				buffer4);
+		fprintf(stderr, "Total: Delay counters:\n");
+		for (int i = 0; i < kNumDelayCounters; i++) {
+			if (delay_counters_global[i] == 0)
+				continue;
+			char buffer1[50];
+			char buffer2[50];
+			char buffer3[50];
+			with_commas(delay_counters_global[i], buffer3);
+			nice_time_to_str(1ULL << i, buffer1);
+			nice_time_to_str(1ULL << (i + 1), buffer2);
+			fprintf(stderr, "%17s  to  %17s : %17s\n",
 					buffer1, buffer2, buffer3);
 		}
 		fprintf(stderr, "\n");
@@ -284,19 +366,41 @@ void malloc_profile_print_stats()
 	}
 }
 
+void malloc_profile_set_trace(size_t size)
+{
+	trace_mask_global = size;
+}
+
 void malloc_profile_set_trace_cpu(size_t size)
 {
 	trace_masks[get_cpu()] = size;
 }
 
-static void malloc_profile_load()
+static void malloc_profile_load_pointers()
 {
-	malloc_profile_reset();
 	realloc_original = dlsym(RTLD_NEXT, "realloc");
 	malloc_original = dlsym(RTLD_NEXT, "malloc");
 	calloc_original = dlsym(RTLD_NEXT, "calloc");
 	free_original = dlsym(RTLD_NEXT, "free");
 	exit_original = dlsym(RTLD_NEXT, "exit");
+}
+
+// Returns 1 for success.
+static int malloc_profile_load()
+{
+	__sync_synchronize();
+	if (loaded)
+		return 1;
+	if (called_by_dlsym())
+		return 0;
+	if (!reset) {
+		malloc_profile_reset();
+		reset = 1;
+	}
+	malloc_profile_load_pointers();
+	loaded = 1;
+	__sync_synchronize();
+	return 1;
 }
 
 void malloc_profile_reset()
@@ -310,6 +414,7 @@ void malloc_profile_reset()
 		}
 		trace_masks[cpu] = 0;
 	}
+	trace_mask_global = 0;
 	__sync_synchronize();
 }
 
@@ -376,8 +481,10 @@ static void malloc_profile_destroy()
 
 void *realloc(void *p, size_t size)
 {
-	if (!realloc_original)
+	if ((!loaded && !malloc_profile_load()) ||
+		!realloc_original) {
 		return NULL;
+	}
 	if (paused) {
 		return realloc_original(p, size);
 	}
@@ -387,13 +494,19 @@ void *realloc(void *p, size_t size)
 	void *result = realloc_original(p, size);
 	quint64 ts2 = get_current_time();
 	record_delay(cpu, ts2 - ts1);
+	if (!result) {
+		fprintf(stderr, "realloc returned NULL:\n");
+		show_backtrace();
+	}
 	return result;
 }
 
 void *calloc(size_t count, size_t size)
 {
-	if (!calloc_original)
+	if ((!loaded && !malloc_profile_load()) ||
+		!calloc_original) {
 		return NULL;
+	}
 	if (paused) {
 		return calloc_original(count, size);
 	}
@@ -403,13 +516,19 @@ void *calloc(size_t count, size_t size)
 	void *result = calloc_original(count, size);
 	quint64 ts2 = get_current_time();
 	record_delay(cpu, ts2 - ts1);
+	if (!result) {
+		fprintf(stderr, "calloc returned NULL:\n");
+		show_backtrace();
+	}
 	return result;
 }
 
 void *malloc(size_t size)
 {
-	if (!malloc_original)
+	if ((!loaded && !malloc_profile_load()) ||
+		!malloc_original) {
 		return NULL;
+	}
 	if (paused) {
 		return malloc_original(size);
 	}
@@ -419,13 +538,19 @@ void *malloc(size_t size)
 	void *result = malloc_original(size);
 	quint64 ts2 = get_current_time();
 	record_delay(cpu, ts2 - ts1);
+	if (!result) {
+		fprintf(stderr, "malloc returned NULL:\n");
+		show_backtrace();
+	}
 	return result;
 }
 
 void free(void *p)
 {
-	if (!free_original)
+	if ((!loaded && !malloc_profile_load()) ||
+		!free_original) {
 		return;
+	}
 	if (paused) {
 		free_original(p);
 		return;
@@ -439,10 +564,13 @@ void free(void *p)
 
 void exit(int status)
 {
-	malloc_profile_print_stats();
-	if (exit_original) {
-		exit_original(status);
-	} else {
+	if ((!loaded && !malloc_profile_load()) ||
+		!exit_original) {
+		if (loaded) {
+			malloc_profile_print_stats();
+		}
 		abort();
 	}
+	malloc_profile_print_stats();
+	exit_original(status);
 }

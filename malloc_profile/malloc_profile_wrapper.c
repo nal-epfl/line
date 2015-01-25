@@ -58,6 +58,14 @@ long long malloc_profile_get_alloc_count_cpu_by_size_wrapper(size_t size)
     return 0;
 }
 
+void malloc_profile_set_trace_wrapper(size_t size)
+{
+	void (*malloc_profile_set_trace)(size_t) = dlsym(RTLD_DEFAULT, "malloc_profile_set_trace");
+	if (malloc_profile_set_trace) {
+		malloc_profile_set_trace(size);
+	}
+}
+
 void malloc_profile_set_trace_cpu_wrapper(size_t size)
 {
 	void (*malloc_profile_set_trace_cpu)(size_t) = dlsym(RTLD_DEFAULT, "malloc_profile_set_trace_cpu");

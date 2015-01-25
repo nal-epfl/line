@@ -29,6 +29,7 @@ extern "C"
 void malloc_profile_reset_wrapper();
 void malloc_profile_pause_wrapper();
 void malloc_profile_resume_wrapper();
+void malloc_profile_set_trace_wrapper(size_t size);
 void malloc_profile_set_trace_cpu_wrapper(size_t size);
 void malloc_profile_print_stats_wrapper();
 long long malloc_profile_get_alloc_count_wrapper();

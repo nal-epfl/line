@@ -26,8 +26,7 @@ echo "make-remote.sh:1: warning: Compiling on $REMOTE_HOST ($(host $REMOTE_HOST 
 
 # Install PF_RING
 PF_RING='PF_RING-5.6.2'
-#if $($INSTALL_PF_RING)
-if false
+if $($INSTALL_PF_RING)
 then
 	cd $BUILD_DIR || exit 1
     pwd; echo "Copying $PF_RING to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR..."

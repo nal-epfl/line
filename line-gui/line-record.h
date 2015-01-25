@@ -20,6 +20,7 @@
 #define LINERECORD_H
 
 #include <QtCore>
+#include "ovector.h"
 #include "queuing-decisions.h"
 
 #ifdef LINE_EMULATOR
@@ -91,9 +92,9 @@ public:
 	bool recordPackets;
 
     // Packet headers. Never modify existing data in the vector, only append.
-	QVector<RecordedPacketData> recordedPacketData;
+	OVector<RecordedPacketData, qint64> recordedPacketData;
     // Queuing events. Never modify existing data in the vector, only append.
-	QVector<RecordedQueuedPacketData> recordedQueuedPacketData;
+	OVector<RecordedQueuedPacketData, qint64> recordedQueuedPacketData;
 
 	bool save(QString fileName);
 	bool load(QString fileName);

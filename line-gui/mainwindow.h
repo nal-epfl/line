@@ -341,6 +341,10 @@ private slots:
 
 	void on_checkSyncPlots_toggled(bool);
 
+	void captureMemChanged();
+	void on_spinCapturePacketCount_valueChanged(int );
+	void on_spinCaptureEventCount_valueChanged(int );
+
 signals:
 	void logInformation(QPlainTextEdit *log, QString message);
 	void logError(QPlainTextEdit *log, QString message);

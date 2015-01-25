@@ -521,7 +521,6 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 
 		// Zip everything
 		key = ssh->startProcess("zip", QStringList() <<
-								QString("-0") <<
 								QString("-r") <<
 								QString("%1.zip").arg(testId) <<
 								QString("%1").arg(testId));
@@ -563,25 +562,11 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 		if (!ssh->waitForFinished(key, -1))
 			qError() << QString("Error: could not copy recorder stderr");
 
-		// Zip everything
-		key = ssh->startProcess("zip", QStringList() <<
-								QString("-r") <<
-								QString("%1.zip").arg(testId) <<
-								QString("%1").arg(testId));
-		if (!ssh->waitForFinished(key, -1))
-			qError() << QString("Error: could not zip recorder output folder");
-
 		// Download
-		if (!ssh->downloadFromRemote(QString("%1.zip").arg(testId), parentDirFromDir(runParams.workingDir))) {
+		if (!ssh->downloadFromRemote(QString("%1/recorder-%2.out").arg(testId).arg(suffix), runParams.workingDir)) {
 			qError() << "Aborted.";
 		}
-
-		// Unzip
-		QString command = "sh";
-		QStringList args = QStringList() << "-c" << QString("cd %1 ; unzip -o %2.zip")
-											.arg(parentDirFromDir(runParams.workingDir))
-											.arg(testId);
-		if (QProcess::execute(command, args) != 0) {
+		if (!ssh->downloadFromRemote(QString("%1/recorder-%2.err").arg(testId).arg(suffix), runParams.workingDir)) {
 			qError() << "Aborted.";
 		}
 	}

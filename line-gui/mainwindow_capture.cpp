@@ -20,6 +20,7 @@
 #include "ui_mainwindow.h"
 
 #include "line-record_processor.h"
+#include "line-record.h"
 
 bool MainWindow::processCapture(QString expPath, int &packetCount, int &queueEventCount)
 {
@@ -71,4 +72,22 @@ void MainWindow::on_btnOpenCapturePlots_clicked()
 	startRedirectingQDebug(ui->txtCapture);
 	openCapture(expPath);
 	stopRedirectingQDebug();
+}
+
+void MainWindow::captureMemChanged()
+{
+	qint64 numPackets = ui->spinCapturePacketCount->value();
+	qint64 numEvents = ui->spinCaptureEventCount->value();
+	qint64 size = numPackets * sizeof(RecordedPacketData) + numEvents * sizeof(RecordedQueuedPacketData);
+	ui->txtCaptureMem->setText(withCommasStr(size) + " B");
+}
+
+void MainWindow::on_spinCapturePacketCount_valueChanged(int )
+{
+	captureMemChanged();
+}
+
+void MainWindow::on_spinCaptureEventCount_valueChanged(int )
+{
+	captureMemChanged();
 }

@@ -18,6 +18,7 @@
 
 #include "bitarray.h"
 
+#include <zlib.h>
 
 BitArray::BitArray() {
     bitCount = 0;
@@ -61,7 +62,26 @@ QString BitArray::toString() const {
             bitsLeft--;
         }
     }
-    return result;
+	return result;
+}
+
+void BitArray::saveToFile(QString fileName) const
+{
+	gzFile f = gzopen(fileName.toLatin1().constData(), "w");
+	quint64 bitsLeft = bitCount;
+	foreach (quint64 word, bits) {
+		if (bitsLeft < 64) {
+			word <<= 64 - bitsLeft;
+		}
+		for (quint64 i = qMin(64ULL, bitsLeft); i > 0; i--) {
+			char bit = ((word & (1ULL << 63)) ? '1' : '0');
+			gzwrite(f, &bit, 1);
+			word <<= 1;
+			bitsLeft--;
+		}
+	}
+	gzwrite(f, "\n", 1);
+	gzclose(f);
 }
 
 QVector<quint8> BitArray::toVector() const {
@@ -84,9 +104,14 @@ BitArray& BitArray::operator<<(int bit) {
     return append(bit);
 }
 
-void BitArray::reserve(int size)
+void BitArray::reserve(quint64 size)
 {
-    bits.reserve(size / 64);
+	bits.reserve(size / 64);
+}
+
+bool BitArray::full() const
+{
+	return count() >= 64ULL * (quint64)bits.capacity();
 }
 
 void BitArray::clear()

@@ -771,6 +771,10 @@ stats:
 		}
 	}
 
+	if (this->edgeIndex == 0 && !losses_link_1.full()) {
+		losses_link_1.append(decision == DECISION_QUEUE ? 0 : 1);
+	}
+
 	Q_ASSERT_FORCE(qload <= qcapacity);
 
 	// return true if queued, false if dropped

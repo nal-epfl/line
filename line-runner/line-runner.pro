@@ -34,7 +34,7 @@ QMAKE_CFLAGS += -Wl,-z,relro,-z,now
 QMAKE_CXXFLAGS += -Wl,-z,relro,-z,now
 QMAKE_LFLAGS += -Wl,-z,relro,-z,now
 
-LIBS += -lunwind
+LIBS += -lunwind -lz
 
 gitinfobundle.target = gitinfo
 gitinfobundle.commands = cd .. ; \

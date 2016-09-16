@@ -82,6 +82,8 @@ SampledPathFlowEvents *sampledPathFlowEvents;
 bool flowTracking;
 TrafficTraceRecord *trafficTraceRecord;
 
+BitArray losses_link_1;
+
 /* *************************************** */
 /*
  * The time dif ference in millisecond
@@ -916,6 +918,8 @@ int runPacketFilter(int argc, char **argv) {
 	QDir dir(".");
 	dir.mkpath(simulationId);
 
+	losses_link_1.reserve(8ULL * 1000ULL * 1000ULL * 1000ULL);
+
 	{
 		QProcess cp;
 		cp.start("cp", QStringList() << QString("%1").arg(graphFileName) << QString("%1/%2").arg(simulationId).arg(graphFileName));
@@ -1006,6 +1010,8 @@ int runPacketFilter(int argc, char **argv) {
     // save recorded packet injection data
     trafficTraceRecord->save("injection.data");
     delete trafficTraceRecord;
+
+	losses_link_1.saveToFile("losses_link_1.txt.gz");
 
 	OVector<Packet*> packets;
 	packetPool.dequeueAll(packets);

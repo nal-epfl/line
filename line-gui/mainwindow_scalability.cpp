@@ -41,6 +41,8 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 		trafficLabel = "udp-constant";
 	} else if (trafficInput == "UDP (average bitrate)") {
 		trafficLabel = "udp-average";
+	} else if (trafficInput == "TCP Pavlos mix") {
+		trafficLabel = "tcp-pavlos-mix";
 	} else {
 		QMessageBox::critical(this,
 							  "Error",
@@ -99,9 +101,20 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 	const qreal linkBw_MBps = oneBottleneck ? totalBwMbps : totalBwMbps / numPaths;
 	const qreal linkBw_kBps = linkBw_MBps * 1000.0 / 8.0;
 	const int linkDelay_ms = qMax(1, rtt / numHops / 2);
+
+	if (oneBottleneck) {
+		g.addEdgeSym(nodes[0][numHops-2],
+					 nodes[0][numHops-1],
+					 linkBw_kBps,
+					 linkDelay_ms,
+					 0,
+					 MIN_QUEUE_LEN_FRAMES /* irrelevant */,
+					 true);
+	}
+
 	for (int iPath = 0; iPath < numPaths; iPath++) {
 		for (int iHop = 0; iHop < numHops; iHop++) {
-			if (!oneBottleneck || iPath == 0 || (iHop != numHops - 2)) {
+			if (!oneBottleneck || (iHop != numHops - 2)) {
 				g.addEdgeSym(nodes[iPath][iHop],
 							 nodes[iPath][iHop + 1],
 						linkBw_kBps,
@@ -145,6 +158,12 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 			encodedType = QString("UDP-CBR %1 x %2").arg(linkBw_MBps / numFlowsPerPath).arg(numFlowsPerPath);
 		} else if (trafficLabel == "udp-average") {
 			encodedType = QString("UDP-CBR %1 poisson x %2").arg(linkBw_MBps / numFlowsPerPath).arg(numFlowsPerPath);
+		} else if (trafficLabel == "tcp-pavlos-mix") {
+			encodedType = QString("TCP-Poisson-Pareto .05 3 0.1Mb sequential cc cubic x %1").arg(90 * numFlowsPerPath);
+			g.addConnection(NetGraphConnection(nodes[iPath].first(), nodes[iPath].last(), encodedType, QByteArray()));
+			encodedType = QString("TCP-Poisson-Pareto .05 3 266Mb sequential cc cubic x %1").arg(10 * numFlowsPerPath);
+			g.addConnection(NetGraphConnection(nodes[iPath].first(), nodes[iPath].last(), encodedType, QByteArray()));
+			continue;
 		} else {
 			QMessageBox::critical(this,
 								  "Error",

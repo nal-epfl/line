@@ -47,12 +47,16 @@ public:
     // Returns a reference to self.
     BitArray &operator<<(int bit);
 
-    void reserve(int size);
+	void reserve(quint64 size);
+
+	bool full() const;
 
     void clear();
 
     // Serializes the array into some representation (currently ASCII).
     QString toString() const;
+
+	void saveToFile(QString fileName) const;
 
     static void test();
 

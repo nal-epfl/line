@@ -771,10 +771,6 @@ stats:
 		}
 	}
 
-	if (this->edgeIndex == 0 && !losses_link_1.full()) {
-		losses_link_1.append(decision == DECISION_QUEUE ? 0 : 1);
-	}
-
 	Q_ASSERT_FORCE(qload <= qcapacity);
 
 	// return true if queued, false if dropped
@@ -871,6 +867,10 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		current.timestamp = ts_now;
 		current.type = queued ? PACKET_EVENT_QUEUED : PACKET_EVENT_QDROP;
 		timelineFull.append(current);
+	}
+
+	if (this->index == 0 && !losses_link_1.full()) {
+		losses_link_1.append(queued ? 0 : 1);
 	}
 
 	return queued;

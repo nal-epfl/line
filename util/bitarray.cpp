@@ -74,8 +74,9 @@ void BitArray::saveToFile(QString fileName) const
 			word <<= 64 - bitsLeft;
 		}
 		for (quint64 i = qMin(64ULL, bitsLeft); i > 0; i--) {
-			char bit = ((word & (1ULL << 63)) ? '1' : '0');
+			char bit = ((word & (1ULL << 63)) ? '0' : '1');
 			gzwrite(f, &bit, 1);
+			gzwrite(f, "\n", 1);
 			word <<= 1;
 			bitsLeft--;
 		}

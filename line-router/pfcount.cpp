@@ -75,12 +75,12 @@ unsigned long long numPkts[MAX_NUM_THREADS] = { 0 }, numBytes[MAX_NUM_THREADS] =
 
 RecordedData *recordedData;
 bool takePathIntervalMeasurements;
-ExperimentIntervalMeasurements *pathIntervalMeasurements;
+ExperimentIntervalMeasurements *pathIntervalMeasurements = NULL;
 bool takeFlowIntervalMeasurements;
-ExperimentIntervalMeasurements *flowIntervalMeasurements;
-SampledPathFlowEvents *sampledPathFlowEvents;
+ExperimentIntervalMeasurements *flowIntervalMeasurements = NULL;
+SampledPathFlowEvents *sampledPathFlowEvents = NULL;
 bool flowTracking;
-TrafficTraceRecord *trafficTraceRecord;
+TrafficTraceRecord *trafficTraceRecord = NULL;
 
 BitArray losses_link_1;
 
@@ -940,26 +940,32 @@ int runPacketFilter(int argc, char **argv) {
 
 	loadTopology(graphFileName);
 
-    pathIntervalMeasurements = new ExperimentIntervalMeasurements();
-    pathIntervalMeasurements->initialize(get_current_time(),
-										 takePathIntervalMeasurements ? estimatedDuration : 1,
-                                         intervalSize,
-                                         netGraph->edges.count(),
-                                         netGraph->paths.count(),
-                                         netGraph->getSparseRoutingMatrixTransposed(),
-                                         1400);
+	if (takePathIntervalMeasurements) {
+		pathIntervalMeasurements = new ExperimentIntervalMeasurements();
+		pathIntervalMeasurements->initialize(get_current_time(),
+											 takePathIntervalMeasurements ? estimatedDuration : 1,
+											 intervalSize,
+											 netGraph->edges.count(),
+											 netGraph->paths.count(),
+											 netGraph->getSparseRoutingMatrixTransposed(),
+											 1400);
+	}
 
-    flowIntervalMeasurements = new ExperimentIntervalMeasurements();
-    flowIntervalMeasurements->initialize(get_current_time(),
-										 takeFlowIntervalMeasurements ? estimatedDuration : 1,
-                                         intervalSize,
-                                         netGraph->edges.count(),
-                                         netGraph->connections.count(),
-                                         netGraph->getSparseConnectionRoutingMatrixTransposed(),
-                                         1400);
+	if (takeFlowIntervalMeasurements) {
+		flowIntervalMeasurements = new ExperimentIntervalMeasurements();
+		flowIntervalMeasurements->initialize(get_current_time(),
+											 takeFlowIntervalMeasurements ? estimatedDuration : 1,
+											 intervalSize,
+											 netGraph->edges.count(),
+											 netGraph->connections.count(),
+											 netGraph->getSparseConnectionRoutingMatrixTransposed(),
+											 1400);
+	}
 
-	sampledPathFlowEvents = new SampledPathFlowEvents();
-	sampledPathFlowEvents->initialize(netGraph->paths.count());
+	if (flowTracking) {
+		sampledPathFlowEvents = new SampledPathFlowEvents();
+		sampledPathFlowEvents->initialize(netGraph->paths.count());
+	}
 
 	// Preallocate the packet pool
 	qint64 numPackets = 0;
@@ -997,15 +1003,21 @@ int runPacketFilter(int argc, char **argv) {
 	delete recordedData;
 
     // save the interval measurements
-    pathIntervalMeasurements->save("interval-measurements.data");
-    delete pathIntervalMeasurements;
+	if (pathIntervalMeasurements) {
+		pathIntervalMeasurements->save("interval-measurements.data");
+		delete pathIntervalMeasurements;
+	}
 
-    flowIntervalMeasurements->save("flow-interval-measurements.data");
-    delete flowIntervalMeasurements;
+	if (flowIntervalMeasurements) {
+		flowIntervalMeasurements->save("flow-interval-measurements.data");
+		delete flowIntervalMeasurements;
+	}
 
 	// save sampledPathFlowEvents
-	sampledPathFlowEvents->save("sampled-path-flows.data");
-	delete sampledPathFlowEvents;
+	if (flowTracking) {
+		sampledPathFlowEvents->save("sampled-path-flows.data");
+		delete sampledPathFlowEvents;
+	}
 
     // save recorded packet injection data
     trafficTraceRecord->save("injection.data");

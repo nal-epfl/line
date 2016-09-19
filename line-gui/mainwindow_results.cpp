@@ -142,13 +142,11 @@ void MainWindow::loadSimulation()
 		return;
 	ui->labelCurrentSimulation->setText(simulations[currentSimulation].dir);
 
-	{
-		QString paramsFileName = simulations[currentSimulation].dir + "/run-params.data";
-		RunParams runParams;
-		if (loadRunParams(runParams, paramsFileName)) {
-			// TODO maybe save the current ones? that is tricky...
-			setUIToRunParams(runParams);
-		}
+	QString paramsFileName = simulations[currentSimulation].dir + "/run-params.data";
+	RunParams runParams;
+	if (loadRunParams(runParams, paramsFileName)) {
+		// TODO maybe save the current ones? that is tricky...
+		setUIToRunParams(runParams);
 	}
 
 	resultsPlotGroup.clear();
@@ -285,7 +283,7 @@ void MainWindow::loadSimulation()
 
     quint64 intervalSize = 0;
 	accordion->addLabel("Interval transmission records");
-    if (1) {
+	if (runParams.takePathIntervalMeasurements) {
 		ExperimentIntervalMeasurements experimentIntervalMeasurements;
 		QString fileName = simulations[currentSimulation].dir + "/" + "interval-measurements.data";
 		if (!experimentIntervalMeasurements.load(fileName)) {
@@ -1462,21 +1460,22 @@ void MainWindow::loadSimulation()
 				accordion->addWidget("Link neutrality (by prob. of congestion)", table);
 			}
 		}
-
+	}
+	if (runParams.takeFlowIntervalMeasurements) {
         ExperimentIntervalMeasurements flowIntervalMeasurements;
-        fileName = simulations[currentSimulation].dir + "/" + "flow-interval-measurements.data";
+		QString fileName = simulations[currentSimulation].dir + "/" + "flow-interval-measurements.data";
         if (!flowIntervalMeasurements.load(fileName)) {
             emit logError(ui->txtBatch, QString("Failed to open file %1").arg(fileName));
         } else {
             const qreal firstTransientCutSec = 10;
             const qreal lastTransientCutSec = 10;
-            const int firstTransientCut = firstTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
-            const int lastTransientCut = lastTransientCutSec * 1.0e9 / experimentIntervalMeasurements.intervalSize;
+			const int firstTransientCut = firstTransientCutSec * 1.0e9 / flowIntervalMeasurements.intervalSize;
+			const int lastTransientCut = lastTransientCutSec * 1.0e9 / flowIntervalMeasurements.intervalSize;
 
             NetGraph g = *editor->graph();
             g.flattenConnections();
 
-            intervalSize = experimentIntervalMeasurements.intervalSize;
+			intervalSize = flowIntervalMeasurements.intervalSize;
 
             QVector<bool> trueEdgeNeutrality(g.edges.count());
             for (int i = 0; i < g.edges.count(); i++) {

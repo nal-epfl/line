@@ -98,9 +98,12 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 	}
 
 	// Create links
-	const qreal linkBw_MBps = oneBottleneck ? totalBwMbps : totalBwMbps / numPaths;
-	const qreal linkBw_kBps = linkBw_MBps * 1000.0 / 8.0;
-	const int linkDelay_ms = qMax(1, rtt / numHops / 2);
+	qreal linkBw_MBps = oneBottleneck ? totalBwMbps : totalBwMbps / numPaths;
+	qreal linkBw_kBps = linkBw_MBps * 1000.0 / 8.0;
+	int linkDelay_ms = qMax(1, rtt / numHops / 2);
+
+	QList<qreal> bw_values_Mbps = QList<qreal>() << 2 << 10 << 20 << 50 << 100 << 250 << 500;
+	QList<qreal> bw_values_freqs = QList<qreal>() << 10 << 30 << 20 << 15 << 10 << 10 << 5;
 
 	if (oneBottleneck) {
 		g.addEdgeSym(nodes[0][numHops-2],
@@ -115,6 +118,8 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 	for (int iPath = 0; iPath < numPaths; iPath++) {
 		for (int iHop = 0; iHop < numHops; iHop++) {
 			if (!oneBottleneck || (iHop != numHops - 2)) {
+				linkBw_kBps = bw_values_Mbps[randDist(bw_values_freqs)] * 1000.0 / 8.0;
+				linkDelay_ms = randInt(5, 50);
 				g.addEdgeSym(nodes[iPath][iHop],
 							 nodes[iPath][iHop + 1],
 						linkBw_kBps,
@@ -127,6 +132,8 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 		// Add cross links so we can have a full mesh
 		if (!oneBottleneck) {
 			if (numPaths > 1 && !(numPaths == 2 && iPath > 0)) {
+				linkBw_kBps = bw_values_Mbps[randDist(bw_values_freqs)] * 1000.0 / 8.0;
+				linkDelay_ms = randInt(5, 50);
 				const int iPathOther = (iPath + 1) % numPaths;
 				g.addEdgeSym(nodes[iPath][1],
 						nodes[iPathOther][1],

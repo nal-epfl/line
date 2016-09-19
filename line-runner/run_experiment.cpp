@@ -107,7 +107,7 @@ bool runExperiment(QString paramsFileName) {
 	}
 
 	if (!exportMatlab(runParams.workingDir, runParams.graphName)) {
-		return false;
+		// return false;
 	}
 
     if (!processResults(QStringList() << runParams.workingDir)) {

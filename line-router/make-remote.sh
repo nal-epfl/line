@@ -26,12 +26,12 @@ echo "make-remote.sh:1: warning: Compiling on $REMOTE_HOST ($(host $REMOTE_HOST 
 
 # Install PF_RING
 PF_RING='PF_RING-6.4.1'
-if $($INSTALL_PF_RING)
+if $($INSTALL_PF_RING) || true
 then
 	cd $BUILD_DIR || exit 1
     pwd; echo "Copying $PF_RING to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR..."
-    rsync -aqcz --delete  -e "ssh -p $REMOTE_PORT" ../$PF_RING $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR || exit 1
-  ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "sh -l -c \"set -x && cd $REMOTE_DIR && touch $PF_RING && cd $PF_RING && find . -type f -exec touch {} \; \""
+    rsync -aqcz --delete  -e "ssh -p $REMOTE_PORT" ../${PF_RING}.tar.gz $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR || exit 1
+  ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "sh -l -c \"set -x && cd $REMOTE_DIR && tar xzf ${PF_RING}.tar.gz && cd $PF_RING && find . -type f -exec touch {} \; \""
 	rm -f stdoutfifo
 	rm -f stderrfifo
 	mkfifo stdoutfifo || exit 1

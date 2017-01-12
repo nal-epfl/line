@@ -27,7 +27,7 @@
 class TCPClient;
 typedef TCPClient* (*TCPClientFactoryCallback)(int, void*);
 
-typedef void (*TCPClientTransferCompletedCallback)(void*);
+typedef void (*TCPClientTransferCompletedCallback)(void*, int);
 
 class TCPClient : public ReaderWriter {
 public:

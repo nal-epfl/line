@@ -213,7 +213,7 @@ void tcp_close_client(int fd)
 		delete c;
 		c = NULL;
 		foreach (TCPClient *sc, tcpServerConnections.values()) {
-			// NOTE: this filter ignores the first 16 bits of the IP address, matching both 10.0 or 10.128 in
+			// NOTE: this filter ignores the first 16 bits of the IP address, matching both 1.0 or 1.128 in
 			// emulations, or 192.168 in experiments with real traffic.
 			if (sc->remoteAddress.split(".").mid(2) == address.split(".").mid(2) &&
 				sc->remotePort == port) {
@@ -236,7 +236,7 @@ void tcp_deferred_close_client_helper(int, void *)
 		if (tcpClients.contains(fd)) {
 			TCPClient *c = tcpClients[fd];
 			if (c->transferCompletedCallback) {
-				c->transferCompletedCallback(c->transferCompletedCallbackArg);
+				c->transferCompletedCallback(c->transferCompletedCallbackArg, fd);
 			}
 		}
 		tcp_close_client(fd);
@@ -370,12 +370,11 @@ static void tcp_client_write_cb(struct ev_loop *loop, struct ev_io *watcher, int
 		if (code) {
 			perror("connect callback error");
 			qDebug() << code << strerror(code);
-			if (code == EHOSTUNREACH) {
-				qDebug() << "Could not connect" <<
-							tcpClients[watcher->fd]->localAddress << "->" << tcpClients[watcher->fd]->remoteAddress;
-				qDebug() << "You might have to redeploy.";
-			}
-			exit(-1);
+			qDebug() << "Could not connect" <<
+						tcpClients[watcher->fd]->localAddress << "->" << tcpClients[watcher->fd]->remoteAddress;
+			qDebug() << "You might have to redeploy.";
+			tcp_deferred_close_client(watcher->fd);
+			return;
 		}
 		if (code == 0) {
 			struct sockaddr_in address;

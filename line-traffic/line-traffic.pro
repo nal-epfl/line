@@ -9,6 +9,8 @@ exists( ../line.pro ) {
 	TEMPLATE = subdirs
 }
 
+DEFINES += \'SRCDIR=\"$$_PRO_FILE_PWD_\"\'
+
 !exists( ../line.pro ) {
 	QT += core xml network
 
@@ -23,7 +25,8 @@ exists( ../line.pro ) {
 	INCLUDEPATH += /usr/include/libev
 	INCLUDEPATH += ../util
 	INCLUDEPATH += ../line-gui
-	LIBS += -lev -lunwind
+  INCLUDEPATH += ../tomo
+  LIBS += -lev -lunwind -lpcap
 
   QMAKE_CXXFLAGS += -std=c++0x
 
@@ -44,6 +47,10 @@ exists( ../line.pro ) {
   QMAKE_CFLAGS += -Wl,-z,relro,-z,now
   QMAKE_CXXFLAGS += -Wl,-z,relro,-z,now
   QMAKE_LFLAGS += -Wl,-z,relro,-z,now
+
+#  QMAKE_CFLAGS += -fsanitize=address -fno-omit-frame-pointer
+#  QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+#  QMAKE_LFLAGS += -fsanitize=address -fno-omit-frame-pointer
 
   system(pkg-config libtcmalloc_minimal) : {
     CONFIG += link_pkgconfig
@@ -117,13 +124,28 @@ HEADERS += \
     ../line-gui/traffictrace.h \
     ../tomo/pcap-qt.h \
     ../util/embed-file.h \
-    ../util/gitinfo.h
+    ../util/gitinfo.h \
+    ../util/json.h \
+    ../tomo/readpacket.h \
+    ../util/compresseddevice.h \
+    evpid.h \
+    ../tomo/fastpcap.h \
+    ../tomo/pcap-common.h
 
 SOURCES += \
     tcpdashsource.cpp \
     ../line-gui/traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
-    ../util/gitinfo.cpp
+    ../util/gitinfo.cpp \
+    ../util/json.cpp \
+    ../tomo/readpacket.cpp \
+    ../util/compresseddevice.cpp \
+    evpid.cpp \
+    ../tomo/fastpcap.cpp
 
 OTHER_FILES += \
     virtual-interfaces-howto.txt
+
+DISTFILES += \
+    config-file-howto.txt \
+    iperf.txt

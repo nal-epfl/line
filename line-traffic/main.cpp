@@ -33,6 +33,7 @@
 
 #include "netgraph.h"
 #include "evtcp.h"
+#include "evpid.h"
 #include "tcpsource.h"
 #include "tcpsink.h"
 #include "tcpparetosource.h"
@@ -54,17 +55,10 @@ NetGraph netGraph;
 QHash<ev_timer *, int> onOffTimer2Connection;
 
 void poissonStartConnectionTimeoutHandler(int revents, void *arg);
-void connectionTransferCompletedHandler(void *arg);
-
-// Assigns port numbers to connections.
-void assignPorts()
-{
-	qDebugT();
-    netGraph.assignPorts();
-}
+void connectionTransferCompletedHandler(void *arg, int client_fd);
 
 // Starts servers (sinks).
-void initConnection(struct ev_loop *loop, NetGraphConnection &c)
+void startConnectionServer(struct ev_loop *loop, NetGraphConnection &c)
 {
 	qDebugT();
 	if (c.maskedOut)
@@ -72,40 +66,85 @@ void initConnection(struct ev_loop *loop, NetGraphConnection &c)
 	if (netGraph.nodes[c.dest].maskedOut)
 		return;
 
-	if (c.basicType == "TCP") {
-        int port = netGraph.connections[c.index].port;
-		c.serverFD = tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-								TCPSink::makeTCPSink, NULL,
-								c.tcpReceiveWindowSize,
-								c.tcpCongestionControl);
-	} else if (c.basicType == "TCPx") {
-		for (int i = 0; i < c.multiplier; i++) {
-            int port = netGraph.connections[c.index].ports[i];
-			c.serverFDs.insert(tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-							   TCPSink::makeTCPSink, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl));
-        }
-	} else if (c.basicType == "TCP-Poisson-Pareto") {
-		int port = netGraph.connections[c.index].port;
-		c.serverFD = tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-				TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl);
-		// The first transmission is delayed exponentially
-		c.delayStart = true;
-    } else if (c.basicType == "TCP-DASH") {
-        int port = netGraph.connections[c.index].port;
-        c.serverFD = tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-                TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl);
-    } else if (c.basicType == "UDP-CBR") {
-		int port = netGraph.connections[c.index].port;
-		c.serverFD = udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-								UDPSink::makeUDPSink);
-	} else if (c.basicType == "UDP-VBR") {
-		int port = netGraph.connections[c.index].port;
-		c.serverFD = udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-								UDPVBRSink::makeUDPVBRSink);
-	} else if (c.basicType == "UDP-VCBR") {
-		int port = netGraph.connections[c.index].port;
-		c.serverFD = udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
-								UDPSink::makeUDPSink);
+	qDebugT() << "Worker handles server socket for connection"
+			  << netGraph.nodes[c.source].ip() << netGraph.nodes[c.dest].ip()
+			  << c.basicType;
+
+	if (c.implementation == NetGraphConnection::Libev) {
+		if (c.basicType == "TCP" || c.basicType == "TCPx") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   TCPSink::makeTCPSink, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl));
+			}
+		} else if (c.basicType == "TCP-Poisson-Pareto") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl));
+				// The first transmission is delayed exponentially
+				c.delayStart = true;
+			}
+		} else if (c.basicType == "TCP-DASH") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl));
+			}
+		} else if (c.basicType == "UDP-CBR") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   UDPSink::makeUDPSink));
+			}
+		} else if (c.basicType == "UDP-VBR") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   UDPVBRSink::makeUDPVBRSink));
+			}
+		} else if (c.basicType == "UDP-VCBR") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   UDPSink::makeUDPSink));
+			}
+		} else {
+			qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
+			Q_ASSERT_FORCE(false);
+		}
+	} else if (c.implementation == NetGraphConnection::Iperf2) {
+		if (c.basicType == "TCP-Poisson-Pareto") {
+			int port = netGraph.connections[c.index].ports[0];
+
+			c.serverFDs.insert(create_process(loop,
+											  QString("iperf --server --port %1 --bind %2 %3")
+											  .arg(port)
+											  .arg(netGraph.nodes[c.dest].ip())
+											  .arg(c.tcpReceiveWindowSize <= 0 ? QString() : QString("--window %1").arg(c.tcpReceiveWindowSize))
+											  .toLatin1().constData()));
+			// The first transmission is delayed exponentially
+			c.delayStart = true;
+		} else {
+			qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
+			Q_ASSERT_FORCE(false);
+		}
+	} else if (c.implementation == NetGraphConnection::Iperf3) {
+		if (c.basicType == "TCP-Poisson-Pareto") {
+			int port = netGraph.connections[c.index].ports[0];
+
+			c.serverFDs.insert(create_process(loop,
+											  QString("iperf3 --server --port %1 --bind %2 %3")
+											  .arg(port)
+											  .arg(netGraph.nodes[c.dest].ip())
+											  .arg(c.tcpReceiveWindowSize <= 0 ? QString() : QString("--window %1").arg(c.tcpReceiveWindowSize))
+											  .toLatin1().constData()));
+			// The first transmission is delayed exponentially
+			c.delayStart = true;
+		} else {
+			qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
+			Q_ASSERT_FORCE(false);
+		}
 	} else {
 		qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
 		Q_ASSERT_FORCE(false);
@@ -113,80 +152,168 @@ void initConnection(struct ev_loop *loop, NetGraphConnection &c)
 }
 
 // Starts clients (sources).
-void startConnection(NetGraphConnection &c)
+void startConnectionClient(NetGraphConnection &c)
 {
 	qDebugT();
 	if (c.maskedOut)
 		return;
 	if (netGraph.nodes[c.source].maskedOut)
 		return;
-	struct ev_loop *loop = static_cast<struct ev_loop *>(c.ev_loop);
-	if (c.basicType == "TCP") {
-        int port = netGraph.connections[c.index].port;
-		c.clientFD = tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-				qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
-				c.trafficClass, TCPSource::makeTCPSource, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl);
-	} else if (c.basicType == "TCPx") {
-        c.clientFDs.clear();
-		for (int i = 0; i < c.multiplier; i++) {
-            int port = netGraph.connections[c.index].ports[i];
-			c.clientFDs.insert(tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-							   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
-					c.trafficClass, TCPSource::makeTCPSource, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl));
-        }
-	} else if (c.basicType == "TCP-Poisson-Pareto") {
-		TCPParetoSourceArg paretoParams;
-		paretoParams.alpha = c.paretoAlpha;
-		paretoParams.scale = c.paretoScale_b / 8.0;
 
-		if (!c.delayStart) {
-			qDebugT() << "Creating Poisson connection";
-			int port = netGraph.connections[c.index].port;
-			c.clientFD = tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-					qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
-					c.trafficClass, TCPParetoSource::makeTCPParetoSource, &paretoParams, c.tcpReceiveWindowSize,
-					c.tcpCongestionControl,
-					c.sequential ? connectionTransferCompletedHandler : NULL,
-					c.sequential ? &c : NULL);
+	qDebugT() << "Worker handles client socket for connection"
+			  << netGraph.nodes[c.source].ip() << netGraph.nodes[c.dest].ip()
+			  << c.basicType;
+
+	struct ev_loop *loop = static_cast<struct ev_loop *>(c.ev_loop);
+
+	c.clientFDs.clear();
+
+	if (c.implementation == NetGraphConnection::Libev) {
+		for (int i = 0; i < c.multiplier; i++) {
+			if (c.basicType == "TCP") {
+				int port = netGraph.connections[c.index].ports[i];
+				c.clientFDs.insert(tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
+						c.trafficClass, TCPSource::makeTCPSource, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl));
+			} else if (c.basicType == "TCPx") {
+				int port = netGraph.connections[c.index].ports[i];
+				c.clientFDs.insert(tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
+						c.trafficClass, TCPSource::makeTCPSource, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl));
+			} else if (c.basicType == "TCP-Poisson-Pareto") {
+				TCPParetoSourceArg paretoParams;
+				paretoParams.alpha = c.paretoAlpha;
+				paretoParams.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
+
+				if (!c.delayStart) {
+					qDebugT() << "Creating Poisson connection";
+					int port = netGraph.connections[c.index].ports[i];
+					c.clientFDs.insert(tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+									   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
+							c.trafficClass, TCPParetoSource::makeTCPParetoSource, &paretoParams, c.tcpReceiveWindowSize,
+							c.tcpCongestionControl,
+							c.sequential ? connectionTransferCompletedHandler : NULL,
+							c.sequential ? &c : NULL));
+				}
+				if (c.delayStart || !c.sequential) {
+					// schedule next start
+					c.delayStart = false;
+					qreal delay = -log(1.0 - frandex()) / c.poissonRate;
+					qDebugT() << "Delaying Poisson connection" << delay;
+					ev_once(loop, -1, 0, delay, poissonStartConnectionTimeoutHandler, &c);
+				}
+			} else if (c.basicType == "TCP-DASH") {
+				TCPDashSourceArg params(c.rate_Mbps * 1.0e6 / 8.0 / qreal(c.multiplier),
+										c.bufferingRate_Mbps * 1.0e6 / 8.0 / qreal(c.multiplier),
+										c.bufferingTime_s,
+										c.streamingPeriod_s);
+				qDebugT() << "Creating DASH connection";
+				int port = netGraph.connections[c.index].ports[i];
+				c.clientFDs.insert(tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
+						c.trafficClass, TCPDashSource::makeTCPDashSource, &params, c.tcpReceiveWindowSize,
+						c.tcpCongestionControl));
+			} else if (c.basicType == "UDP-CBR") {
+				qreal rate_Bps = c.rate_Mbps * 1.0e6 / 8.0 / qreal(c.multiplier);
+				int port = netGraph.connections[c.index].ports[i];
+				UDPCBRSourceArg params(rate_Bps, 1400, c.poisson);
+				c.clientFDs.insert(udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port, c.trafficClass,
+						UDPCBRSource::makeUDPCBRSource, &params));
+			} else if (c.basicType == "UDP-VBR") {
+				int port = netGraph.connections[c.index].ports[i];
+				UDPVBRSourceArg params(1000);
+				c.clientFDs.insert(udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port, c.trafficClass,
+						UDPVBRSource::makeUDPVBRSource, &params));
+			} else if (c.basicType == "UDP-VCBR") {
+				qreal rate_Bps = c.rate_Mbps * 1.0e6 / 8.0 / qreal(c.multiplier);
+				int port = netGraph.connections[c.index].ports[i];
+				UDPVCBRSourceArg params(rate_Bps);
+				c.clientFDs.insert(udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port, c.trafficClass,
+						UDPVCBRSource::makeUDPVCBRSource, &params));
+			} else {
+				qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
+				Q_ASSERT_FORCE(false);
+			}
 		}
-		if (c.delayStart || !c.sequential) {
-			// schedule next start
-			c.delayStart = false;
-			qreal delay = -log(1.0 - frandex()) / c.poissonRate;
-			qDebugT() << "Delaying Poisson connection" << delay;
-			ev_once(loop, -1, 0, delay, poissonStartConnectionTimeoutHandler, &c);
+	} else if (c.implementation == NetGraphConnection::Iperf2) {
+		if (c.basicType == "TCP-Poisson-Pareto") {
+			TCPParetoSourceArg paretoParams;
+			paretoParams.alpha = c.paretoAlpha;
+			paretoParams.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
+
+			// uniform is uniformly distributed in (0, 1]
+			qreal uniform = 1.0 - frandex();
+			quint64 transferSize = paretoParams.scale / pow(uniform, (1.0/paretoParams.alpha));
+			qDebugT() << "Pareto transfer size (bytes): " << transferSize;
+
+			if (!c.delayStart) {
+				qDebugT() << "Creating Poisson connection";
+				int port = netGraph.connections[c.index].ports[0];
+				c.clientFDs.insert(create_process(loop,
+												  QString("iperf --client %1 --port %2 --bind %3 --num %4 --parallel %5 --tos %6 %7")
+												  .arg(netGraph.nodes[c.dest].ipForeign())
+												  .arg(port)
+												  .arg(netGraph.nodes[c.source].ip())
+												  .arg(transferSize)
+												  .arg(c.multiplier)
+												  .arg(QString("%1").arg(c.trafficClass << 3, 2, 16, QLatin1Char('0')))
+												  .arg(c.tcpCongestionControl.isEmpty() ? QString() : QString("--linux-congestion %1").arg(c.tcpCongestionControl))
+												  .toLatin1().constData(),
+												  c.sequential ? connectionTransferCompletedHandler : NULL,
+												  c.sequential ? &c : NULL));
+			}
+			if (c.delayStart || !c.sequential) {
+				// schedule next start
+				c.delayStart = false;
+				qreal delay = -log(1.0 - frandex()) / c.poissonRate;
+				qDebugT() << "Delaying Poisson connection" << delay;
+				ev_once(loop, -1, 0, delay, poissonStartConnectionTimeoutHandler, &c);
+			}
+		} else {
+			qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
+			Q_ASSERT_FORCE(false);
 		}
-    } else if (c.basicType == "TCP-DASH") {
-        TCPDashSourceArg params(c.rate_Mbps * 1.0e6 / 8.0,
-                                c.bufferingRate_Mbps * 1.0e6 / 8.0,
-                                c.bufferingTime_s,
-                                c.streamingPeriod_s);
-        qDebugT() << "Creating DASH connection";
-        int port = netGraph.connections[c.index].port;
-        c.clientFD = tcp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-                qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
-                c.trafficClass, TCPDashSource::makeTCPDashSource, &params, c.tcpReceiveWindowSize,
-                c.tcpCongestionControl);
-    } else if (c.basicType == "UDP-CBR") {
-		qreal rate_Bps = c.rate_Mbps * 1.0e6 / 8.0;
-		int port = netGraph.connections[c.index].port;
-		UDPCBRSourceArg params(rate_Bps, 1400, c.poisson);
-		c.clientFD = udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-				qPrintable(netGraph.nodes[c.dest].ipForeign()), port, c.trafficClass,
-				UDPCBRSource::makeUDPCBRSource, &params);
-	} else if (c.basicType == "UDP-VBR") {
-		int port = netGraph.connections[c.index].port;
-		UDPVBRSourceArg params(1000);
-		c.clientFD = udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-				qPrintable(netGraph.nodes[c.dest].ipForeign()), port, c.trafficClass,
-				UDPVBRSource::makeUDPVBRSource, &params);
-	} else if (c.basicType == "UDP-VCBR") {
-		qreal rate_Bps = c.rate_Mbps * 1.0e6 / 8.0;
-		int port = netGraph.connections[c.index].port;
-		UDPVCBRSourceArg params(rate_Bps);
-		c.clientFD = udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
-				qPrintable(netGraph.nodes[c.dest].ipForeign()), port, c.trafficClass,
-				UDPVCBRSource::makeUDPVCBRSource, &params);
+	} else if (c.implementation == NetGraphConnection::Iperf3) {
+		if (c.basicType == "TCP-Poisson-Pareto") {
+			TCPParetoSourceArg paretoParams;
+			paretoParams.alpha = c.paretoAlpha;
+			paretoParams.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
+
+			// uniform is uniformly distributed in (0, 1]
+			qreal uniform = 1.0 - frandex();
+			quint64 transferSize = paretoParams.scale / pow(uniform, (1.0/paretoParams.alpha));
+			qDebugT() << "Pareto transfer size (bytes): " << transferSize;
+
+			if (!c.delayStart) {
+				qDebugT() << "Creating Poisson connection";
+				int port = netGraph.connections[c.index].ports[0];
+				c.clientFDs.insert(create_process(loop,
+												  QString("iperf3 --client %1 --port %2 --bind %3 --bytes %4 --parallel %5 --tos %6 %7")
+												  .arg(netGraph.nodes[c.dest].ipForeign())
+												  .arg(port)
+												  .arg(netGraph.nodes[c.source].ip())
+												  .arg(transferSize)
+												  .arg(c.multiplier)
+												  .arg(QString("%1").arg(c.trafficClass << 3, 2, 16, QLatin1Char('0')))
+												  .arg(c.tcpCongestionControl.isEmpty() ? QString() : QString("--linux-congestion %1").arg(c.tcpCongestionControl))
+												  .toLatin1().constData(),
+												  c.sequential ? connectionTransferCompletedHandler : NULL,
+												  c.sequential ? &c : NULL));
+			}
+			if (c.delayStart || !c.sequential) {
+				// schedule next start
+				c.delayStart = false;
+				qreal delay = -log(1.0 - frandex()) / c.poissonRate;
+				qDebugT() << "Delaying Poisson connection" << delay;
+				ev_once(loop, -1, 0, delay, poissonStartConnectionTimeoutHandler, &c);
+			}
+		} else {
+			qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
+			Q_ASSERT_FORCE(false);
+		}
 	} else {
 		qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
 		Q_ASSERT_FORCE(false);
@@ -194,7 +321,7 @@ void startConnection(NetGraphConnection &c)
 }
 
 // Stops clients (sources)
-void stopConnection(NetGraphConnection &c)
+void stopConnectionClient(NetGraphConnection &c)
 {
 	qDebugT();
 	if (c.maskedOut)
@@ -202,16 +329,14 @@ void stopConnection(NetGraphConnection &c)
 	if (netGraph.nodes[c.source].maskedOut)
 		return;
 
-	if (c.basicType == "TCP") {
-        tcp_close_client(c.clientFD);
-        c.clientFD = -1;
-	} else if (c.basicType == "TCPx") {
+	if (c.basicType == "TCP" || c.basicType == "TCPx") {
 		foreach (int fd, c.clientFDs) {
 			tcp_close_client(fd);
         }
 	} else if (c.basicType == "UDP-CBR" || c.basicType == "UDP-VBR" || c.basicType == "UDP-VCBR") {
-		udp_close_client(c.clientFD);
-		c.clientFD = -1;
+		foreach (int fd, c.clientFDs) {
+			udp_close_client(fd);
+		}
 	} else {
 		qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters" << c.encodedType;
 		Q_ASSERT_FORCE(false);
@@ -233,7 +358,10 @@ void connectionTransferCompleted(NetGraphConnection &c)
 	} else if (c.basicType == "TCP-Poisson-Pareto") {
 		netGraph.connections[c.index].delayStart = true;
 		ev_once(static_cast<struct ev_loop*>(c.ev_loop),
-				-1, 0, 0, poissonStartConnectionTimeoutHandler, &netGraph.connections[c.index]);
+				-1,
+				0,
+				0,
+				poissonStartConnectionTimeoutHandler, &netGraph.connections[c.index]);
 	} else if (c.basicType == "TCP-Repeated-Pareto") {
 		// Nothing to do
     } else if (c.basicType == "TCP-DASH") {
@@ -256,7 +384,7 @@ void timeout_start_connection(struct ev_loop *loop, ev_timer *w, int revents)
 	Q_UNUSED(loop);
     Q_UNUSED(revents);
 	if (onOffTimer2Connection.contains(w)) {
-		startConnection(netGraph.connections[onOffTimer2Connection[w]]);
+		startConnectionClient(netGraph.connections[onOffTimer2Connection[w]]);
     }
 }
 
@@ -266,7 +394,7 @@ void timeout_stop_connection(struct ev_loop *loop, ev_timer *w, int revents)
     Q_UNUSED(loop);
     Q_UNUSED(revents);
 	if (onOffTimer2Connection.contains(w)) {
-		stopConnection(netGraph.connections[onOffTimer2Connection[w]]);
+		stopConnectionClient(netGraph.connections[onOffTimer2Connection[w]]);
     }
 }
 
@@ -277,7 +405,8 @@ void createOnOffTimers()
 		if (c.maskedOut)
 			continue;
 		if (netGraph.nodes[c.source].maskedOut)
-			return;
+			continue;
+
 		qreal firstStart = c.onOff ? frand() * (c.onDurationMax + c.offDurationMax) : frand();
 		qreal onDuration = c.onOff ? c.onDurationMin + frand() * (c.onDurationMax - c.onDurationMin) : 0.0;
 		qreal offDuration = c.onOff ? c.offDurationMin + frand() * (c.offDurationMax - c.offDurationMin) : 0.0;
@@ -304,15 +433,17 @@ void poissonStartConnectionTimeoutHandler(int revents, void *arg)
 	Q_UNUSED(revents);
 	Q_ASSERT_FORCE(arg != NULL);
 	NetGraphConnection &c = *static_cast<NetGraphConnection *>(arg);
-	startConnection(c);
+	startConnectionClient(c);
 }
 
-void connectionTransferCompletedHandler(void *arg)
+void connectionTransferCompletedHandler(void *arg, int client_fd)
 {
 	Q_ASSERT_FORCE(arg != NULL);
 	qDebugT() << "connectionTransferCompletedHandler";
 	NetGraphConnection &c = *static_cast<NetGraphConnection *>(arg);
-	connectionTransferCompleted(c);
+	c.clientFDs.remove(client_fd);
+	if (c.clientFDs.isEmpty())
+		connectionTransferCompleted(c);
 }
 
 bool start = false;
@@ -348,13 +479,13 @@ void sigint_cb(struct ev_loop *loop, struct ev_signal *w, int revents)
 	ev_unloop(loop, EVUNLOOP_ALL);
 }
 
-void runMaster(int argc, char **argv)
+void runMaster(QString program, int argc, char **argv)
 {
 	signal(SIGINT, masterSignalCallback);
 	signal(SIGTERM, masterSignalCallback);
 	signal(SIGUSR1, masterSignalCallback);
 
-	long numCpu = sysconf(_SC_NPROCESSORS_ONLN) / 2;
+	long numCpu = qMax(1L, sysconf(_SC_NPROCESSORS_ONLN) / 2);
 	qDebug() << "Spawning" << numCpu << "processes...";
 
 	QVector<QProcess*> children;
@@ -367,7 +498,7 @@ void runMaster(int argc, char **argv)
 		args << "--child" << QString::number(iChild) << QString::number(numCpu);
 
 		child->setProcessChannelMode(QProcess::MergedChannels);
-        child->start("line-traffic", args);
+        child->start(program, args);
 
 		children << child;
 	}
@@ -388,6 +519,10 @@ void runMaster(int argc, char **argv)
 	for (int iChild = 0; iChild < numCpu; iChild++) {
 		children[iChild]->waitForFinished();
 		qDebug() << children[iChild]->readAll();
+		int exitCode = children[iChild]->exitCode();
+		if (exitCode) {
+			qDebug() << "Worker" << iChild << "crashed with exit code" << exitCode;
+		}
 	}
 }
 
@@ -400,7 +535,7 @@ bool isValidIPv4Address(QString s)
 	return true;
 }
 
-void runWithTextConfig(int argc, char **argv)
+void runWithTextConfig(QString program, int argc, char **argv)
 {
 	if (argc != 1) {
 		qDebug() << __FILE__ << __LINE__ << "wrong args, expecting file name";
@@ -420,6 +555,7 @@ void runWithTextConfig(int argc, char **argv)
 	QTextStream stream(&configFile);
 	int lineNumber = 0;
 	QHash<QString, int> ip2node;
+	QStringList allInterfaceIPs = getAllInterfaceIPs();
 	while (true) {
 		lineNumber++;
 		QString line = stream.readLine();
@@ -432,22 +568,41 @@ void runWithTextConfig(int argc, char **argv)
 			continue;
 
 		QString cmd = tokens.takeFirst();
-		if (cmd == "connection") {
+		if (cmd == "port") {
+			if (tokens.isEmpty()) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing port";
+				exit(-1);
+			}
+			QString token = tokens.takeFirst().trimmed();
+			bool ok;
+			quint16 port = token.toUShort(&ok);
+			if (!ok) {
+				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: bad port";
+				exit(-1);
+			}
+			g.setBasePort(port);
+		} else if (cmd == "connection") {
 			if (tokens.isEmpty()) {
 				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing first ip";
 				exit(-1);
 			}
 			QString ip1 = tokens.takeFirst().trimmed();
+			if (!isValidIPv4Address(ip1))
+				ip1 = resolveDNSName(ip1);
 			if (!isValidIPv4Address(ip1)) {
 				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: bad first ip";
+				exit(-1);
 			}
 			if (tokens.isEmpty()) {
 				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing second ip";
 				exit(-1);
 			}
 			QString ip2 = tokens.takeFirst().trimmed();
+			if (!isValidIPv4Address(ip2))
+				ip2 = resolveDNSName(ip2);
 			if (!isValidIPv4Address(ip2)) {
 				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: bad second ip";
+				exit(-1);
 			}
 
 			if (!ip2node.contains(ip1)) {
@@ -464,25 +619,41 @@ void runWithTextConfig(int argc, char **argv)
 
 			if (tokens.isEmpty()) {
 				qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: missing connection params";
+				exit(-1);
 			}
+
+			QStringList hops;
+			while (tokens.first() == "via") {
+				tokens.removeFirst();
+				QString hop = tokens.takeFirst().trimmed();
+				if (!isValidIPv4Address(hop))
+					hop = resolveDNSName(hop);
+				if (!isValidIPv4Address(hop)) {
+					qDebug() << __FILE__ << __LINE__ << "Cannot parse config file, line" << lineNumber << line << "reason: bad hop";
+					exit(-1);
+				}
+				hops << hop;
+
+				if (!ip2node.contains(hop)) {
+					int n = g.addNode(NETGRAPH_NODE_HOST);
+					g.nodes[n].customIp = g.nodes[n].customIpForeign = hop;
+					ip2node[hop] = n;
+				}
+			}
+
+			if (!hops.isEmpty()) {
+				if (allInterfaceIPs.contains(ip1) &&
+					!allInterfaceIPs.contains(ip2)) {
+					ip2 = hops.first();
+				} else if (!allInterfaceIPs.contains(ip1) &&
+						   allInterfaceIPs.contains(ip2)) {
+					ip1 = hops.last();
+				}
+			}
+
 			g.addConnection(NetGraphConnection(ip2node[ip1], ip2node[ip2], tokens.join(" "), QByteArray()));
 		}
 	}
-
-	/*
-	g.addNode(NETGRAPH_NODE_HOST);
-	g.addNode(NETGRAPH_NODE_HOST);
-	g.addNode(NETGRAPH_NODE_HOST);
-	g.addNode(NETGRAPH_NODE_HOST);
-
-	g.nodes[0].customIp = g.nodes[0].customIpForeign = "10.0.0.0";
-	g.nodes[1].customIp = g.nodes[1].customIpForeign = "10.0.0.1";
-	g.nodes[2].customIp = g.nodes[2].customIpForeign = "10.0.0.2";
-	g.nodes[3].customIp = g.nodes[3].customIpForeign = "10.0.0.3";
-
-	g.addConnection(NetGraphConnection(0, 1, "TCP", QByteArray()));
-	g.addConnection(NetGraphConnection(2, 3, "TCP", QByteArray()));
-	*/
 
 	if (!g.saveToFile()) {
 		qDebug() << __FILE__ << __LINE__ << "Cannot save file:" << g.fileName;
@@ -491,7 +662,7 @@ void runWithTextConfig(int argc, char **argv)
 
 	char **argv2 = new char*[1];
 	argv2[0] = strdup(g.fileName.toLatin1().data());
-	runMaster(1, argv2);
+	runMaster(program, 1, argv2);
 	free(argv2[0]);
 	delete [] argv2;
 	exit(0);
@@ -499,11 +670,17 @@ void runWithTextConfig(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	QCoreApplication a(argc, argv);
+
 	unsigned int seed = clock() ^ time(NULL) ^ getpid();
 	qDebug() << "seed:" << seed;
 	srand(seed);
 
-	showGitInfo();
+	if (!a.arguments().contains("--text-config") &&
+		a.arguments().contains("--master"))
+		showGitInfo();
+
+	QString program(argv[0]);
 
 	argc--, argv++;
 
@@ -514,13 +691,13 @@ int main(int argc, char **argv)
 
 	if (QString(argv[0]) == "--text-config") {
 		argc--, argv++;
-		runWithTextConfig(argc, argv);
+		runWithTextConfig(program, argc, argv);
 		exit(0);
 	}
 
 	if (QString(argv[0]) == "--master") {
 		argc--, argv++;
-		runMaster(argc, argv);
+		runMaster(program, argc, argv);
 		exit(0);
 	}
 
@@ -550,11 +727,8 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
-	// Multiply connections
-    netGraph.flattenConnections();
-
 	// Assign ports
-	assignPorts();
+	netGraph.assignPorts();
 
 	for (int c = 0; c < netGraph.connections.count(); c++) {
 		netGraph.connections[c].maskedOut = c % numWorkers != workerIndex;
@@ -603,7 +777,7 @@ int main(int argc, char **argv)
 			continue;
 		if (netGraph.nodes[c.dest].maskedOut)
 			continue;
-		initConnection(loop, netGraph.connections[c.index]);
+		startConnectionServer(loop, netGraph.connections[c.index]);
 	}
 
 	signal(SIGINT, childSignalCallback);
@@ -626,23 +800,7 @@ int main(int argc, char **argv)
 
 	tcp_close_all();
 	udp_close_all();
+	process_close_all();
 
 	return 0;
-
-//  int port = 8000;
-//	tcp_server(loop, "127.0.0.1", port, TCPSink::makeTCPSink);
-//	tcp_client(loop, "127.0.0.1", "127.0.0.1", port, 0, TCPSource::makeTCPSource);
-//	port++;
-
-//	tcp_server(loop, "127.0.0.1", port, TCPSink::makeTCPSink);
-//	tcp_client(loop, "127.0.0.1", "127.0.0.1", port, 0, TCPParetoSource::makeTCPParetoSource);
-//	port++;
-
-//    udp_server(loop, "127.0.0.1", port, UDPSink::makeUDPSink);
-//	udp_client(loop, "127.0.0.1", "127.0.0.1", port, 0, UDPCBRSource::makeUDPCBRSource, new UDPCBRSourceArg(128000));
-//    port++;
-
-//	udp_server(loop, "127.0.0.1", port, UDPVBRSink::makeUDPVBRSink);
-//	udp_client(loop, "127.0.0.1", "127.0.0.1", port, 0, UDPVBRSource::makeUDPVBRSource, new UDPVBRSourceArg(10000));
-//	port++;
 }

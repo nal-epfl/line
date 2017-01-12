@@ -1,0 +1,55 @@
+### Using iperf in our setup
+
+## Prerequisite
+# Configure two interfaces to bind on:
+
+ifconfig lo:0 10.0.0.1 netmask 255.255.255.0
+ifconfig lo:1 10.0.1.1 netmask 255.255.255.0
+
+########################################################################################################################
+## iperf2
+
+# Start a TCP sink that:
+# * keeps accepting clients in a loop
+# * listens on interface with address 10.0.0.1
+# * listens on port 8000
+# * sets the TCP receive window to 1MB
+
+iperf --server --port 8000 --bind 10.0.0.1 --window 1M
+
+
+# Start a TCP source that:
+# * sends traffic to 10.0.0.1:8000
+# * sends traffic from 10.0.1.1
+# * sends 1MB of data/flow and exits
+# * sends traffic via 5 parallel flows (1MB for each = 5 MB total)
+# * sets the IP TOS field to 0x08 (aka class 1 in line-router)
+# * sets the TCP congestion control algorithm to CUBIC
+
+iperf --client 10.0.0.1 --port 8000 --bind 10.0.1.1 --num 1M --parallel 5 --tos 0x08 --linux-congestion cubic
+
+
+########################################################################################################################
+## iperf3
+
+# Pulled from https://github.com/esnet/iperf.git fe1c2246a49d2206dc364f3f4c5c867bc57ed356
+
+# Start a TCP sink that:
+# * keeps accepting clients in a loop
+# * listens on interface with address 10.0.0.1
+# * listens on port 8000
+# * sets the TCP receive window to 1MB
+
+iperf3 --server --port 8000 --bind 10.0.0.1 --window 1M
+
+
+# Start a TCP source that:
+# * sends traffic to 10.0.0.1:8000
+# * sends traffic from 10.0.1.1
+# * sends 1MB of data/flow and exits
+# * sends traffic via 5 parallel flows (1MB for each = 5 MB total)
+# * sets the IP TOS field to 0x08 (aka class 1 in line-router)
+# * sets the TCP congestion control algorithm to CUBIC
+
+iperf3 --client 10.0.0.1 --port 8000 --bind 10.0.1.1 --bytes 1M --parallel 5 --tos 0x08 --linux-congestion cubic
+

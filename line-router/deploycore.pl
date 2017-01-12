@@ -15,7 +15,7 @@ sub command {
 }
 
 # Flush the routing table - only the 10/8 routes
-foreach my $route (`netstat -rn | grep '^10.'`) {
+foreach my $route (`netstat -rn | grep '^1\\.'`) {
 	my ($dest, $gate, $linuxmask) = split ' ',$route;
 	command("/sbin/route delete -net $dest netmask $linuxmask");
 }
@@ -36,7 +36,7 @@ command "sh -c \'echo 0 | tee /proc/sys/net/ipv4/conf/*/send_redirects\'";
 
 if ($gateway ne "127.0.0.1") {
 	print "Gateway: $gateway\n";
-	command "/sbin/route add -net 10.0.0.0/9 gw $gateway";
+	command "/sbin/route add -net 1.0.0.0/9 gw $gateway";
 }
 
 command "sh -c \'ifconfig $netdev mtu 1500\'";

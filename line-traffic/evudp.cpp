@@ -179,7 +179,7 @@ void udp_close_client(int fd)
 		foreach (int server_fd, UDPServerConnections.uniqueKeys()) {
 			foreach (QString clientKey, UDPServerConnections[server_fd].uniqueKeys()) {
 				UDPClient *sc = UDPServerConnections[server_fd][clientKey];
-				// NOTE: this filter ignores the first 16 bits of the IP address, matching both 10.0 or 10.128 in
+				// NOTE: this filter ignores the first 16 bits of the IP address, matching both 1.0 or 1.128 in
 				// emulations, or 192.168 in experiments with real traffic.
 				if (sc->remoteAddress.split(".").mid(2) ==
 					address.split(".").mid(2) &&

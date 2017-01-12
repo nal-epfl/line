@@ -4,7 +4,7 @@
 
 # Note: if you add more variables here, you need to substitute them manually
 # in make-remote.sh (with perl -pi -e).
-my $netdev = "eth7";
+my $netdev = "eth2";
 my $gateway = "192.168.77.2";
 
 sub command {

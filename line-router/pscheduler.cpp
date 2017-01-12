@@ -814,6 +814,9 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		}
 	}
 
+	if (!queued)
+		ts_exit = ts_now;
+
 	if (!p->injected) {
 		if (pathIntervalMeasurements)
 			pathIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);

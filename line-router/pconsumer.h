@@ -147,7 +147,6 @@ public:
 	bool ecn_bit_set;
     bool injected;
 
-
     // Global counter used to generate unique packet IDs.
 	static quint64 next_packet_unique_id;
 };

@@ -879,10 +879,6 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		timelineFull.append(current);
 	}
 
-	if (this->index == 0 && !losses_link_1.full()) {
-		losses_link_1.append(queued ? 0 : 1);
-	}
-
 	return queued;
 }
 

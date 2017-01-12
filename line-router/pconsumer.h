@@ -162,8 +162,6 @@ extern TrafficTraceRecord *trafficTraceRecord;
 extern NetGraph *netGraph;
 extern QString initDoneFilePath;
 
-extern BitArray losses_link_1;
-
 extern quint64 estimatedDuration;
 
 extern pfring *pd;

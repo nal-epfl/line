@@ -207,6 +207,8 @@ private slots:
 
 	void on_spinConnectionMultiplier_valueChanged(int arg1);
 
+	void on_spinConnectionMultiple_valueChanged(int arg1);
+
 	void on_btnTCPParetoMultiplier_clicked();
 
 	void on_btnTcpCongestionCOntrol_clicked();
@@ -248,6 +250,18 @@ private slots:
 	void on_btnAddTrace_clicked();
 
 	void on_btnClearTraces_clicked();
+
+	void on_checkRandomSpeed_toggled(bool checked);
+
+	void on_checkRandomDelay_toggled(bool checked);
+
+	void on_cmbConnectionImplementation_currentIndexChanged(int index);
+
+	void on_btnAdjustConnectionImplementation_clicked();
+
+	void on_btnUdpAdjustPoisson_clicked();
+
+	void on_btnUdpAdjustRate_clicked();
 
 protected:
 	virtual void resizeEvent(QResizeEvent* event);

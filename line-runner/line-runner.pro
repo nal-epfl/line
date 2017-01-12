@@ -36,7 +36,7 @@ QMAKE_CFLAGS += -Wl,-z,relro,-z,now
 QMAKE_CXXFLAGS += -Wl,-z,relro,-z,now
 QMAKE_LFLAGS += -Wl,-z,relro,-z,now
 
-LIBS += -lunwind -lz
+LIBS += -lunwind -lz -lpcap
 
 gitinfobundle.target = gitinfo
 gitinfobundle.commands = cd .. ; \
@@ -82,7 +82,8 @@ SOURCES += main.cpp \
     ../util/gitinfo.cpp \
     ../util/json.cpp \
     ../util/compresseddevice.cpp \
-    ../line-gui/end_to_end_measurements.cpp
+    ../line-gui/end_to_end_measurements.cpp \
+    ../tomo/fastpcap.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -124,7 +125,8 @@ HEADERS += \
     ../util/gitinfo.h \
     ../util/json.h \
     ../util/compresseddevice.h \
-    ../line-gui/end_to_end_measurements.h
+    ../line-gui/end_to_end_measurements.h \
+    ../tomo/fastpcap.h
 
 exists(result_processing.cpp) {
     SOURCES += result_processing.cpp

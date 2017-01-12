@@ -41,8 +41,6 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 		trafficLabel = "udp-constant";
 	} else if (trafficInput == "UDP (average bitrate)") {
 		trafficLabel = "udp-average";
-	} else if (trafficInput == "TCP Pavlos mix") {
-		trafficLabel = "tcp-pavlos-mix";
 	} else {
 		QMessageBox::critical(this,
 							  "Error",
@@ -98,28 +96,12 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 	}
 
 	// Create links
-	qreal linkBw_MBps = oneBottleneck ? totalBwMbps : totalBwMbps / numPaths;
-	qreal linkBw_kBps = linkBw_MBps * 1000.0 / 8.0;
-	int linkDelay_ms = qMax(1, rtt / numHops / 2);
-
-	QList<qreal> bw_values_Mbps = QList<qreal>() << 2 << 10 << 20 << 50 << 100 << 250 << 500;
-	QList<qreal> bw_values_freqs = QList<qreal>() << 10 << 30 << 20 << 15 << 10 << 10 << 5;
-
-	if (oneBottleneck) {
-		g.addEdgeSym(nodes[0][numHops-2],
-					 nodes[0][numHops-1],
-					 linkBw_kBps,
-					 linkDelay_ms,
-					 0,
-					 MIN_QUEUE_LEN_FRAMES /* irrelevant */,
-					 true);
-	}
-
+	const qreal linkBw_MBps = oneBottleneck ? totalBwMbps : totalBwMbps / numPaths;
+	const qreal linkBw_kBps = linkBw_MBps * 1000.0 / 8.0;
+	const int linkDelay_ms = qMax(1, rtt / numHops / 2);
 	for (int iPath = 0; iPath < numPaths; iPath++) {
 		for (int iHop = 0; iHop < numHops; iHop++) {
-			if (!oneBottleneck || (iHop != numHops - 2)) {
-				linkBw_kBps = bw_values_Mbps[randDist(bw_values_freqs)] * 1000.0 / 8.0;
-				linkDelay_ms = randInt(5, 50);
+			if (!oneBottleneck || iPath == 0 || (iHop != numHops - 2)) {
 				g.addEdgeSym(nodes[iPath][iHop],
 							 nodes[iPath][iHop + 1],
 						linkBw_kBps,
@@ -132,8 +114,6 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 		// Add cross links so we can have a full mesh
 		if (!oneBottleneck) {
 			if (numPaths > 1 && !(numPaths == 2 && iPath > 0)) {
-				linkBw_kBps = bw_values_Mbps[randDist(bw_values_freqs)] * 1000.0 / 8.0;
-				linkDelay_ms = randInt(5, 50);
 				const int iPathOther = (iPath + 1) % numPaths;
 				g.addEdgeSym(nodes[iPath][1],
 						nodes[iPathOther][1],
@@ -165,12 +145,6 @@ void MainWindow::on_btnBenchmarkGenerateGraph_clicked()
 			encodedType = QString("UDP-CBR %1 x %2").arg(linkBw_MBps / numFlowsPerPath).arg(numFlowsPerPath);
 		} else if (trafficLabel == "udp-average") {
 			encodedType = QString("UDP-CBR %1 poisson x %2").arg(linkBw_MBps / numFlowsPerPath).arg(numFlowsPerPath);
-		} else if (trafficLabel == "tcp-pavlos-mix") {
-			encodedType = QString("TCP-Poisson-Pareto .05 3 0.1Mb sequential cc cubic x %1").arg(90 * numFlowsPerPath);
-			g.addConnection(NetGraphConnection(nodes[iPath].first(), nodes[iPath].last(), encodedType, QByteArray()));
-			encodedType = QString("TCP-Poisson-Pareto .05 3 266Mb sequential cc cubic x %1").arg(10 * numFlowsPerPath);
-			g.addConnection(NetGraphConnection(nodes[iPath].first(), nodes[iPath].last(), encodedType, QByteArray()));
-			continue;
 		} else {
 			QMessageBox::critical(this,
 								  "Error",

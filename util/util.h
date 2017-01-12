@@ -47,6 +47,8 @@ inline QString sourceDir()
 	return SRCDIR;
 }
 
+void copyDir(QString src, QString dst);
+
 template<typename Container>
 qreal average(Container list)
 {

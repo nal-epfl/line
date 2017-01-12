@@ -29,6 +29,9 @@
 #include "intervalmeasurements.h"
 #include "result_processing.h"
 #include "../util/json.h"
+#include "erroranalysisdata.h"
+
+#include <QtGui>
 
 #define WRITE_PCAP 0
 

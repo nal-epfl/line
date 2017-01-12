@@ -259,12 +259,6 @@ int main(int argc, char **argv) {
 			processedParams << paramsFileName;
 		}
 
-        if (command == "--process-results") {
-            if (!processResults(extraParams)) {
-				exit(-1);
-			}
-		}
-
 		if (command == "--run") {
 			if (!runExperiment(paramsFileName)) {
 				exit(-1);

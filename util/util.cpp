@@ -43,6 +43,30 @@
 
 QList<QSharedPointer<QTextStream> > OutputStream::copies;
 
+void copyDir(QString src, QString dst)
+{
+	QDir dir(src);
+	if (!dir.exists())
+		return;
+
+	foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+		QString dstPath = dst + QDir::separator() + d;
+		QDir dstDir;
+		dstDir.cd(dst);
+		dstDir.mkpath(dstPath);
+		copyDir(src + QDir::separator() + d, dstPath);
+	}
+
+	foreach (QString f, dir.entryList(QDir::Files)) {
+		QString srcPath = src + QDir::separator() + f;
+		QString dstPath = dst + QDir::separator() + f;
+		if (QFile::exists(dstPath)) {
+			QFile::remove(dstPath);
+		}
+		QFile::copy(srcPath, dstPath);
+	}
+}
+
 void show_backtrace() {
 	unw_cursor_t cursor;
 	unw_context_t context;

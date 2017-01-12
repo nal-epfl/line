@@ -32,10 +32,10 @@ do
 	ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "bash -l -c \"set -x && cd $REMOTE_DIR && touch $DIR && (cd $DIR 2>/dev/null && find . -exec touch {} \; || /bin/true)\""
 done
 
-echo "make-remote.sh:1: warning: *** Building iperf2..."
-ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "bash -l -c \"set -x && pwd && cd $REMOTE_DIR && pwd && tar xzf iperf-2.0.9.tar.gz && cd iperf-2.0.9 && apt-get -y build-dep iperf && ./configure --prefix=/usr && make -j12 && make install\""
-echo "make-remote.sh:1: warning: *** Building iperf3..."
-ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "bash -l -c \"set -x && pwd && cd $REMOTE_DIR && pwd && tar xzf iperf-3.1.3-source.tar.gz && cd iperf3 && ./configure --prefix=/usr && make -j12 && make install\""
+#echo "make-remote.sh:1: warning: *** Building iperf2..."
+#ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "bash -l -c \"set -x && pwd && cd $REMOTE_DIR && pwd && tar xzf iperf-2.0.9.tar.gz && cd iperf-2.0.9 && apt-get -y build-dep iperf && ./configure --prefix=/usr && make -j12 && make install\""
+#echo "make-remote.sh:1: warning: *** Building iperf3..."
+#ssh $REMOTE_USER@$REMOTE_HOST -p $REMOTE_PORT "bash -l -c \"set -x && pwd && cd $REMOTE_DIR && pwd && tar xzf iperf-3.1.3-source.tar.gz && cd iperf3 && ./configure --prefix=/usr && make -j12 && make install\""
 
 echo "make-remote.sh:1: warning: *** Building line-traffic..."
 rm -f stdoutfifo

@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	blocking = false;
 	ignoreDirChanges = false;
 	lastDirChangeNs = 0;
+	saveResultPlots = false;
 
 	delete ui->widgetEditorDummy;
 	ui->widgetEditorDummy = 0;
@@ -127,14 +128,14 @@ MainWindow::MainWindow(QWidget *parent) :
 	emit reloadTopologyList(QString());
 	updateWindowTitle();
 	loadExperimentQueue();
+	captureMemChanged();
+	on_checkCapture_toggled(ui->checkCapture->isChecked());
 
 	showMaximized();
 
-#ifdef HAVE_CUSTOM_CONTROLS
 	customControls = new CustomControls();
 	customControls->mainWindow = this;
 	customControls->show();
-#endif
 }
 
 MainWindow::~MainWindow()
@@ -310,7 +311,7 @@ void MainWindow::doLogInformation(QPlainTextEdit *log, QString message)
 {
 #if 1
 	QTextCharFormat format = log->currentCharFormat();
-	format.setForeground(Qt::darkCyan);
+	format.setForeground(Qt::cyan);
 	format.setFontFamily("Liberation Sans");
 	format.setFontStyleHint(QFont::SansSerif);
 	format.setFontPointSize(10);
@@ -344,7 +345,7 @@ void MainWindow::doLogSuccess(QPlainTextEdit *log, QString message)
 {
 #if 1
 	QTextCharFormat format = log->currentCharFormat();
-	format.setForeground(Qt::darkGreen);
+	format.setForeground(Qt::green);
 	format.setFontFamily("Liberation Sans");
 	format.setFontStyleHint(QFont::SansSerif);
 	format.setFontPointSize(10);
@@ -389,7 +390,7 @@ void MainWindow::doLogOutput(QPlainTextEdit *log, QString message)
 #if 1
 	QTextCharFormat oldFormat = log->currentCharFormat();
 	QTextCharFormat newFormat = oldFormat;
-	newFormat.setForeground(Qt::darkBlue);
+	newFormat.setForeground(Qt::gray);
 	newFormat.setFontFamily("Liberation Mono");
     newFormat.setFontStyleHint(QFont::Monospace);
 	newFormat.setFontPointSize(10);

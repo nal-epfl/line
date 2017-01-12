@@ -22,6 +22,7 @@
 #include <QSvgGenerator>
 #include <limits>
 #include <math.h>
+#include "isnan.h"
 
 #include "nicelabel.h"
 #include "util.h"
@@ -1830,6 +1831,7 @@ void QOPlotWidget::updateGeometry()
 {
 	if (!isVisible())
 		return;
+
 	qreal totalMarginBottom;
 	totalMarginBottom = marginBottom;
 

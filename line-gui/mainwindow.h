@@ -43,11 +43,9 @@
 #include "writelog.h"
 #include "run_experiment_params.h"
 #include "../remote_config.h"
-
-#ifdef HAVE_CUSTOM_CONTROLS
 #include "customcontrols.h"
+
 class CustomControls;
-#endif
 
 #define UDPPING_OVERHEAD 42
 
@@ -148,10 +146,8 @@ protected:
 
 private:
 	Ui::MainWindow *ui;
-#ifdef HAVE_CUSTOM_CONTROLS
 	CustomControls *customControls;
 	friend class CustomControls;
-#endif
 
 	int maxLogLines;
 
@@ -185,6 +181,7 @@ private:
 
 	QList<RunParams> experimentQueue;
 	bool runningInQueue;
+	bool saveResultPlots;
 
 	QProcess httpServer;
 
@@ -336,6 +333,7 @@ private slots:
 	void on_btnQueueRemove_clicked();
 
     void on_txtResultsInterestingLinks_returnPressed();
+	void on_txtResultsInterestingPaths_returnPressed();
 
     void on_cmbExpType_currentIndexChanged(const QString &arg1);
 
@@ -344,6 +342,8 @@ private slots:
 	void captureMemChanged();
 	void on_spinCapturePacketCount_valueChanged(int );
 	void on_spinCaptureEventCount_valueChanged(int );
+
+	void on_btnResultsSavePlots_clicked();
 
 signals:
 	void logInformation(QPlainTextEdit *log, QString message);

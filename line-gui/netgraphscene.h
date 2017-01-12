@@ -77,6 +77,7 @@ public:
 
 	int defaultASNumber;
 	QString connectionType;
+	int connectionCount;
 
 	// the start node for a new edge/connection
 	NetGraphSceneNode *startNode;
@@ -148,6 +149,7 @@ public slots:
 
 	// connection properties
 	void connectionTypeChanged(QString val);
+	void connectionNumberChanged(int val);
 
 	// graph events
 	void reload();

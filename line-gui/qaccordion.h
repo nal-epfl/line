@@ -37,7 +37,7 @@ signals:
 public slots:
 	void expandAll();
 
-protected:
+public:
 	QList<QDisclosure*> disclosures;
 
 protected slots:

@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 	exit(0);
 #endif
 
-	QApplication::setGraphicsSystem("raster");
+	//QApplication::setGraphicsSystem("raster");
 
 	qDebug() << "This machine has" << getNumCoresLinux() << "CPUs";
 

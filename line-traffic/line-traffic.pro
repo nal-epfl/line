@@ -121,7 +121,6 @@ DEFINES += \'SRCDIR=\"$$_PRO_FILE_PWD_\"\'
 
 HEADERS += \
     tcpdashsource.h \
-    ../line-gui/traffictrace.h \
     ../tomo/pcap-qt.h \
     ../util/embed-file.h \
     ../util/gitinfo.h \
@@ -130,18 +129,19 @@ HEADERS += \
     ../util/compresseddevice.h \
     evpid.h \
     ../tomo/fastpcap.h \
-    ../tomo/pcap-common.h
+    ../tomo/pcap-common.h \
+    ../line-gui/traffictrace.h
 
 SOURCES += \
     tcpdashsource.cpp \
-    ../line-gui/traffictrace.cpp \
-    ../tomo/pcap-qt.cpp \
     ../util/gitinfo.cpp \
     ../util/json.cpp \
-    ../tomo/readpacket.cpp \
     ../util/compresseddevice.cpp \
     evpid.cpp \
-    ../tomo/fastpcap.cpp
+    ../tomo/fastpcap.cpp \
+    ../tomo/pcap-qt.cpp \
+    ../tomo/readpacket.cpp \
+    ../line-gui/traffictrace.cpp
 
 OTHER_FILES += \
     virtual-interfaces-howto.txt

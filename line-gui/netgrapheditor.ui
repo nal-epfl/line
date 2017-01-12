@@ -58,7 +58,7 @@
         <x>0</x>
         <y>0</y>
         <width>2204</width>
-        <height>67</height>
+        <height>64</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1107,9 +1107,9 @@
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>-762</y>
-              <width>352</width>
-              <height>1336</height>
+              <y>-800</y>
+              <width>356</width>
+              <height>1351</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1143,7 +1143,7 @@
                 <string notr="true"/>
                </property>
                <property name="currentIndex">
-                <number>11</number>
+                <number>9</number>
                </property>
                <widget class="QWidget" name="pageAddEditLink">
                 <property name="sizePolicy">
@@ -1485,21 +1485,7 @@ Click an existing link to edit its properties.</string>
                     <string>Adjust links</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_20">
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_57">
-                      <property name="text">
-                       <string>Delay:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="label_58">
-                      <property name="text">
-                       <string>Rate:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="3">
+                    <item row="0" column="4">
                      <widget class="QWidget" name="widget_13" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_14">
                        <property name="leftMargin">
@@ -1575,7 +1561,7 @@ Click an existing link to edit its properties.</string>
                       </layout>
                      </widget>
                     </item>
-                    <item row="1" column="3">
+                    <item row="1" column="4">
                      <widget class="QWidget" name="widget_14" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_15">
                        <property name="leftMargin">
@@ -1642,7 +1628,7 @@ Click an existing link to edit its properties.</string>
                       </layout>
                      </widget>
                     </item>
-                    <item row="2" column="3">
+                    <item row="2" column="4">
                      <widget class="QWidget" name="widget_15" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_16">
                        <property name="leftMargin">
@@ -1670,7 +1656,7 @@ Click an existing link to edit its properties.</string>
                        <item>
                         <widget class="QCheckBox" name="spinSetPropGatewayLinks">
                          <property name="text">
-                          <string>Gateway links</string>
+                          <string>Access links</string>
                          </property>
                          <property name="checked">
                           <bool>true</bool>
@@ -1680,17 +1666,37 @@ Click an existing link to edit its properties.</string>
                       </layout>
                      </widget>
                     </item>
-                    <item row="2" column="0">
+                    <item row="3" column="1">
+                     <widget class="QPushButton" name="btnEditBatchLinks">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
                      <widget class="QLabel" name="label_61">
                       <property name="text">
                        <string>Only for:</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="3" column="0">
-                     <widget class="QPushButton" name="btnEditBatchLinks">
+                    <item row="0" column="1">
+                     <widget class="QCheckBox" name="checkRandomSpeed">
                       <property name="text">
-                       <string>Apply</string>
+                       <string>Rate:</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="checkRandomDelay">
+                      <property name="text">
+                       <string>Delay:</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
@@ -2438,6 +2444,42 @@ Use the zoom slider to zoom in and out.</string>
                       </property>
                      </widget>
                     </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_79">
+                      <property name="text">
+                       <string>Implementation</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="cmbAdjustConnectionImplementation">
+                      <property name="sizeAdjustPolicy">
+                       <enum>QComboBox::AdjustToContents</enum>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>libev</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>iperf2</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>iperf3</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="2">
+                     <widget class="QToolButton" name="btnAdjustConnectionImplementation">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -2984,6 +3026,9 @@ Use the zoom slider to zoom in and out.</string>
                       <property name="suffix">
                        <string> flows/s</string>
                       </property>
+                      <property name="decimals">
+                       <number>4</number>
+                      </property>
                       <property name="maximum">
                        <double>99.000000000000000</double>
                       </property>
@@ -3163,13 +3208,6 @@ Use the zoom slider to zoom in and out.</string>
                       </item>
                      </widget>
                     </item>
-                    <item row="0" column="2">
-                     <widget class="QToolButton" name="btnTcpDashCongestionControl">
-                      <property name="text">
-                       <string>Apply</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="3" column="0">
                      <widget class="QLabel" name="label_82">
                       <property name="text">
@@ -3300,6 +3338,88 @@ Use the zoom slider to zoom in and out.</string>
                     </item>
                     <item row="5" column="2">
                      <widget class="QToolButton" name="btnTCPDashStreamingPeriod">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="2">
+                     <widget class="QToolButton" name="btnTcpDashCongestionControl">
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QGroupBox" name="groupBox_31">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="title">
+                    <string>UDP CBR</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_28">
+                    <item row="0" column="0" rowspan="2">
+                     <widget class="QLabel" name="label_57">
+                      <property name="text">
+                       <string>Poisson</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="3" rowspan="2">
+                     <widget class="QPushButton" name="btnUdpAdjustPoisson">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="text">
+                       <string>Apply</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_58">
+                      <property name="text">
+                       <string>Rate</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QDoubleSpinBox" name="spinUdpAdjustRate">
+                      <property name="suffix">
+                       <string> Mbps</string>
+                      </property>
+                      <property name="minimum">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>9999.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="checkUdpAdjustPoisson">
+                      <property name="text">
+                       <string>Enabled</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="3">
+                     <widget class="QPushButton" name="btnUdpAdjustRate">
                       <property name="text">
                        <string>Apply</string>
                       </property>
@@ -3686,7 +3806,20 @@ Use the zoom slider to zoom in and out.</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="11" column="0">
+                      <item row="8" column="1">
+                       <widget class="QSpinBox" name="spinConnectionTrafficClass">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <number>7</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="12" column="0">
                        <widget class="QLabel" name="labelOnDuration">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -3702,19 +3835,6 @@ Use the zoom slider to zoom in and out.</string>
                         </property>
                         <property name="text">
                          <string>On duration</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="8" column="1">
-                       <widget class="QSpinBox" name="spinConnectionTrafficClass">
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>28</height>
-                         </size>
-                        </property>
-                        <property name="maximum">
-                         <number>7</number>
                         </property>
                        </widget>
                       </item>
@@ -3963,11 +4083,14 @@ Large values: narrow range.</string>
                               <property name="suffix">
                                <string> flows/s</string>
                               </property>
+                              <property name="decimals">
+                               <number>4</number>
+                              </property>
                               <property name="singleStep">
-                               <double>0.100000000000000</double>
+                               <double>0.001000000000000</double>
                               </property>
                               <property name="value">
-                               <double>0.100000000000000</double>
+                               <double>0.010000000000000</double>
                               </property>
                              </widget>
                             </item>
@@ -4644,19 +4767,6 @@ Large values: narrow range.</string>
                         </item>
                        </widget>
                       </item>
-                      <item row="2" column="0">
-                       <widget class="QLabel" name="label_45">
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="text">
-                         <string>Type (encoded)</string>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="2" column="1">
                        <widget class="QLineEdit" name="txtConnectionType">
                         <property name="sizePolicy">
@@ -4670,10 +4780,30 @@ Large values: narrow range.</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="10" column="0">
+                      <item row="11" column="0">
                        <widget class="QLabel" name="label_27">
                         <property name="text">
                          <string>On-off</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="11" column="1">
+                       <widget class="QCheckBox" name="checkConnectionOnOff">
+                        <property name="text">
+                         <string/>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="0">
+                       <widget class="QLabel" name="label_45">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="text">
+                         <string>Type (encoded)</string>
                         </property>
                        </widget>
                       </item>
@@ -4690,14 +4820,7 @@ Large values: narrow range.</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="10" column="1">
-                       <widget class="QCheckBox" name="checkConnectionOnOff">
-                        <property name="text">
-                         <string/>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="12" column="0">
+                      <item row="13" column="0">
                        <widget class="QLabel" name="labelOffDuration">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -4716,7 +4839,7 @@ Large values: narrow range.</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="11" column="1">
+                      <item row="12" column="1">
                        <widget class="QWidget" name="widget_5" native="true">
                         <layout class="QHBoxLayout" name="horizontalLayout_6">
                          <property name="leftMargin">
@@ -4792,7 +4915,26 @@ Large values: narrow range.</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="12" column="1">
+                      <item row="14" column="0">
+                       <widget class="QLabel" name="labelOffDuration_3">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>Implementation</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="13" column="1">
                        <widget class="QWidget" name="widget_6" native="true">
                         <layout class="QHBoxLayout" name="horizontalLayout_7">
                          <property name="leftMargin">
@@ -4857,6 +4999,60 @@ Large values: narrow range.</string>
                       </item>
                       <item row="9" column="1">
                        <widget class="QSpinBox" name="spinConnectionMultiplier">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="minimum">
+                         <number>1</number>
+                        </property>
+                        <property name="maximum">
+                         <number>9999</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="14" column="1">
+                       <widget class="QComboBox" name="cmbConnectionImplementation">
+                        <property name="currentIndex">
+                         <number>0</number>
+                        </property>
+                        <property name="sizeAdjustPolicy">
+                         <enum>QComboBox::AdjustToContents</enum>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>libev</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>iperf2</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>iperf3</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item row="10" column="0">
+                       <widget class="QLabel" name="label_86">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>Add multiple</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="10" column="1">
+                       <widget class="QSpinBox" name="spinConnectionMultiple">
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
@@ -5092,8 +5288,8 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>114</width>
-                      <height>705</height>
+                      <width>350</width>
+                      <height>1345</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_41">

@@ -43,7 +43,7 @@ signals:
 
 public slots:
 
-protected:
+public:
 	QVBoxLayout *verticalLayout;
 	QCheckBox *checkExpand;
 	QWidget *mWidget;

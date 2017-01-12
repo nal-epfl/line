@@ -44,6 +44,7 @@ void print_help()
 
 qint64 fastpcapCountPackets(QString fileName)
 {
+#ifdef PCAP_TSTAMP_PRECISION_NANO
 	// open input file
 	char pcap_errbuf[PCAP_ERRBUF_SIZE];
 
@@ -64,6 +65,9 @@ qint64 fastpcapCountPackets(QString fileName)
 	pcap_close(pcap_handle_in);
 
 	return count;
+#else
+	return -1;
+#endif
 }
 
 FastPcapReader::FastPcapReader(QString fileName)

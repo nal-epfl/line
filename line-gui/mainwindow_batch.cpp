@@ -43,10 +43,12 @@ bool MainWindow::getRunParams(RunParams &params, QPlainTextEdit *log)
 					   ui->checkCapture->isChecked(),
 					   ui->spinCapturePacketCount->value(),
 					   ui->spinCaptureEventCount->value(),
+					   ui->spinCaptureSamplingPeriod->value() * 1000000ULL,
 					   ui->checkPathIntervalMeasurements->isChecked(),
 					   ui->checkFlowIntervalMeasurements->isChecked(),
 					   intervalSize,
 					   duration * 1000000000ULL,
+					   ui->spinIntervalSamplingPeriod->value() * 1000000ULL,
 					   ui->spinBufferBloadFactor->value(),
 					   ui->cmbBufferSize->currentText(),
 					   ui->cmbQoSBufferScaling->currentText(),
@@ -243,6 +245,14 @@ void MainWindow::on_btnQueueRemove_clicked()
 		}
 		ui->tableExperimentQueue->removeRow(i);
 	}
+
+	qreal totalDuration = 0;
+	foreach (RunParams p, experimentQueue) {
+		totalDuration += p.estimatedDuration * 1.0e-9 + 250;
+	}
+	emit logInformation(ui->txtExperimentQueue, QString("Queue duration: %1 seconds. ETA: %2").
+						arg(totalDuration).
+						arg(QDateTime::currentDateTime().addSecs(totalDuration).toString()));
 }
 
 void MainWindow::on_btnQueueStartAll_clicked()
@@ -325,7 +335,8 @@ void MainWindow::onBtnGenericFinished(QString testId)
 		emit logError(ui->txtBatch, reason);
 		emit logError(ui->txtExperimentQueue, QString("Experiment failed: %1").arg(reason));
 	} else {
-        if (ui->checkCapture->isChecked()) {
+		// TODO readd
+		if (0 && ui->checkCapture->isChecked()) {
 			safeLogClear(ui->txtCapture);
 			startRedirectingQDebug(ui->txtCapture);
             int packetCount, queueEventCount;
@@ -374,6 +385,8 @@ void MainWindow::on_checkCapture_toggled(bool)
 {
 	ui->spinCapturePacketCount->setEnabled(ui->checkCapture->isChecked());
 	ui->spinCaptureEventCount->setEnabled(ui->checkCapture->isChecked());
+	ui->spinCaptureSamplingPeriod->setEnabled(ui->checkCapture->isChecked());
+	ui->txtCaptureMem->setEnabled(ui->checkCapture->isChecked());
 }
 
 void MainWindow::on_checkTcpReceiveWin_toggled(bool)

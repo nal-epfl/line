@@ -34,7 +34,7 @@
     <item>
      <widget class="QColoredTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="tabTopology">
        <attribute name="title">
@@ -506,11 +506,6 @@
                   <string>UDP (average bitrate)</string>
                  </property>
                 </item>
-                <item>
-                 <property name="text">
-                  <string>TCP Pavlos mix</string>
-                 </property>
-                </item>
                </widget>
               </item>
               <item>
@@ -657,8 +652,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1573</width>
-             <height>314</height>
+             <width>1600</width>
+             <height>315</height>
             </rect>
            </property>
            <property name="sizePolicy">
@@ -790,9 +785,6 @@
                </item>
                <item>
                 <widget class="QLineEdit" name="txtGenericTimeout">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -800,7 +792,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>60s</string>
+                  <string>30s</string>
                  </property>
                 </widget>
                </item>
@@ -833,38 +825,10 @@ For performance reasons, the number of packets that can be captured is limited b
                  <property name="text">
                   <string>Capture traffic</string>
                  </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QSpinBox" name="spinCapturePacketCount">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="toolTip">
-                  <string>The maximum number of unique packets</string>
-                 </property>
-                 <property name="suffix">
-                  <string> u.p.</string>
-                 </property>
-                 <property name="maximum">
-                  <number>99999999</number>
-                 </property>
-                 <property name="singleStep">
-                  <number>1000</number>
-                 </property>
-                 <property name="value">
-                  <number>50000</number>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="spinCaptureEventCount">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
                  <property name="toolTip">
                   <string>The maximum number of packets</string>
                  </property>
@@ -878,12 +842,53 @@ For performance reasons, the number of packets that can be captured is limited b
                   <number>1000</number>
                  </property>
                  <property name="value">
-                  <number>500000</number>
+                  <number>99999999</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinCaptureEventCount">
+                 <property name="toolTip">
+                  <string>The maximum number of queuing events</string>
+                 </property>
+                 <property name="suffix">
+                  <string> e.</string>
+                 </property>
+                 <property name="maximum">
+                  <number>999999999</number>
+                 </property>
+                 <property name="singleStep">
+                  <number>1000</number>
+                 </property>
+                 <property name="value">
+                  <number>299999999</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinCaptureSamplingPeriod">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The sampling period for packet capture (1 packet is captured every x ms for each path). Use 0 to capture all packets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="suffix">
+                  <string> ms</string>
+                 </property>
+                 <property name="maximum">
+                  <number>999999999</number>
+                 </property>
+                 <property name="singleStep">
+                  <number>1000</number>
+                 </property>
+                 <property name="value">
+                  <number>10</number>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="txtCaptureMem">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="text">
                   <string/>
                  </property>
@@ -954,6 +959,9 @@ For performance reasons, the number of packets that can be captured is limited b
                   </item>
                   <item>
                    <widget class="QCheckBox" name="checkFlowIntervalMeasurements">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="text">
                      <string>Flow interval measurements</string>
                     </property>
@@ -978,7 +986,33 @@ For performance reasons, the number of packets that can be captured is limited b
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In order to compute the probability of congestion for paths/links, we divide time into intervals of this size, and we use packet counters for each interval.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;This is unrelated to the &amp;quot;Timelines&amp;quot; shown in the Results tab, for which data is sampled every second.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
-                     <string>100ms</string>
+                     <string>5s</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>Sampling:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinIntervalSamplingPeriod">
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The sampling period for interval measurements (1 packet is sampled every x ms for each path/flow). Use 0 to sample all packets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="suffix">
+                     <string> ms</string>
+                    </property>
+                    <property name="maximum">
+                     <number>999999999</number>
+                    </property>
+                    <property name="singleStep">
+                     <number>1000</number>
+                    </property>
+                    <property name="value">
+                     <number>50</number>
                     </property>
                    </widget>
                   </item>
@@ -1063,11 +1097,14 @@ For performance reasons, the number of packets that can be captured is limited b
                   </property>
                   <item>
                    <widget class="QCheckBox" name="checkSampleTimelinesEverywhere">
+                    <property name="enabled">
+                     <bool>true</bool>
+                    </property>
                     <property name="text">
-                     <string>Take samples for all links at the specified interval size</string>
+                     <string>Take samples for all links/paths at the specified interval size</string>
                     </property>
                     <property name="checked">
-                     <bool>true</bool>
+                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>
@@ -1760,6 +1797,10 @@ For performance reasons, the number of packets that can be captured is limited b
         </item>
         <item>
          <widget class="QPlainTextEdit" name="txtBatch">
+          <property name="styleSheet">
+           <string notr="true">background-color: #111;
+color: white;</string>
+          </property>
           <property name="maximumBlockCount">
            <number>10000</number>
           </property>
@@ -1801,6 +1842,9 @@ For performance reasons, the number of packets that can be captured is limited b
              <property name="textFormat">
               <enum>Qt::PlainText</enum>
              </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
              <property name="textInteractionFlags">
               <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
              </property>
@@ -1838,6 +1882,30 @@ For performance reasons, the number of packets that can be captured is limited b
             </widget>
            </item>
            <item>
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Paths:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="txtResultsInterestingPaths">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a comma separated list of link indices (numbers) and press Enter. Alternatively, enter the text &amp;quot;all&amp;quot; to display the timelines for all links.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>1</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnResultsSavePlots">
+             <property name="text">
+              <string>Save all plots</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="horizontalSpacer_17">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -1863,8 +1931,8 @@ For performance reasons, the number of packets that can be captured is limited b
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1571</width>
-             <height>705</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13"/>

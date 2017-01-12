@@ -485,8 +485,7 @@ NetGraphSceneConnection *NetGraphScene::addConnection(int index, NetGraphSceneNo
 															 netGraph->connections[index].dest,
 															 index,
 															 netGraph->connections[index].trafficClass,
-															 netGraph->connections[index].onOff ||
-															 netGraph->connections[index].basicType == "UDP-CBR",
+															 netGraph->connections[index].onOff,
                                                              root, this);
 	c->setFastMode(fastMode);
 	c->setStartPoint(start->pos());
@@ -576,11 +575,12 @@ void NetGraphScene::nodeMousePressed(QGraphicsSceneMouseEvent *mouseEvent, NetGr
 		editMode = InsertConnectionStart;
 		startNode->setSel(false);
 		node->ungrabMouse();
-		addConnection(getNewConnection()->startIndex, getNewConnection()->endIndex, startNode, node);
-        emit graphChanged();
+		for (int i = 0; i < connectionCount; i++)
+			addConnection(getNewConnection()->startIndex, getNewConnection()->endIndex, startNode, node);
 		getNewConnection()->startIndex = getNewConnection()->endIndex = 0;
 		getNewConnection()->start = getNewConnection()->end = NULL;
 		getNewConnection()->setVisibility(false);
+		emit graphChanged();
 		startNode = 0;
 	}
 }
@@ -981,8 +981,11 @@ void NetGraphScene::hostTrafficFlagsChanged(bool web, bool vvoip, bool p2p, bool
 void NetGraphScene::connectionTypeChanged(QString val)
 {
 	connectionType = val;
-	if (!enabled)
-        return;
+}
+
+void NetGraphScene::connectionNumberChanged(int val)
+{
+	connectionCount = val;
 }
 
 void NetGraphScene::setFastMode(bool valAuto, bool valMode)

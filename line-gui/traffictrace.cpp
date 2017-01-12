@@ -2,7 +2,9 @@
 
 #include <stdint.h>
 
+#include "../tomo/fastpcap.h"
 #include "../tomo/pcap-qt.h"
+#include "compresseddevice.h"
 
 QDataStream& operator<<(QDataStream& s, const TrafficTracePacket& d)
 {
@@ -55,10 +57,10 @@ bool TrafficTrace::loadFromPcap()
 		return false;
 	}
 
-	int numPackets = 0;
+	qint64 numPackets = 0;
 	// First pass: get the number of packets
 	{
-		PcapReader pcapReader(fileName);
+		FastPcapReader pcapReader(fileName);
 
 		while (pcapReader.isOk() && !pcapReader.atEnd()) {
 			PcapPacketHeader packetHeader;
@@ -73,7 +75,7 @@ bool TrafficTrace::loadFromPcap()
 
 	packets.reserve(numPackets);
 
-	PcapReader pcapReader(fileName);
+	FastPcapReader pcapReader(fileName);
 
 	quint64 tsStart = 0;
 	while (pcapReader.isOk() && !pcapReader.atEnd()) {
@@ -244,7 +246,13 @@ bool TrafficTraceRecord::save(QString fileName)
 		return false;
 	}
 
-	QDataStream out(&file);
+	CompressedDevice device(&file);
+	if (!device.open(QIODevice::WriteOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+		return false;
+	}
+
+	QDataStream out(&device);
 	out.setVersion(QDataStream::Qt_4_0);
 
 	out << *this;
@@ -264,7 +272,13 @@ bool TrafficTraceRecord::load(QString fileName)
 		return false;
 	}
 
-	QDataStream in(&file);
+	CompressedDevice device(&file);
+	if (!device.open(QIODevice::ReadOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+		return false;
+	}
+
+	QDataStream in(&device);
 	in.setVersion(QDataStream::Qt_4_0);
 
 	in >> *this;
@@ -393,5 +407,112 @@ bool TrafficTraceRecord::rawLoad(const char *fileName)
 	}
 
 	fclose(f);
+	return true;
+}
+
+bool TrafficTraceRecord::dumpMatlabText(QString fileNamePrefix, bool lossesOnly)
+{
+	if (!lossesOnly) {
+		QFile file(fileNamePrefix + "-traceIndex.txt");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+			return false;
+		}
+
+		QTextStream out(&file);
+		for (int i = 0; i < events.count(); i++) {
+			out << events[i].traceIndex << "\n";
+		}
+		out.flush();
+		if (out.status() != QTextStream::Ok)
+			return false;
+		if (!file.flush())
+			return false;
+	}
+	if (1) {
+		QFile file(fileNamePrefix + "-packetIndex.txt");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+			return false;
+		}
+
+		QTextStream out(&file);
+		for (int i = 0; i < events.count(); i++) {
+			out << events[i].packetIndex << "\n";
+		}
+		out.flush();
+		if (out.status() != QTextStream::Ok)
+			return false;
+		if (!file.flush())
+			return false;
+	}
+	if (!lossesOnly) {
+		QFile file(fileNamePrefix + "-injectionTime.txt");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+			return false;
+		}
+
+		QTextStream out(&file);
+		for (int i = 0; i < events.count(); i++) {
+			out << (events[i].injectionTime - tsStart) << "\n";
+		}
+		out.flush();
+		if (out.status() != QTextStream::Ok)
+			return false;
+		if (!file.flush())
+			return false;
+	}
+	if (!lossesOnly) {
+		QFile file(fileNamePrefix + "-exitTime.txt");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+			return false;
+		}
+
+		QTextStream out(&file);
+		for (int i = 0; i < events.count(); i++) {
+			out << (events[i].exitTime > 0 ? events[i].exitTime - tsStart : 0) << "\n";
+		}
+		out.flush();
+		if (out.status() != QTextStream::Ok)
+			return false;
+		if (!file.flush())
+			return false;
+	}
+	if (1) {
+		QFile file(fileNamePrefix + "-exited.txt");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+			return false;
+		}
+
+		QTextStream out(&file);
+		for (int i = 0; i < events.count(); i++) {
+			out << (events[i].exitTime > 0 ? 1 : 0) << "\n";
+		}
+		out.flush();
+		if (out.status() != QTextStream::Ok)
+			return false;
+		if (!file.flush())
+			return false;
+	}
+	if (!lossesOnly) {
+		QFile file(fileNamePrefix + "-theoreticalDelay.txt");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+			return false;
+		}
+
+		QTextStream out(&file);
+		for (int i = 0; i < events.count(); i++) {
+			out << events[i].theoreticalDelay << "\n";
+		}
+		out.flush();
+		if (out.status() != QTextStream::Ok)
+			return false;
+		if (!file.flush())
+			return false;
+	}
 	return true;
 }

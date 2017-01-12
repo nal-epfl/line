@@ -64,6 +64,7 @@ public:
     bool save(QString fileName);
     bool load(QString fileName);
 	bool rawLoad(const char *fileName);
+	bool dumpMatlabText(QString fileNamePrefix, bool lossesOnly);
 };
 
 QDataStream& operator>>(QDataStream& s, TrafficTraceRecord& d);

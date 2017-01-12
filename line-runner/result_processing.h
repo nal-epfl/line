@@ -21,17 +21,11 @@
 
 #include <QtCore>
 
-#ifdef HAVE_RESULT_PROCESSING
+#include "netgraph.h"
+#include "graph_types.h"
+#include "intervalmeasurements.h"
+#include "end_to_end_measurements.h"
+#include "erroranalysisdata.h"
 
-bool processResults(QStringList params);
-
-#else
-
-inline bool processResults(QStringList params) {
-    Q_UNUSED(params);
-    return true;
-}
-
-#endif
 
 #endif // RESULT_PROCESSING_H

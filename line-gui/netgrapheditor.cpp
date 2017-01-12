@@ -118,6 +118,7 @@ NetGraphEditor::NetGraphEditor(QWidget *parent) :
     on_spinConnectionTrafficClass_valueChanged(ui->spinConnectionTrafficClass->value());
     on_checkConnectionOnOff_toggled(ui->checkConnectionOnOff->isChecked());
 	on_cmbConnectionTypeBase_currentIndexChanged(ui->cmbConnectionTypeBase->currentText());
+	on_spinConnectionMultiple_valueChanged(ui->spinConnectionMultiple->value());
 
 	on_checkHideEdges_toggled(ui->checkHideEdges->isChecked());
 	on_checkUnusedHidden_toggled(ui->checkUnusedHidden->isChecked());
@@ -126,6 +127,9 @@ NetGraphEditor::NetGraphEditor(QWidget *parent) :
 	on_checkDomains_toggled(ui->checkDomains->isChecked());
 	on_spinEdgeQueues_valueChanged(ui->spinEdgeQueues->value());
 	on_spinEdgePolicers_valueChanged(ui->spinEdgePolicers->value());
+
+	on_checkRandomSpeed_toggled(ui->checkRandomSpeed->isChecked());
+	on_checkRandomDelay_toggled(ui->checkRandomDelay->isChecked());
 
 	resetScene();
 }
@@ -934,6 +938,11 @@ void NetGraphEditor::on_spinOffDurationMin_valueChanged(double)
 }
 
 void NetGraphEditor::on_spinOffDurationMax_valueChanged(double)
+{
+	updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_cmbConnectionImplementation_currentIndexChanged(int)
 {
 	updateTxtConnectionType();
 }
@@ -1832,6 +1841,69 @@ void NetGraphEditor::on_btnTCPDashStreamingPeriod_clicked()
     reloadScene();
 }
 
+void NetGraphEditor::on_btnUdpAdjustPoisson_clicked()
+{
+	foreach (NetGraphConnection c, graph()->connections) {
+		if (!ui->checkAdjustClass0->isChecked() &&
+			c.trafficClass == 0)
+			continue;
+		if (!ui->checkAdjustClass1->isChecked() &&
+			c.trafficClass == 1)
+			continue;
+		if (c.basicType == "UDP-CBR") {
+			graph()->connections[c.index].poisson = ui->checkUdpAdjustPoisson->isChecked();
+			graph()->connections[c.index].setTypeFromParams();
+		}
+	}
+	setModified();
+	reloadScene();
+}
+
+void NetGraphEditor::on_btnUdpAdjustRate_clicked()
+{
+	foreach (NetGraphConnection c, graph()->connections) {
+		if (!ui->checkAdjustClass0->isChecked() &&
+			c.trafficClass == 0)
+			continue;
+		if (!ui->checkAdjustClass1->isChecked() &&
+			c.trafficClass == 1)
+			continue;
+		if (c.basicType == "UDP-CBR") {
+			graph()->connections[c.index].rate_Mbps = ui->spinUdpAdjustRate->value();
+			graph()->connections[c.index].setTypeFromParams();
+		}
+	}
+	setModified();
+	reloadScene();
+}
+
+void NetGraphEditor::on_btnAdjustConnectionImplementation_clicked()
+{
+	foreach (NetGraphConnection c, graph()->connections) {
+		if (!ui->checkAdjustClass0->isChecked() &&
+			c.trafficClass == 0)
+			continue;
+		if (!ui->checkAdjustClass1->isChecked() &&
+			c.trafficClass == 1)
+			continue;
+		QString implementationText = ui->cmbAdjustConnectionImplementation->currentText();
+		NetGraphConnection::Implementation implementation = NetGraphConnection::Libev;
+		if (implementationText == "libev") {
+			implementation = NetGraphConnection::Libev;
+		} else if (implementationText =="iperf2") {
+			implementation = NetGraphConnection::Iperf2;
+		} else if (implementationText == "iperf3") {
+			implementation = NetGraphConnection::Iperf3;
+		} else {
+			Q_ASSERT_FORCE(false);
+		}
+		graph()->connections[c.index].implementation = implementation;
+		graph()->connections[c.index].setTypeFromParams();
+	}
+	setModified();
+	reloadScene();
+}
+
 void NetGraphEditor::on_cmbConnectionTypeBase_currentIndexChanged(const QString &)
 {
     ui->boxTCPParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP");
@@ -1900,6 +1972,12 @@ void NetGraphEditor::updateTxtConnectionType()
 									   .arg(ui->txtConnectionType->text())
 									   .arg(ui->spinConnectionMultiplier->value()));
 	}
+
+	if (ui->cmbConnectionImplementation->currentText() != "libev") {
+		ui->txtConnectionType->setText(QString("%1 %2")
+									   .arg(ui->txtConnectionType->text())
+									   .arg(ui->cmbConnectionImplementation->currentText()));
+	}
 }
 
 void NetGraphEditor::on_cmbTcpCc_currentIndexChanged(const QString &)
@@ -1915,6 +1993,11 @@ void NetGraphEditor::on_cmbTcpParetoCc_currentIndexChanged(const QString &)
 void NetGraphEditor::on_spinConnectionMultiplier_valueChanged(int)
 {
 	updateTxtConnectionType();
+}
+
+void NetGraphEditor::on_spinConnectionMultiple_valueChanged(int arg1)
+{
+	scene->connectionNumberChanged(arg1);
 }
 
 void NetGraphEditor::on_spinPoissonRate_valueChanged(double )
@@ -2229,6 +2312,9 @@ void NetGraphEditor::updateTCPPoissonParetoSimText()
 	}
 	if (debugTimeline) qDebug() << "activeFlowsTimeline" << activeFlowsTimeline;
 
+	if (flowSize.isEmpty())
+		return;
+
 	qreal minSize = flowSize.first();
 	foreach (qreal value, flowSize) {
 		minSize = qMin(minSize, value);
@@ -2428,6 +2514,11 @@ void NetGraphEditor::on_spinTestTCPPoissonParetoConTime_valueChanged(double )
 
 void NetGraphEditor::on_btnEditBatchLinks_clicked()
 {
+	QHash<QInt32Pair, qint32> nodes2link;
+	foreach (NetGraphEdge e, graph()->edges) {
+		nodes2link[QInt32Pair(e.source, e.dest)] = e.index;
+	}
+
 	foreach (NetGraphEdge e, graph()->edges) {
 		bool internalLink = graph()->nodes[e.source].nodeType != NETGRAPH_NODE_HOST &&
 																 graph()->nodes[e.dest].nodeType != NETGRAPH_NODE_HOST;
@@ -2435,21 +2526,34 @@ void NetGraphEditor::on_btnEditBatchLinks_clicked()
 			continue;
 		if (!internalLink && !ui->spinSetPropGatewayLinks->isChecked())
 			continue;
-		qreal bwMbps = randInt(ui->spinRandomSpeedMin->value(), ui->spinRandomSpeedMax->value());
-		qreal step = 1.0;
-		if (ui->spinRandomSpeedMax->value() - ui->spinRandomSpeedMin->value() >= 50) {
-			step = 10.0;
-		} else if (ui->spinRandomSpeedMax->value() - ui->spinRandomSpeedMin->value() >= 20) {
-			step = 5.0;
+		if (ui->checkRandomSpeed->isChecked()) {
+			qreal bwMbps = randInt(ui->spinRandomSpeedMin->value(), ui->spinRandomSpeedMax->value());
+			qreal step = 1.0;
+			if (ui->spinRandomSpeedMax->value() - ui->spinRandomSpeedMin->value() >= 50) {
+				step = 10.0;
+			} else if (ui->spinRandomSpeedMax->value() - ui->spinRandomSpeedMin->value() >= 20) {
+				step = 5.0;
+			}
+			if (step > 1) {
+				bwMbps = round(bwMbps / step) * step;
+				bwMbps = qMax(bwMbps, ui->spinRandomSpeedMin->value());
+				bwMbps = qMin(bwMbps, ui->spinRandomSpeedMax->value());
+			}
+			graph()->edges[e.index].bandwidth = bwMbps * 1000.0 / 8.0;
+			if (nodes2link.contains(QInt32Pair(e.dest, e.source))) {
+				graph()->edges[nodes2link[QInt32Pair(e.dest, e.source)]].bandwidth = graph()->edges[e.index].bandwidth;
+			}
 		}
-		if (step > 1) {
-			bwMbps = round(bwMbps / step) * step;
-			bwMbps = qMax(bwMbps, ui->spinRandomSpeedMin->value());
-			bwMbps = qMin(bwMbps, ui->spinRandomSpeedMax->value());
+		if (ui->checkRandomDelay->isChecked()) {
+			graph()->edges[e.index].delay_ms = randInt(ui->spinRandomDelayMin->value(), ui->spinRandomDelayMax->value());
+			if (nodes2link.contains(QInt32Pair(e.dest, e.source))) {
+				graph()->edges[nodes2link[QInt32Pair(e.dest, e.source)]].delay_ms = graph()->edges[e.index].delay_ms;
+			}
 		}
-		graph()->edges[e.index].bandwidth = bwMbps * 1000.0 / 8.0;
-		graph()->edges[e.index].delay_ms = randInt(ui->spinRandomDelayMin->value(), ui->spinRandomDelayMax->value());
 		graph()->edges[e.index].queueLength = NetGraph::optimalQueueLength(graph()->edges[e.index].bandwidth, graph()->edges[e.index].delay_ms);
+		if (nodes2link.contains(QInt32Pair(e.dest, e.source))) {
+			graph()->edges[nodes2link[QInt32Pair(e.dest, e.source)]].queueLength = graph()->edges[e.index].queueLength;
+		}
 	}
 	setModified();
 	reloadScene();
@@ -2765,3 +2869,17 @@ void NetGraphEditor::on_btnClearTraces_clicked()
 	setModified();
 	reloadScene();
 }
+
+void NetGraphEditor::on_checkRandomSpeed_toggled(bool)
+{
+	ui->spinRandomSpeedMin->setEnabled(ui->checkRandomSpeed->isChecked());
+	ui->spinRandomSpeedMax->setEnabled(ui->checkRandomSpeed->isChecked());
+}
+
+void NetGraphEditor::on_checkRandomDelay_toggled(bool)
+{
+	ui->spinRandomDelayMin->setEnabled(ui->checkRandomDelay->isChecked());
+	ui->spinRandomDelayMax->setEnabled(ui->checkRandomDelay->isChecked());
+}
+
+

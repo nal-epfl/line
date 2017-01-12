@@ -9,12 +9,14 @@
 }
 system(cd $$PWD/..; [ ! -f remote_config.h ] || test remote-config.sh -nt remote_config.h):system(cd $$PWD/..; /bin/sh remote-config.sh ; touch line-gui/line-gui.pro)
 
+DEFINES += \'SRCDIR=\"$$_PRO_FILE_PWD_\"\'
+
 QT += core gui xml svg opengl network testlib
 
 TARGET = line-gui
 TEMPLATE = app
 
-LIBS += -lglpk -llzma -lunwind -lX11 -lz
+LIBS += -lglpk -llzma -lunwind -lX11 -lpcap
 
 QMAKE_CFLAGS += -std=gnu99 -fno-strict-overflow -fno-strict-aliasing -Wno-unused-local-typedefs -gdwarf-2
 QMAKE_CXXFLAGS += -std=c++11 -fno-strict-overflow -fno-strict-aliasing -Wno-unused-local-typedefs -gdwarf-2
@@ -31,6 +33,10 @@ QMAKE_LFLAGS += -fPIE -pie -rdynamic
 QMAKE_CFLAGS += -Wl,-z,relro,-z,now
 QMAKE_CXXFLAGS += -Wl,-z,relro,-z,now
 QMAKE_LFLAGS += -Wl,-z,relro,-z,now
+
+#QMAKE_CFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
+#QMAKE_CXXFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
+#QMAKE_LFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
 
 exists( /usr/include/glpk ) {
 	INCLUDEPATH += /usr/include/glpk
@@ -117,7 +123,15 @@ SOURCES += main.cpp\
     ../util/bitarray.cpp \
     traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
-    ../util/tinyhistogram.cpp
+    ../util/tinyhistogram.cpp \
+	../line-runner/result_processing.cpp \
+    customcontrols.cpp \
+    customcontrols_qos.cpp \
+    ../util/json.cpp \
+    ../line-gui/end_to_end_measurements.cpp \
+    ../util/compresseddevice.cpp \
+    ../tomo/fastpcap.cpp \
+    erroranalysisdata.cpp
 
 HEADERS  += mainwindow.h \
     netgraph.h \
@@ -175,22 +189,24 @@ HEADERS  += mainwindow.h \
     ../util/ovector.h \
     ../util/bitarray.h \
     traffictrace.h \
-    ../util/tinyhistogram.h
+    ../util/tinyhistogram.h \
+    customcontrols.h \
+    ../util/json.h \
+    ../line-gui/end_to_end_measurements.h \
+    ../util/compresseddevice.h \
+    ../tomo/fastpcap.h \
+    ../tomo/pcap-common.h \
+    erroranalysisdata.h
 
 FORMS    += mainwindow.ui \
     ../util/qswiftprogressdialog.ui \
     netgrapheditor.ui \
-    formcoverage.ui
-
-exists(customcontrols.h) {
-    HEADERS += customcontrols.h
-    SOURCES += customcontrols.cpp customcontrols_*.cpp
-    FORMS += customcontrols.ui
-    DEFINES += HAVE_CUSTOM_CONTROLS
-}
+    formcoverage.ui \
+    customcontrols.ui
 
 INCLUDEPATH += ../util/
 INCLUDEPATH += ../line-runner/
+INCLUDEPATH += ../tomo/
 INCLUDEPATH += /usr/include/glpk
 
 OTHER_FILES += \

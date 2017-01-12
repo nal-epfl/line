@@ -676,7 +676,6 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 	p->theoretical_delay += ts_exit - ts_now;
 
 	p->ts_expected_exit = ts_exit;
-	p->queue_id = edgeIndex;
 	if (queuedIndex >= 0) {
 		if (queued_packets[queuedIndex].recordedQueuedPacketDataIndex >= 0) {
 			// Update recorded data
@@ -789,6 +788,8 @@ stats:
 
 bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 {
+	p->queue_id = this->index;
+
 	qint32 policerIndex = qMin(policerCount - 1, qMax(0, p->traffic_class));
 	qint32 queueIndex = qMin(queueCount - 1, qMax(0, p->traffic_class));
 	bool accepted = policers[policerIndex].filter(p, ts_now, !hasPolicing);
@@ -814,8 +815,10 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		}
 	}
 
-	if (!queued)
+	if (!queued) {
 		ts_exit = ts_now;
+		p->ts_expected_exit = ts_now;
+	}
 
 	if (!p->injected) {
 		if (pathIntervalMeasurements)

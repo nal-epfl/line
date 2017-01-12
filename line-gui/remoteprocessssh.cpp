@@ -439,6 +439,7 @@ bool RemoteProcessSsh::downloadFromRemote(QString source, QString target)
 	QString command = "scp";
 	QStringList args = QStringList()
 			<< "-C"
+			<< "-r"
 			<< "-P" << port
 			<< QString("%1@%2:%3").arg(user).arg(host).arg(source)
 			<< target;

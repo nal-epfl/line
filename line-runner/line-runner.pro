@@ -9,6 +9,8 @@
 }
 system(cd $$PWD/..; test remote-config.sh -nt remote_config.h):system(cd $$PWD/..; /bin/sh remote-config.sh ; touch line-gui/line-gui.pro)
 
+DEFINES += \'SRCDIR=\"$$_PRO_FILE_PWD_/..\"\'
+
 QT += core xml network
 QT -= gui
 
@@ -40,7 +42,8 @@ gitinfobundle.target = gitinfo
 gitinfobundle.commands = cd .. ; \
                          git status 2>&1 1> git-status.txt ; \
                          git log --pretty=format:\'%h %an %ae %s (%ci) %d%\' -n 1  2>&1 1> git-log.txt ; \
-                         git diff 2>&1 1> git-diff.txt
+						 git diff 2>&1 1> git-diff.txt ; \
+						 touch util/gitinfo.cpp
 
 gitinfobundle.depends =
 QMAKE_EXTRA_TARGETS += gitinfobundle
@@ -55,7 +58,6 @@ SOURCES += main.cpp \
     ../line-gui/netgraphconnection.cpp \
     ../line-gui/netgraphas.cpp \
     ../line-gui/netgraph.cpp \
-    ../line-gui/line-record_processor.cpp \
     ../line-gui/line-record.cpp \
     ../line-gui/intervalmeasurements.cpp \
     ../line-gui/convexhull.cpp \
@@ -77,7 +79,10 @@ SOURCES += main.cpp \
     ../line-gui/traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
     ../util/tinyhistogram.cpp \
-    ../util/gitinfo.cpp
+    ../util/gitinfo.cpp \
+    ../util/json.cpp \
+    ../util/compresseddevice.cpp \
+    ../line-gui/end_to_end_measurements.cpp
 
 HEADERS += \
     ../line-gui/netgraph.h \
@@ -116,7 +121,10 @@ HEADERS += \
     ../tomo/pcap-qt.h \
     ../util/tinyhistogram.h \
     ../util/embed-file.h \
-    ../util/gitinfo.h
+    ../util/gitinfo.h \
+    ../util/json.h \
+    ../util/compresseddevice.h \
+    ../line-gui/end_to_end_measurements.h
 
 exists(result_processing.cpp) {
     SOURCES += result_processing.cpp

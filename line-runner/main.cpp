@@ -188,8 +188,6 @@ int main(int argc, char **argv) {
 	qDebug() << "Seed:" << seed;
 	srand(seed);
 
-	showGitInfo();
-
 	shiftCmdLineArg(argc, argv);
 
 	QString command;
@@ -202,9 +200,11 @@ int main(int argc, char **argv) {
 			QString arg = shiftCmdLineArg(argc, argv);
 
 			if (arg == "--deploy") {
+				showGitInfo();
 				command = arg;
 				paramsFileName = shiftCmdLineArg(argc, argv, command);
 			} else if (arg == "--run") {
+				showGitInfo();
 				command = arg;
 				paramsFileName = shiftCmdLineArg(argc, argv, command);
 			} else if (arg == "--path-pairs") {
@@ -254,13 +254,6 @@ int main(int argc, char **argv) {
 
 		if (command == "--deploy") {
 			if (!deploy(paramsFileName)) {
-				exit(-1);
-			}
-			processedParams << paramsFileName;
-		}
-
-		if (command == "--export-matlab") {
-			if (!exportMatlab(paramsFileName)) {
 				exit(-1);
 			}
 			processedParams << paramsFileName;

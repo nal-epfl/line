@@ -416,7 +416,7 @@ bool deploy(NetGraph &g, const RunParams &params) {
 			}
 		}
 		foreach (QString host, QStringList() << params.clientHostName) {
-			description = "Turning on network card offloading";
+			description = "Turning off network card offloading";
 			command = "ssh";
 			args = QStringList() << "-f" << QString("root@%1").arg(host) <<
 									"-p" << clientPort <<
@@ -429,7 +429,7 @@ bool deploy(NetGraph &g, const RunParams &params) {
 									"  done ; "
 									"  for f in rx tx sg tso ufo gso gro rxvlan txvlan rxhash ; "
 									"  do "
-									"    ethtool --offload $i $f on ; "
+									"    ethtool --offload $i $f off ; "
 									"  done ; "
 									"done'";
 			if (!runCommand(command, args, description)) {
@@ -607,7 +607,7 @@ void generateHostDeploymentScript(NetGraph &g, bool realRouting) {
 					 "}");
 
 	lines << QString("# Flush the routing table - only the 10/8 routes\n"
-					 "foreach my $route (`netstat -rn | grep '^10.'`) {\n"
+					 "foreach my $route (`netstat -rn | grep '^1.'`) {\n"
 					 "my ($dest, $gate, $linuxmask) = split ' ',$route;\n"
 					 "command(\"/sbin/route delete -net $dest netmask $linuxmask\");\n"
 					 "}");
@@ -617,6 +617,12 @@ void generateHostDeploymentScript(NetGraph &g, bool realRouting) {
 	lines << QString("command \"sh -c 'echo 1 | tee /proc/sys/net/ipv4/conf/*/accept_local'\";");
 	lines << QString("command \"sh -c 'echo 0 | tee /proc/sys/net/ipv4/conf/*/accept_redirects'\";");
 	lines << QString("command \"sh -c 'echo 0 | tee /proc/sys/net/ipv4/conf/*/send_redirects'\";");
+
+	lines << QString("command \"sh -c 'for f in rx tx sg tso ufo gso gro lro rxvlan txvlan ntuple rxhash ; "
+										"  do "
+										"    ethtool --offload %1 \\$f off 1>/dev/null 2>/dev/null || true ; "
+										"    ethtool --pause %1 rx off tx off 1>/dev/null 2>/dev/null || true ; "
+										"  done '\";").arg(REMOTE_DEDICATED_IF_HOSTS);
 
 	lines << QString("#Set up interface aliases");
 
@@ -713,9 +719,9 @@ void generateHostDeploymentScript(NetGraph &g, bool realRouting) {
 	if (!realRouting) {
 		if (QString(REMOTE_DEDICATED_IP_HOSTS) != "127.0.0.1") {
 			QString gateway = REMOTE_DEDICATED_IP_ROUTER;
-			lines << QString("command \"sh -c '/sbin/route add -net 10.128.0.0/9 gw %1'\"").arg(gateway);
+			lines << QString("command \"sh -c '/sbin/route add -net 1.128.0.0/9 gw %1'\"").arg(gateway);
 		} else {
-			lines << QString("command \"sh -c '/sbin/route add -net 10.128.0.0/9 dev lo'\"");
+			lines << QString("command \"sh -c '/sbin/route add -net 1.128.0.0/9 dev lo'\"");
 		}
 	}
 

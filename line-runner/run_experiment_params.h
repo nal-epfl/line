@@ -29,10 +29,12 @@ public:
 					 bool capture = false,
 					 int capturePacketLimit = 0,
 					 int captureEventLimit = 0,
+					 quint64 captureSamplingPeriod = 0,
 					 bool takePathIntervalMeasurements = false,
 					 bool takeFlowIntervalMeasurements = false,
 					 quint64 intervalSize = 5000000000ULL,
 					 quint64 estimatedDuration = 10000000000ULL,
+					 quint64 intervalSamplingPeriod = 0,
 					 qreal bufferBloatFactor = 1.0,
 					 QString bufferSize = "large",
 					 QString qosBufferScaling = "none",
@@ -72,10 +74,12 @@ public:
 		  capture(capture),
 		  capturePacketLimit(capturePacketLimit),
 		  captureEventLimit(captureEventLimit),
+		  captureSamplingPeriod(captureSamplingPeriod),
 		  takePathIntervalMeasurements(takePathIntervalMeasurements),
 		  takeFlowIntervalMeasurements(takeFlowIntervalMeasurements),
 		  intervalSize(intervalSize),
 		  estimatedDuration (estimatedDuration),
+		  intervalSamplingPeriod(intervalSamplingPeriod),
 		  bufferBloatFactor(bufferBloatFactor),
 		  bufferSize(bufferSize),
 		  qosBufferScaling(qosBufferScaling),
@@ -117,10 +121,12 @@ public:
 	bool capture;
 	qint64 capturePacketLimit;
 	qint64 captureEventLimit;
+	quint64 captureSamplingPeriod;
 	bool takePathIntervalMeasurements;
 	bool takeFlowIntervalMeasurements;
 	quint64 intervalSize;
 	quint64 estimatedDuration;
+	quint64 intervalSamplingPeriod;
 	qreal bufferBloatFactor;
 	QString bufferSize;
 	QString qosBufferScaling;

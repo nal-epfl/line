@@ -47,6 +47,14 @@ inline QString sourceDir()
 	return SRCDIR;
 }
 
+template<typename Container>
+qreal average(Container list)
+{
+	if (list.isEmpty())
+		return 0;
+	return sum(list) / list.count();
+}
+
 template <class T>
 uint qHash(const QSet<T>& set) {
 	uint seed = 0;

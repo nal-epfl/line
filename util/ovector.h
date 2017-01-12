@@ -54,11 +54,7 @@
 #endif
 #include <vector>
 
-#include <QDataStream>
-#include <QDebug>
-#include <QtGlobal>
-#include <QList>
-#include <QVector>
+#include <QtCore>
 
 template <typename T, typename INT = qint32>
 class OVector
@@ -1132,5 +1128,565 @@ QDataStream& operator>>(QDataStream& s, OVector<T, INT>& v)
 // Runs a battery of tests to check if OVector is working correctly. Slow.
 void testOVector();
 #endif
+
+
+///////////////////////// LAZY LOADING FROM DISK //////////////////////////////
+
+template <typename T, typename INT = qint64>
+class OLazyVector
+{
+public:
+	// Constructs an empty vector.
+	inline OLazyVector()
+		: file_(nullptr),
+		  data_(nullptr),
+		  first_(0),
+		  count_(0),
+		  elementSize_(sizeof(T)),
+		  logProgressEnabled_(false)
+	{}
+
+	inline OLazyVector(QFile *file, INT elementSize = sizeof(T)) {
+		init(file, elementSize);
+	}
+
+	inline void init(QFile *file, INT elementSize = sizeof(T)) {
+		file_ = file;
+		elementSize_ = elementSize;
+		QDataStream stream(file_);
+		stream >> count_;
+#if 0
+		// Disabled because it appears to be slower than regular seeking, uses more memory and requires difficult
+		// handling of object copies
+		data_ = file_->map(file_->pos(), count_ * elementSize_);
+		if (!data_)
+			qWarning() << __FILE__ << __LINE__ << "OLazyVector: mmap failed";
+#else
+		data_ = nullptr;
+#endif
+		first_ = file->pos();
+		if (!maybeSeek(first_ + count_ * elementSize_)) {
+			qDebug() << "Read error!!!";
+		}
+	}
+
+	// Destroys the vector.
+	inline ~OLazyVector() {
+		if (data_) {
+			file_->unmap((uchar*)data_);
+			data_ = nullptr;
+		}
+	}
+
+	// Returns true if other is equal to this vector; otherwise returns false.
+	// Two vectors are considered equal if they contain the same values in the same order.
+	// This function requires the value type to have an implementation of operator==().
+	bool operator==(const OLazyVector<T, INT> &other) const {
+		if (this->count_ != other.count_)
+			return false;
+		for (INT i = first_; i < count_; i++) {
+			if ((*this)[i] != other[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// Returns true if other is not equal to this vector; otherwise returns false. See operator==().
+	inline bool operator!=(const OLazyVector<T, INT> &other) const {
+		return !(*this == other);
+	}
+
+	// Returns the number of elements in the vector.
+	inline INT size() const {
+		return count_;
+	}
+
+	// Returns the number of elements in the vector.
+	inline INT count() const {
+		return count_;
+	}
+
+	// Returns true if the vector has size 0; otherwise returns false.
+	inline bool isEmpty() const {
+		return count_ == 0;
+	}
+
+	// Returns the maximum number of elements that can be stored in the vector without forcing a reallocation.
+	// The sole purpose of this function is to provide a means of fine tuning QVector's memory usage. In general, you
+	// will rarely ever need to call this function.
+	// If you want to know how many elements are in the vector, call size().
+	inline INT capacity() const {
+		return count_;
+	}
+
+	void setProgressLogOn() {
+		logProgressEnabled_ = true;
+		logStartTime_ = QDateTime::currentMSecsSinceEpoch() / 1000.0;
+	}
+
+	void setProgressLogOff() {
+		logProgressEnabled_ = false;
+	}
+
+	inline void logProgress(INT i) const {
+		if (logProgressEnabled_) {
+			if (i % 1000000 == 0) {
+				qreal logTime = QDateTime::currentMSecsSinceEpoch() / 1000.0;
+				qreal progress = qreal(i) / (count() + 1.0e-9) + 1.0e-9;
+				qreal eta = (logTime - logStartTime_) / progress * (1 - progress);
+				qDebug() << "Progress:" << int(progress * 100) << "%" << "eta" << eta << "s";
+			}
+		}
+	}
+
+	// Returns the item at index position i in the vector.
+	// i must be a valid index position in the vector (i.e., 0 <= i < size()).
+	T at(INT i) const {
+		Q_ASSERT(i >= 0 && i < count_);
+		logProgress(i);
+		if (data_) {
+			QByteArray buffer((char*)data_ + i * elementSize_, elementSize_);
+			QDataStream stream(&buffer, QIODevice::ReadOnly);
+			T element;
+			stream >> element;
+			return element;
+		}
+		T element;
+		if (!maybeSeek(fileOffset(i))) {
+			qDebug() << "Read error!!!";
+		}
+		QDataStream stream(file_);
+		stream >> element;
+		return element;
+	}
+
+	// Returns the item at index position i.
+	// i must be a valid index position in the vector (i.e., 0 <= i < size()).
+	T operator[](INT i) const {
+		return at(i);
+	}
+
+	// Returns the index position of the first occurrence of value in the vector, searching forward from
+	// index position from (by default, 0).
+	// Returns -1 if no item matched.
+	// This function requires the value type to have an implementation of operator==().
+	INT indexOf(const T &value, INT from = 0) const {
+		for (INT i = from; i < count_; i++) {
+			if ((*this)[offset(i)] == value)
+				return i;
+		}
+		return -1;
+	}
+
+	// Returns the index position of the last occurrence of the value value in the vector, searching backward
+	// from index position from (by default, -1, signifying the last element).
+	// Returns -1 if no item matched.
+	// This function requires the value type to have an implementation of operator==().
+	INT lastIndexOf(const T &value, INT from = -1) const {
+		if (from < 0)
+			from = count_ - 1;
+		for (INT i = from; i >= 0; i--) {
+			if ((*this)[offset(i)] == value)
+				return i;
+		}
+		return -1;
+	}
+
+	// Returns true if the vector contains an occurrence of value; otherwise returns false.
+	// This function requires the value type to have an implementation of operator==().
+	bool contains(const T &value) const {
+		return indexOf(value) >= 0;
+	}
+
+	// Returns the number of occurrences of value in the vector.
+	// This function requires the value type to have an implementation of operator==().
+	INT count(const T &value) const {
+		INT result = 0;
+		for (INT i = 0; i < count_; i++) {
+			if ((*this)[offset(i)] == value)
+				result++;
+		}
+		return result;
+	}
+
+	// An STL-style non-const iterator.
+	class iterator {
+	public:
+		OLazyVector *v;
+		INT i;
+
+		typedef std::random_access_iterator_tag  iterator_category;
+		typedef qptrdiff difference_type;
+		typedef T value_type;
+		typedef T *pointer;
+		typedef T &reference;
+
+		inline iterator()
+			: v(nullptr),
+			  i(0) {}
+
+		inline iterator(OLazyVector *v, INT index)
+			: v(v),
+			  i(index) {}
+
+		inline iterator(const iterator &other)
+			: v(other.v),
+			  i(other.i) {}
+
+		inline T operator*() const {
+			return (*v)[i];
+		}
+
+		inline T operator[](INT j) const {
+			return (*v)[i + j];
+		}
+
+		inline bool operator==(const iterator &other) const {
+			return v == other.v && i == other.i;
+		}
+
+		inline bool operator!=(const iterator &other) const {
+			return !(*this == other);
+		}
+
+		inline bool operator<(const iterator& other) const {
+			return i < other.i;
+		}
+
+		inline bool operator<=(const iterator& other) const {
+			return i <= other.i;
+		}
+
+		inline bool operator>(const iterator& other) const {
+			return i > other.i;
+		}
+
+		inline bool operator>=(const iterator& other) const {
+			return i >= other.i;
+		}
+
+		inline iterator &operator++() {
+			++i;
+			return *this;
+		}
+
+		inline iterator operator++(int) {
+			iterator copy(*this);
+			++i;
+			return copy;
+		}
+
+		inline iterator &operator--() {
+			i--;
+			return *this;
+		}
+
+		inline iterator operator--(int) {
+			iterator copy(*this);
+			i--;
+			return copy;
+		}
+
+		inline iterator &operator+=(INT j) {
+			i += j;
+			return *this;
+		}
+
+		inline iterator &operator-=(INT j) {
+			i -= j;
+			return *this;
+		}
+
+		inline iterator operator+(INT j) const {
+			return iterator(v, i + j);
+		}
+
+		inline iterator operator-(INT j) const {
+			return iterator(v, i - j);
+		}
+
+		inline INT operator-(iterator j) const {
+			return i - j.i;
+		}
+	};
+	friend class iterator;
+
+	// An STL-style const iterator.
+	class const_iterator {
+	public:
+		const OLazyVector *v;
+		INT i;
+		typedef std::random_access_iterator_tag  iterator_category;
+		typedef qptrdiff difference_type;
+		typedef T value_type;
+		typedef const T *pointer;
+		typedef const T &reference;
+
+		inline const_iterator()
+			: v(nullptr),
+			  i(0) {}
+
+		inline const_iterator(const OLazyVector *v, INT index)
+			: v(v),
+			  i(index) {}
+
+		inline const_iterator(const const_iterator &other)
+			: v(other.v),
+			  i(other.i) {}
+
+		inline const_iterator(const iterator &other)
+			: v(other.v),
+			  i(other.i) {}
+
+		inline const T operator*() const {
+			return (*v)[i];
+		}
+
+		inline const T operator[](INT j) const {
+			return (*v)[i + j];
+		}
+
+		inline bool operator==(const const_iterator &other) const {
+			return v == other.v && i == other.i;
+		}
+
+		inline bool operator!=(const const_iterator &other) const {
+			return !(*this == other);
+		}
+
+		inline bool operator<(const const_iterator& other) const {
+			return i < other.i;
+		}
+
+		inline bool operator<=(const const_iterator& other) const {
+			return i <= other.i;
+		}
+
+		inline bool operator>(const const_iterator& other) const {
+			return i > other.i;
+		}
+
+		inline bool operator>=(const const_iterator& other) const {
+			return i >= other.i;
+		}
+
+		inline const_iterator &operator++() {
+			++i;
+			return *this;
+		}
+
+		inline const_iterator operator++(int) {
+			const_iterator n(*this);
+			++i;
+			return n;
+		}
+
+		inline const_iterator &operator--() {
+			i--;
+			return *this;
+		}
+
+		inline const_iterator operator--(int) {
+			const_iterator n(*this);
+			i--;
+			return n;
+		}
+
+		inline const_iterator &operator+=(INT j) {
+			i += j;
+			return *this;
+		}
+
+		inline const_iterator &operator-=(INT j) {
+			i -= j;
+			return *this;
+		}
+
+		inline const_iterator operator+(INT j) const {
+			return const_iterator(i+j);
+		}
+
+		inline const_iterator operator-(INT j) const {
+			return const_iterator(i-j);
+		}
+
+		inline INT operator-(const_iterator j) const {
+			return i - j.i;
+		}
+	};
+	friend class const_iterator;
+
+	// Returns an STL-style iterator pointing to the first element in the vector.
+	inline iterator begin() {
+		return iterator(this, 0);
+	}
+
+	// Returns an STL-style const iterator pointing to the first element in the vector.
+	inline const_iterator begin() const {
+		return const_iterator(this, 0);
+	}
+
+	// Returns an STL-style const iterator pointing to the first element in the vector.
+	inline const_iterator constBegin() const {
+		return begin();
+	}
+
+	// Returns an STL-style iterator pointing to the imaginary element after the last element in the vector.
+	inline iterator end() {
+		return iterator(this, count_);
+	}
+
+	// Returns an STL-style const iterator pointing to the imaginary element after the last element in the vector.
+	inline const_iterator end() const {
+		return const_iterator(this, count_);
+	}
+
+	// Returns an STL-style const iterator pointing to the imaginary element after the last element in the vector.
+	inline const_iterator constEnd() const {
+		return end();
+	}
+
+	// Returns the first item in the vector.
+	// The vector must not be empty.
+	inline T first() const {
+		Q_ASSERT(!isEmpty());
+		return (*this)[offset(0)];
+	}
+
+	// Returns the last item in the vector.
+	// The vector must not be empty.
+	inline T last() const {
+		Q_ASSERT(!isEmpty());
+		return (*this)[offset(count_ - 1)];
+	}
+
+	// Returns true if this vector is not empty and its first element is equal to value.
+	inline bool startsWith(const T &value) const {
+		return !isEmpty() && first() == value;
+	}
+
+	// Returns true if this vector is not empty and its last element is equal to value.
+	inline bool endsWith(const T &value) const {
+		return !isEmpty() && last() == value;
+	}
+
+	// Returns a vector whose elements are copied from this vector, starting at position pos.
+	// If length is -1 (the default), all elements after pos are copied; otherwise length elements
+	// (or all remaining elements if there are less than length elements) are copied.
+	OLazyVector<T, INT> mid(INT pos, INT length = -1) const {
+		if (length == -1)
+			length = count_;
+		OLazyVector<T, INT> other;
+		other.file_ = file_;
+		other.first_ = first_ + pos * elementSize_;
+		other.count_ = count_ - pos;
+		return other;
+	}
+
+	// Returns the value at index position i in the vector.
+	// If the index i is out of bounds, returns a default-constructed value.
+	T value(INT i) const {
+		return value(i, T());
+	}
+
+	// Returns the value at index position i in the vector.
+	// If the index i is out of bounds, returns a defaultValue.
+	T value(INT i, const T &defaultValue) const {
+		if (i < 0 || i >= count_)
+			return defaultValue;
+		return at(i);
+	}
+
+	// STL compatibility
+	typedef T value_type;
+	typedef value_type* pointer;
+	typedef const value_type* const_pointer;
+	typedef value_type& reference;
+	typedef const value_type& const_reference;
+	typedef qptrdiff difference_type;
+	typedef iterator Iterator;
+	typedef const_iterator ConstIterator;
+	typedef INT size_type;
+
+	// Returns true if the vector is empty.
+	inline bool empty() const {
+		return isEmpty();
+	}
+
+	// Returns the first element.
+	// The vector must not be empty.
+	inline T front() const {
+		Q_ASSERT(!isEmpty());
+		return (*this)[offset(0)];
+	}
+
+	// Returns a reference to the last element.
+	// The vector must not be empty.
+	inline T back() const {
+		return last();
+	}
+
+	// Returns a QVector containing the same elements as this vector.
+	QVector<T> toVector() const {
+		QVector<T> result;
+		for (INT i = 0; i < count_; i++) {
+			result.append((*this)[offset(i)]);
+		}
+		return result;
+	}
+
+	// Returns a QList containing the same elements as this vector.
+	QList<T> toList() const {
+		QList<T> result;
+		for (INT i = 0; i < count_; i++) {
+			result.append((*this)[offset(i)]);
+		}
+		return result;
+	}
+
+	// Returns an std::vector containing the same elements as this vector.
+	inline std::vector<T> toStdVector() const {
+		std::vector<T> tmp;
+		tmp.reserve(size());
+		qCopy(constBegin(), constEnd(), std::back_inserter(tmp));
+		return tmp;
+	}
+
+protected:
+	// File containing the data (or null).
+	QFile *file_;
+
+	uchar *data_;
+
+	// The index of the first element in file_.
+	INT first_;
+
+	// The number of elements.
+	INT count_;
+
+	INT elementSize_;
+
+	bool logProgressEnabled_;
+	qreal logStartTime_;
+
+	// Returns the index in the file_, given a logical index index.
+	// The index must be valid (no out of bounds access!).
+	INT offset(INT index) const {
+		Q_ASSERT(index >= 0 && index < count_);
+		return index;
+	}
+
+	INT fileOffset(INT index) const {
+		Q_ASSERT(index >= 0 && index < count_);
+		return first_ + index * elementSize_;
+	}
+
+	bool maybeSeek(INT pos) const {
+		if (file_->pos() == pos)
+			return true;
+		return file_->seek(pos);
+	}
+};
 
 #endif // OVECTOR_H

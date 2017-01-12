@@ -77,7 +77,7 @@ bool dumpRunParams(const RunParams &runParams,
 }
 
 QDataStream& operator<<(QDataStream& s, const RunParams& d) {
-	qint32 ver = 5;
+	qint32 ver = 7;
 	s << ver;
 
 	if (ver >= 1) {
@@ -133,6 +133,12 @@ QDataStream& operator<<(QDataStream& s, const RunParams& d) {
 	if (ver >= 5) {
 		s << d.takePathIntervalMeasurements;
 		s << d.takeFlowIntervalMeasurements;
+	}
+	if (ver >= 6) {
+		s << d.captureSamplingPeriod;
+	}
+	if (ver >= 7) {
+		s << d.intervalSamplingPeriod;
 	}
 
 	return s;
@@ -201,7 +207,17 @@ QDataStream& operator>>(QDataStream& s, RunParams& d) {
 		d.takePathIntervalMeasurements = true;
 		d.takeFlowIntervalMeasurements = true;
 	}
-	if (ver < 1 || ver > 5) {
+	if (ver >= 6) {
+		s >> d.captureSamplingPeriod;
+	} else {
+		d.captureSamplingPeriod = 0;
+	}
+	if (ver >= 7) {
+		s >> d.intervalSamplingPeriod;
+	} else {
+		d.intervalSamplingPeriod = 0;
+	}
+	if (ver < 1 || ver > 7) {
 		qDebug() << __FILE__ << __LINE__ << "Read error";
 		exit(-1);
 	}
@@ -215,10 +231,12 @@ QTextStream& operator<<(QTextStream& s, const RunParams& d) {
 	s << "capture = " << d.capture << endl;
 	s << "capturePacketLimit = " << d.capturePacketLimit << endl;
 	s << "captureEventLimit = " << d.captureEventLimit << endl;
+	s << "captureSamplingPeriod = " << d.captureSamplingPeriod << endl;
 	s << "takePathIntervalMeasurements = " << d.takePathIntervalMeasurements << endl;
 	s << "takeFlowIntervalMeasurements = " << d.takeFlowIntervalMeasurements << endl;
 	s << "intervalSize = " << d.intervalSize << endl;
 	s << "estimatedDuration = " << d.estimatedDuration << endl;
+	s << "intervalSamplingPeriod = " << d.intervalSamplingPeriod << endl;
 	s << "bufferBloatFactor = " << d.bufferBloatFactor << endl;
 	s << "bufferSize = " << d.bufferSize << endl;
 	s << "QoSBufferScaling = " << d.qosBufferScaling << endl;

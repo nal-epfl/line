@@ -106,14 +106,6 @@ bool runExperiment(QString paramsFileName) {
 		return false;
 	}
 
-	if (!exportMatlab(runParams.workingDir, runParams.graphName)) {
-		// return false;
-	}
-
-    if (!processResults(QStringList() << runParams.workingDir)) {
-		return false;
-	}
-
 	signal(SIGINT, SIG_DFL);
 	return true;
 }
@@ -134,7 +126,8 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 	}
 
 	if (runParams.fakeEmulation) {
-		return runSimulation(g, runParams);
+		qError() << "Simulations not implemented";
+		return false;
 	}
 
 	QList<QSharedPointer<RemoteProcessSsh> > sshHosts;
@@ -214,7 +207,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 	// clear leftover apps
 	qDebug() << QString("Clearing zombie apps...");
 	foreach (PointerSsh ssh, sshHosts) {
-        QString clearKey = ssh->startProcess("killall -9 line-traffic; killall -9 bash");
+		QString clearKey = ssh->startProcess("killall -9 line-traffic; killall -9 bash; killall -9 iperf; killall -9 iperf3; killall -9 flowtracker");
 		while (!mustStop && ssh->isProcessRunning(clearKey)) {}
 		QString output = ssh->readAllStdout(clearKey) + "\n" + ssh->readAllStderr(clearKey);
 		qDebug() << output;
@@ -226,9 +219,9 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 			QString netstatKey = ssh->startProcess("netstat", QStringList() << "-ntp");
 			while (!mustStop && ssh->isProcessRunning(netstatKey)) {}
 			QString output = ssh->readAllStdout(netstatKey) + "\n" + ssh->readAllStderr(netstatKey);
-			if (!output.contains(" 10.128."))
+			if (!output.contains(" 1.128."))
 				break;
-			qDebug() << QString("Found %1 leftover connections. Waiting...").arg(output.count(" 10.128."));
+			qDebug() << QString("Found %1 leftover connections. Waiting...").arg(output.count(" 1.128."));
 			sleep(5);
 		}
 	}
@@ -273,25 +266,25 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 				emulatorCmd = QString("LD_PRELOAD=/usr/lib/malloc_profile.so line-router %1.graph %2 %3 %4 %5 %6 %7 %8 %9 %10 %11")
 							  .arg(runParams.graphName)
 							  .arg(testId)
-							  .arg(runParams.capture ?
-									   QString("--record %1 %2")
-									   .arg(runParams.capturePacketLimit)
-									   .arg(runParams.captureEventLimit) :
-									   QString(""))
+							  .arg(runParams.capture
+								   ? QString("--record %1 %2 %3")
+									 .arg(runParams.capturePacketLimit)
+									 .arg(runParams.captureEventLimit)
+									 .arg(runParams.captureSamplingPeriod)
+								   : QString(""))
 							  .arg(runParams.takePathIntervalMeasurements ? "--take_path_interval_measurements" : "")
-							  .arg(runParams.takeFlowIntervalMeasurements ? "--take_flow_interval_measurements" : "")
 							  .arg(QString("--interval_size %1 --estimated_duration %2")
 								   .arg(runParams.intervalSize)
 								   .arg(runParams.estimatedDuration))
+							  .arg(QString("--interval_measurements_sampling_period %1")
+								   .arg(runParams.intervalSamplingPeriod))
 							  .arg(QString("--scale_buffers %1")
 								   .arg(runParams.bufferBloatFactor))
 							  .arg(QString("--qos_scale_buffers %1")
 								   .arg(runParams.qosBufferScaling))
 							  .arg(QString("--queuing_discipline %1")
                                    .arg(runParams.queuingDiscipline))
-                              .arg(runParams.flowTracking ?
-                                       QString("--track_flows") :
-									   QString(""))
+							  .arg(QString(""))
 							  .arg(QString("--init_done_file_path %1")
 								   .arg(initDoneFileName));
 			} else {
@@ -311,6 +304,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 			if (!ssh->isProcessRunning(allKeys[ssh.data()])) {
 				qError() << "Early abort: machine down";
 				allGood = false;
+				mustStop = true;
 				break;
 			}
 		}
@@ -329,33 +323,21 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 	}
 
 	if (!mustStop) {
-		// Start the recorders
-		foreach (PointerSsh ssh, sshAll) {
-			QString recorderCmd = QString("bash -c '"
-										  "cat /proc/net/line-reset; "
-										  "x=0; "
-										  "ttl=64; "
-										  "while true; "
-										  "do "
-										  "  (( x-- )) || { "
-										  "    x=4; "
-										  "	   echo \"$ttl\" > /proc/sys/net/ipv4/ip_default_ttl; "
-										  "    (( ttl++ )); "
-										  "	   (( ttl > 255 )) && ttl=64; "
-										  "	 }; "
-										  "  date +%s; "
-										  "  cat /proc/sys/net/ipv4/ip_default_ttl; "
-										  "  sleep 1; "
-										  "done"
-										  "'");
-			qDebug() << QString("Recorder command: %1").arg(recorderCmd);
-			allKeys[ssh.data()] = recorderKeys[ssh.data()] = ssh->startProcess(recorderCmd);
+		if (runParams.flowTracking) {
+			// Start the recorders
+			foreach (PointerSsh ssh, sshHosts) {
+				QString recorderCmd = QString("bash -c '"
+											  "cd %1 && flowtracker --root "
+											  "'").arg(testId);
+				qDebug() << QString("Recorder command: %1").arg(recorderCmd);
+				allKeys[ssh.data()] = recorderKeys[ssh.data()] = ssh->startProcess(recorderCmd);
+			}
 		}
 	}
 
 	// Wait
-	qDebug() << "Sleeping a bit so that the recorders can be calibrated...";
-	sleep(5);
+	qDebug() << "Sleeping a bit so that the recorders can initialize...";
+	sleep(1);
 
 	if (!mustStop) {
 		// Start the client server sockets
@@ -397,6 +379,7 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 					if (!ssh->isProcessRunning(allKeys[ssh.data()])) {
 						qError() << __FILE__ << __LINE__ << "Early abort: machine down";
 						allGood = false;
+						mustStop = true;
 						break;
 					}
 				}
@@ -429,8 +412,8 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 	}
 
 	// Stop the recorders
-	foreach (PointerSsh ssh, sshAll) {
-		if (!ssh->signalProcess(recorderKeys[ssh.data()], SIGUSR1)) {
+	foreach (PointerSsh ssh, sshHosts) {
+		if (!ssh->signalProcess(recorderKeys[ssh.data()], SIGINT)) {
 			qError() << QString("Error: %1 signal failed").arg(recorderKeys[ssh.data()]);
 		}
 	}
@@ -548,47 +531,12 @@ bool doGenericSimulation(NetGraph &g, const RunParams &runParams)
 
 	// Save recorder output
 	qDebug() << "Saving recorder output";
-	foreach (PointerSsh ssh, sshAll) {
-		QString recorderKey = recorderKeys[ssh.data()];
-		QString suffix = ssh->getHostname();
-		QString key = ssh->startProcess("cp", QStringList() <<
-										QString("%1.out").arg(recorderKey) <<
-										QString("%1/recorder-%2.out").arg(testId).arg(suffix));
-		if (!ssh->waitForFinished(key, -1))
-			qError() << QString("Error: could not copy recorder stdout");
-		key = ssh->startProcess("cp", QStringList() <<
-								QString("%1.err").arg(recorderKey) <<
-								QString("%1/recorder-%2.err").arg(testId).arg(suffix));
-		if (!ssh->waitForFinished(key, -1))
-			qError() << QString("Error: could not copy recorder stderr");
-
-		// Download
-		if (!ssh->downloadFromRemote(QString("%1/recorder-%2.out").arg(testId).arg(suffix), runParams.workingDir)) {
-			qError() << "Aborted.";
-		}
-		if (!ssh->downloadFromRemote(QString("%1/recorder-%2.err").arg(testId).arg(suffix), runParams.workingDir)) {
-			qError() << "Aborted.";
-		}
-	}
-
-	// Save line-rec data
-	foreach (PointerSsh ssh, sshAll) {
-		QString suffix = ssh->getHostname();
-
-		QString key = ssh->startProcess(QString("cat /proc/net/line-in > %1/line-in-%2").arg(testId).arg(suffix));
-		if (!ssh->waitForFinished(key, -1))
-			qError() << QString("Error: could not copy line-in");
-
-		key = ssh->startProcess(QString("cat /proc/net/line-out > %1/line-out-%2").arg(testId).arg(suffix));
-		if (!ssh->waitForFinished(key, -1))
-			qError() << QString("Error: could not copy line-out");
-
-		// Download
-		if (!ssh->downloadFromRemote(QString("%1/line-in-%2").arg(testId).arg(suffix), runParams.workingDir)) {
-			qError() << "Aborted.";
-		}
-		if (!ssh->downloadFromRemote(QString("%1/line-out-%2").arg(testId).arg(suffix), runParams.workingDir)) {
-			qError() << "Aborted.";
+	if (runParams.flowTracking) {
+		foreach (PointerSsh ssh, sshHosts) {
+			// Download
+			if (!ssh->downloadFromRemote(QString("%1/flowt*").arg(testId), runParams.workingDir)) {
+				qError() << "Aborted.";
+			}
 		}
 	}
 
@@ -671,6 +619,9 @@ bool readMachineData(QString fileName, QList<QList<qint64> > &data1s) {
 
 bool lineKernelRec2IntervalMeasurements(QString testId,
 										QList<QString> hosts) {
+	Q_UNUSED(testId);
+	Q_UNUSED(hosts);
+#if 0
 	// Network: A <-> B <-> C <-> D
 	// A hosts nodes (id from 0) 2, 4, 6, 8.
 	// D hosts nodes (id from 0) 3, 5, 7, 9.
@@ -766,5 +717,6 @@ bool lineKernelRec2IntervalMeasurements(QString testId,
 		qError() << "save";
 	}
 
+#endif
 	return true;
 }

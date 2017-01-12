@@ -16,8 +16,6 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include <QtGui>
-
 #include "line-record_processor.h"
 
 #include "line-record.h"
@@ -30,7 +28,6 @@
 #include "../util/bitarray.h"
 #include "intervalmeasurements.h"
 #include "result_processing.h"
-#include "../util/colortable.h"
 #include "../util/json.h"
 
 #define WRITE_PCAP 0

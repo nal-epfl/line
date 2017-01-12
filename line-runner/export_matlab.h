@@ -19,11 +19,4 @@
 #ifndef EXPORT_MATLAB_H
 #define EXPORT_MATLAB_H
 
-#include <QtCore>
-
-// graphName must not contain path or extension
-bool exportMatlab(QString resultsDir, QString graphName);
-
-bool exportMatlab(QString paramsFileName);
-
 #endif // EXPORT_MATLAB_H

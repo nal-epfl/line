@@ -38,9 +38,9 @@ extern "C" {
 #include "../malloc_profile/malloc_profile_wrapper.h"
 
 // masks from libipaddr.so
-#define NAT_SUBNET   htonl(0x0a000000)  /* 10.0.0.0/8 */
-#define NAT_MASK     htonl(0xff000000)  /* 10.0.0.0/8 */
-#define NAT_FOREIGN  htonl(0x00800000)  /* 0000 0000 . 1000 0000 . 0000 0000 . 0000 0000 which gives 10.128.0.0/9 */
+#define NAT_SUBNET   htonl(0x01000000)  /* 1.0.0.0/8 */
+#define NAT_MASK     htonl(0xff000000)  /* 1.0.0.0/8 */
+#define NAT_FOREIGN  htonl(0x00800000)  /* 0000 0000 . 1000 0000 . 0000 0000 . 0000 0000 which gives 1.128.0.0/9 */
 #define NAT_HOSTMASK 0x7FFFFF           /* 0000 0000 . 0111 1111 . 1111 1111 . 1111 1111 */
 
 class Packet {
@@ -76,11 +76,12 @@ public:
 		id = 0;
 		traffic_class = 0;
 		queue_id = -1;
-        connection_index = -1;
 		ts_expected_exit = 0;
 		dropped = false;
 		ecn_bit_set = false;
         injected = false;
+		recorded = false;
+		sampledForMeasurements = false;
 	}
 
 	void generateNewId() {
@@ -136,26 +137,32 @@ public:
 
 	// Current queue ID where the packet is buffered; -1 if not available
 	qint32 queue_id;
+	quint64 ts_enqueue;
 	// The time when the packet (the last byte) should reach the next link
 	quint64 ts_expected_exit;
-    // The index of the connection in the graph or -1 if not available
-    qint32 connection_index;
-    // The index of the link on which to inject the packet, defined only if injected == true
+	// The index of the link on which to inject the packet, defined only if injected == true
     qint32 injection_link_index;
 	// True if the packet is dropped, important if it happens after queuing (e.g. with drop-head)
 	bool dropped;
 	bool ecn_bit_set;
     bool injected;
+	// True if the packet is recorded
+	bool recorded;
+	// True if the packet is sampled for interval measurements
+	bool sampledForMeasurements;
 
     // Global counter used to generate unique packet IDs.
 	static quint64 next_packet_unique_id;
 };
 
+
 extern RecordedData *recordedData;
 extern bool takePathIntervalMeasurements;
-extern ExperimentIntervalMeasurements *pathIntervalMeasurements;
-extern bool takeFlowIntervalMeasurements;
-extern ExperimentIntervalMeasurements *flowIntervalMeasurements;
+extern ExperimentIntervalMeasurements *sampledPathIntervalMeasurements;
+extern ExperimentIntervalMeasurements *rawPathIntervalMeasurements;
+// If non-zero, a single packet is recoded per path every intervalMeasurementsSamplingPeriod nanoseconds.
+// If zero, all packets are recorded.
+extern quint64 intervalMeasurementsSamplingPeriod;
 extern SampledPathFlowEvents *sampledPathFlowEvents;
 extern TrafficTraceRecord *trafficTraceRecord;
 extern NetGraph *netGraph;

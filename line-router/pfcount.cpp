@@ -53,8 +53,8 @@
 #include <QtCore>
 
 #include "../remote_config.h"
-#include "../line-gui/intervalmeasurements.h"
 #include "util.h"
+#include "pconsumer.h"
 
 #define ALARM_SLEEP             1
 #define DEFAULT_SNAPLEN      1600
@@ -75,12 +75,12 @@ unsigned long long numPkts[MAX_NUM_THREADS] = { 0 }, numBytes[MAX_NUM_THREADS] =
 
 RecordedData *recordedData;
 bool takePathIntervalMeasurements;
-ExperimentIntervalMeasurements *pathIntervalMeasurements = NULL;
-bool takeFlowIntervalMeasurements;
-ExperimentIntervalMeasurements *flowIntervalMeasurements = NULL;
-SampledPathFlowEvents *sampledPathFlowEvents = NULL;
+ExperimentIntervalMeasurements *sampledPathIntervalMeasurements;
+ExperimentIntervalMeasurements *rawPathIntervalMeasurements;
+quint64 intervalMeasurementsSamplingPeriod;
+SampledPathFlowEvents *sampledPathFlowEvents;
 bool flowTracking;
-TrafficTraceRecord *trafficTraceRecord = NULL;
+TrafficTraceRecord *trafficTraceRecord;
 
 /* *************************************** */
 /*
@@ -752,7 +752,7 @@ int runPacketFilter(int argc, char **argv) {
 				memset(&rule, 0, sizeof(rule));
 
 				if (1) {
-					filter.src_host = ntohl(inet_addr("10.100.0.238"));
+					filter.src_host = ntohl(inet_addr("1.100.0.238"));
 
 #if  0
 					rule.rule_id = 5;
@@ -827,13 +827,13 @@ int runPacketFilter(int argc, char **argv) {
 	gQueuingDiscipline = QueuingDisciplineDropTail;
 	flowTracking = false;
 	takePathIntervalMeasurements = false;
-	takeFlowIntervalMeasurements = false;
-    trafficTraceRecord = new TrafficTraceRecord();
+	intervalMeasurementsSamplingPeriod = 0;
+	trafficTraceRecord = new TrafficTraceRecord();
 	initDoneFilePath = QString();
 
 	while (argc > 0) {
 		if (QString(argv[0]) == "--record") {
-			if (argc < 3) {
+			if (argc < 4) {
 				fprintf(stderr, "wrong args %s:%d\n", __FILE__, __LINE__);
 				qDebug() << __FILE__ << __LINE__;
 				exit(EXIT_FAILURE);
@@ -841,6 +841,8 @@ int runPacketFilter(int argc, char **argv) {
 			recordedData->recordPackets = true;
 			int recordPacketMaxCount = QString(argv[1]).toInt();
 			int recordPacketQueuedMaxCount = QString(argv[2]).toInt();
+			quint64 recordPacketSamplingPeriod = QString(argv[3]).toULongLong();
+			argc--, argv++;
 			argc--, argv++;
 			argc--, argv++;
 			argc--, argv++;
@@ -851,11 +853,15 @@ int runPacketFilter(int argc, char **argv) {
 			}
 			recordedData->recordedPacketData.reserve(recordPacketMaxCount);
 			recordedData->recordedQueuedPacketData.reserve(recordPacketQueuedMaxCount);
+			recordedData->samplingPeriod = recordPacketSamplingPeriod;
 		} else if (QString(argv[0]) == "--take_path_interval_measurements") {
 			takePathIntervalMeasurements = true;
 			argc--, argv++;
-		} else if (QString(argv[0]) == "--take_flow_interval_measurements") {
-			takeFlowIntervalMeasurements = true;
+		} else if (QString(argv[0]) == "--interval_measurements_sampling_period") {
+			bool ok;
+			intervalMeasurementsSamplingPeriod = QString(argv[1]).toLongLong(&ok);
+			Q_ASSERT_FORCE(ok);
+			argc--, argv++;
 			argc--, argv++;
 		} else if (QString(argv[0]) == "--estimated_duration") {
 			bool ok;
@@ -877,7 +883,6 @@ int runPacketFilter(int argc, char **argv) {
 			argc--, argv++;
 		} else if (QString(argv[0]) == "--track_flows") {
 			flowTracking = true;
-			argc--, argv++;
 			argc--, argv++;
 		} else if (QString(argv[0]) == "--qos_scale_buffers") {
 			if (QString(argv[1]) == "none") {
@@ -936,32 +941,27 @@ int runPacketFilter(int argc, char **argv) {
 
 	loadTopology(graphFileName);
 
-	if (takePathIntervalMeasurements) {
-		pathIntervalMeasurements = new ExperimentIntervalMeasurements();
-		pathIntervalMeasurements->initialize(get_current_time(),
-											 takePathIntervalMeasurements ? estimatedDuration : 1,
-											 intervalSize,
-											 netGraph->edges.count(),
-											 netGraph->paths.count(),
-											 netGraph->getSparseRoutingMatrixTransposed(),
-											 1400);
-	}
+	sampledPathIntervalMeasurements = new ExperimentIntervalMeasurements();
+	quint64 tsStart = get_current_time();
+	sampledPathIntervalMeasurements->initialize(tsStart,
+												takePathIntervalMeasurements ? estimatedDuration : 1,
+												intervalSize,
+												netGraph->edges.count(),
+												netGraph->paths.count(),
+												netGraph->getSparseRoutingMatrixTransposed(),
+												1400);
 
-	if (takeFlowIntervalMeasurements) {
-		flowIntervalMeasurements = new ExperimentIntervalMeasurements();
-		flowIntervalMeasurements->initialize(get_current_time(),
-											 takeFlowIntervalMeasurements ? estimatedDuration : 1,
-											 intervalSize,
-											 netGraph->edges.count(),
-											 netGraph->connections.count(),
-											 netGraph->getSparseConnectionRoutingMatrixTransposed(),
-											 1400);
-	}
+	rawPathIntervalMeasurements = new ExperimentIntervalMeasurements();
+	rawPathIntervalMeasurements->initialize(tsStart,
+											takePathIntervalMeasurements ? estimatedDuration : 1,
+											intervalSize,
+											netGraph->edges.count(),
+											netGraph->paths.count(),
+											netGraph->getSparseRoutingMatrixTransposed(),
+											1400);
 
-	if (flowTracking) {
-		sampledPathFlowEvents = new SampledPathFlowEvents();
-		sampledPathFlowEvents->initialize(netGraph->paths.count());
-	}
+	sampledPathFlowEvents = new SampledPathFlowEvents();
+	sampledPathFlowEvents->initialize(netGraph->paths.count());
 
 	// Preallocate the packet pool
 	qint64 numPackets = 0;
@@ -999,21 +999,15 @@ int runPacketFilter(int argc, char **argv) {
 	delete recordedData;
 
     // save the interval measurements
-	if (pathIntervalMeasurements) {
-		pathIntervalMeasurements->save("interval-measurements.data");
-		delete pathIntervalMeasurements;
-	}
+    sampledPathIntervalMeasurements->save("interval-measurements.data");
+    delete sampledPathIntervalMeasurements;
 
-	if (flowIntervalMeasurements) {
-		flowIntervalMeasurements->save("flow-interval-measurements.data");
-		delete flowIntervalMeasurements;
-	}
+	rawPathIntervalMeasurements->save("raw-interval-measurements.data");
+    delete rawPathIntervalMeasurements;
 
 	// save sampledPathFlowEvents
-	if (flowTracking) {
-		sampledPathFlowEvents->save("sampled-path-flows.data");
-		delete sampledPathFlowEvents;
-	}
+	sampledPathFlowEvents->save("sampled-path-flows.data");
+	delete sampledPathFlowEvents;
 
     // save recorded packet injection data
     trafficTraceRecord->save("injection.data");

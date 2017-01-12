@@ -30,8 +30,7 @@
 
 class NetGraph;
 
-#ifdef LINE_EMULATOR
-class pathTimelineItem {
+class PathTimelineItem {
 public:
 	void clear();
     quint64      timestamp;
@@ -45,7 +44,31 @@ public:
     quint64      delay_max;     /* max packet delay */
     quint64      delay_min;     /* min packet delay (default value: ULLONG_MAX) */
 };
-#endif
+QDataStream& operator>>(QDataStream& s, PathTimelineItem& d);
+QDataStream& operator<<(QDataStream& s, const PathTimelineItem& d);
+
+bool comparePathTimelineItem(const PathTimelineItem &a, const PathTimelineItem &b);
+
+class PathTimeline {
+public:
+    PathTimeline();
+    qint32 pathIndex;
+    quint64 tsMin;
+    quint64 tsMax;
+    quint64 timelineSamplingPeriod;
+    QVector<PathTimelineItem> items;
+};
+QDataStream& operator>>(QDataStream& s, PathTimeline& d);
+QDataStream& operator<<(QDataStream& s, const PathTimeline& d);
+
+class PathTimelines {
+public:
+    QVector<PathTimeline> timelines;
+};
+QDataStream& operator>>(QDataStream& s, PathTimelines& d);
+QDataStream& operator<<(QDataStream& s, const PathTimelines& d);
+bool readPathTimelines(PathTimelines &d, NetGraph *g, QString workingDir);
+
 
 // A path between a source and a destination node in the graph.
 // Due to load balancing, this may not be a list of edges, but a
@@ -87,7 +110,7 @@ public:
     quint64 total_actual_delay;
 
     // Timeline
-	OVector<pathTimelineItem> timelineSampled;
+	OVector<PathTimelineItem> timelineSampled;
 #endif
 
     bool retrace(NetGraph &g);
@@ -112,5 +135,7 @@ public:
 QDataStream& operator>>(QDataStream& s, NetGraphPath& p);
 
 QDataStream& operator<<(QDataStream& s, const NetGraphPath& p);
+
+QString toJson(const NetGraphPath& d);
 
 #endif // NETGRAPHPATH_H

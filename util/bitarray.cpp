@@ -17,29 +17,39 @@
 */
 
 #include "bitarray.h"
+#include "debug.h"
 
-#include <zlib.h>
 
 BitArray::BitArray() {
     bitCount = 0;
 }
 
-BitArray& BitArray::append(int bit) {
+BitArray& BitArray::append(int value) {
     if (bitCount % 64 == 0) {
         // extend
         bits << 0ULL;
     }
-    bits.last() = (bits.last() << 1) | (bit ? 1ULL : 0ULL);
+    bits.last() = (bits.last() << 1) | (value ? 1ULL : 0ULL);
     bitCount++;
 	return *this;
 }
 
 BitArray &BitArray::append(const BitArray &other)
 {
-	foreach (quint8 bit, other.toVector()) {
-		this->append(bit);
+	foreach (quint8 value, other.toVector()) {
+		this->append(value);
 	}
 	return *this;
+}
+
+void BitArray::set(int bit, int value)
+{
+	Q_ASSERT_FORCE(0 <= bit && bit < (int)bitCount);
+	if (value) {
+		bits[bit / 64] |= (1ULL << (bit % 64));
+	} else {
+		bits[bit / 64] &= ~(1ULL << (bit % 64));
+	}
 }
 
 quint64 BitArray::count() const {
@@ -62,27 +72,7 @@ QString BitArray::toString() const {
             bitsLeft--;
         }
     }
-	return result;
-}
-
-void BitArray::saveToFile(QString fileName) const
-{
-	gzFile f = gzopen(fileName.toLatin1().constData(), "w");
-	quint64 bitsLeft = bitCount;
-	foreach (quint64 word, bits) {
-		if (bitsLeft < 64) {
-			word <<= 64 - bitsLeft;
-		}
-		for (quint64 i = qMin(64ULL, bitsLeft); i > 0; i--) {
-			char bit = ((word & (1ULL << 63)) ? '0' : '1');
-			gzwrite(f, &bit, 1);
-			gzwrite(f, "\n", 1);
-			word <<= 1;
-			bitsLeft--;
-		}
-	}
-	gzwrite(f, "\n", 1);
-	gzclose(f);
+    return result;
 }
 
 QVector<quint8> BitArray::toVector() const {
@@ -105,14 +95,18 @@ BitArray& BitArray::operator<<(int bit) {
     return append(bit);
 }
 
-void BitArray::reserve(quint64 size)
+void BitArray::reserve(int size)
 {
 	bits.reserve(size / 64);
 }
 
-bool BitArray::full() const
+void BitArray::fill(int size, int value)
 {
-	return count() >= 64ULL * (quint64)bits.capacity();
+	clear();
+	reserve(size);
+	for (int i = 0; i < size; i++) {
+		append(value);
+	}
 }
 
 void BitArray::clear()
@@ -168,6 +162,18 @@ void BitArray::test() {
         for (int c = i; c > 0; c--) {
             bits << 1;
             reference << 1;
+            if (reference != bits.toVector()) {
+                qDebug() << "FAIL";
+                qDebug() << reference;
+                qDebug() << bits.toString();
+                qDebug() << bits.count();
+				qDebug() << __FILE__ << __LINE__;
+				exit(EXIT_FAILURE);
+            }
+        }
+		for (int c = i; c > 0; c--) {
+            bits.set(c, (i + c) % 2 ? 1 : 0);
+            reference[c] = (i + c) % 2 ? 1 : 0;
             if (reference != bits.toVector()) {
                 qDebug() << "FAIL";
                 qDebug() << reference;

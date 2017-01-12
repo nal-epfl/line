@@ -44,9 +44,17 @@ BINDATA(gitStatus, ../git-status.txt)
 BINDATA(gitLog, ../git-log.txt)
 BINDATA(gitDiff, ../git-diff.txt)
 
+QString gitInfo()
+{
+	return QString("--- Git status ---\n%1\n------------------\n"
+				   "--- Git log ------\n%2\n------------------\n"
+				   "--- Git diff -----\n%3\n------------------\n")
+			.arg(&gitStatus)
+			.arg(&gitLog)
+			.arg(&gitDiff);
+}
+
 void showGitInfo()
 {
-	fprintf(stderr, "--- Git status ---\n%s\n------------------\n", &gitStatus);
-	fprintf(stderr, "--- Git log ------\n%s\n------------------\n", &gitLog);
-	fprintf(stderr, "--- Git diff -----\n%s\n------------------\n", &gitDiff);
+	fprintf(stderr, "%s", gitInfo().toLatin1().constData());
 }

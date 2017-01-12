@@ -30,11 +30,13 @@ public:
 
     // Appends a bit to the end of the array.
     // Returns a reference to self.
-    BitArray &append(int bit);
+    BitArray &append(int value);
 
 	// Appends a bit array to the end of the array.
 	// Returns a reference to self.
 	BitArray &append(const BitArray &other);
+
+	void set(int bit, int value);
 
     // Returns the number of bits in the array.
     quint64 count() const;
@@ -47,16 +49,14 @@ public:
     // Returns a reference to self.
     BitArray &operator<<(int bit);
 
-	void reserve(quint64 size);
+    void reserve(int size);
 
-	bool full() const;
+	void fill(int size, int value);
 
     void clear();
 
     // Serializes the array into some representation (currently ASCII).
     QString toString() const;
-
-	void saveToFile(QString fileName) const;
 
     static void test();
 

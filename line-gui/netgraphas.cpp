@@ -50,3 +50,14 @@ QDataStream& operator>>(QDataStream& s, NetGraphAS& as)
 	return s;
 }
 
+
+
+QString toJson(const NetGraphAS &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.ASNumber);
+	jsonObjectPrinterAddMember(p, d.hull);
+	jsonObjectPrinterAddMember(p, d.index);
+	jsonObjectPrinterAddMember(p, d.used);
+	return p.json();
+}

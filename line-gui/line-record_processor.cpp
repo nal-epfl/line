@@ -16,6 +16,8 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <QtGui>
+
 #include "line-record_processor.h"
 
 #include "line-record.h"
@@ -25,6 +27,13 @@
 #include "../tomo/readpacket.h"
 #include <netinet/ip.h>
 #include "../tomo/pcap-qt.h"
+#include "../util/bitarray.h"
+#include "intervalmeasurements.h"
+#include "result_processing.h"
+#include "../util/colortable.h"
+#include "../util/json.h"
+
+#define WRITE_PCAP 0
 
 quint64 ns2ms(quint64 time)
 {
@@ -53,204 +62,401 @@ bool loadGraph(QString expPath, NetGraph &g)
 	return true;
 }
 
-bool createPcapFiles(QString expPath, RecordedData rec, NetGraph g)
+int getOriginalPacketLength(QByteArray buffer)
 {
-	// Create 3 files per link: input, dropped, output
+	IPHeader iph;
+	TCPHeader tcph;
+	UDPHeader udph;
+	ICMPHeader icmph;
+	if (decodePacket(buffer, iph, tcph, udph, icmph)) {
+		return iph.totalLength;
+	} else {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
+		return CAPTURE_LENGTH; // not correct
+	}
+}
+
+// Returns a flow identifier for the packet. The identifier is guaranteed to be different only for concurrent flows
+// belonging to the same path (flows on different paths can have the same identifier; also the indentifier might
+// repeat if port numbers are reused in sequential flows).
+// The value is not zero for TCP and UDP flows (except in case of error).
+quint32 getPacketFlow(QByteArray buffer, bool &freshFlow)
+{
+	freshFlow = false;
+	IPHeader iph;
+	TCPHeader tcph;
+	UDPHeader udph;
+	ICMPHeader icmph;
+	if (decodePacket(buffer, iph, tcph, udph, icmph)) {
+		if (iph.protocol == IPPROTO_TCP) {
+			quint32 flow = tcph.sourcePort;
+			flow = (flow << 16) | tcph.destPort;
+			freshFlow = tcph.flagSyn;
+			return flow;
+		} else if (iph.protocol == IPPROTO_UDP) {
+			quint32 flow = udph.sourcePort;
+			flow = (flow << 16) | udph.destPort;
+			return flow;
+		} else if (iph.protocol == IPPROTO_ICMP &&
+				   (icmph.echoRequest || icmph.echoReply)) {
+			quint32 flow = icmph.icmpId;
+			flow = (flow << 16) | icmph.icmpSeqNo;
+			return flow;
+		} else {
+			return 0;
+		}
+	} else {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
+		return 0; // not correct
+	}
+}
+
+qint64 getSeqNo(QByteArray buffer, qint64 lastKnownSeqNo)
+{
+	IPHeader iph;
+	TCPHeader tcph;
+	UDPHeader udph;
+	ICMPHeader icmph;
+	if (decodePacket(buffer, iph, tcph, udph, icmph)) {
+		if (iph.protocol == IPPROTO_TCP) {
+			qint64 result = tcph.seq;
+			// Wrap around protection
+			if (lastKnownSeqNo >= 0) {
+				while (result < lastKnownSeqNo && lastKnownSeqNo - result > (1LL << 31)) {
+					result += 1LL << 32;
+				}
+			}
+			return result;
+		} else if (iph.protocol == IPPROTO_UDP) {
+			return 0;
+		} else if (iph.protocol == IPPROTO_ICMP) {
+			return 0;
+		} else {
+			return 0;
+		}
+	} else {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
+		return 0; // not correct
+	}
+}
+
+void generatePacketInfo(RecordedData &rec,
+						OVector<quint64, qint64> &packetExitTimestamp,
+						OVector<qint32, qint64> &packetExitLink,
+						OVector<bool, qint64> &packetDropped)
+{
+	qDebug() << "generatePacketInfo() ...";
+	packetExitTimestamp = OVector<quint64, qint64>(rec.recordedPacketData.count(), 0);
+	packetExitLink = OVector<qint32, qint64>(rec.recordedPacketData.count(), -1);
+	packetDropped = OVector<bool, qint64>(rec.recordedPacketData.count(), false);
+	rec.recordedQueuedPacketData.setProgressLogOn();
+	for (qint64 qei = 0; qei < rec.recordedQueuedPacketData.count(); qei++) {
+		RecordedQueuedPacketData qe = rec.recordedQueuedPacketData[qei];
+		qint64 pIndex = rec.packetIndexByID(qe.packet_id);
+		if (qe.decision != RecordedQueuedPacketData::Queued) {
+			packetDropped[pIndex] = true;
+			packetExitTimestamp[pIndex] = qe.ts_enqueue;
+			packetExitLink[pIndex] = qe.edge_index;
+		} else {
+			if (qe.ts_exit > packetExitTimestamp[pIndex]) {
+				packetExitTimestamp[pIndex] = qe.ts_exit;
+				packetExitLink[pIndex] = qe.edge_index;
+			}
+		}
+	}
+	rec.recordedQueuedPacketData.setProgressLogOff();
+}
+
+bool createPcapFiles(QString expPath, RecordedData &rec, NetGraph g)
+{
+#if WRITE_PCAP
+	OVector<PcapWriter> input(g.edges.count());
+	OVector<PcapWriter> dropped(g.edges.count());
+	OVector<PcapWriter> output(g.edges.count());
+
 	foreach (NetGraphEdge e, g.edges) {
-		QList<RecordedQueuedPacketData> edgeEvents;
-		foreach (RecordedQueuedPacketData qe, rec.recordedQueuedPacketData) {
-			if (qe.edge_index == e.index) {
-				edgeEvents << qe;
-			}
-		}
-
-		QByteArray pcapBytesIn;
-		QByteArray pcapBytesOut;
-		QByteArray pcapBytesDrop;
-
-		PcapHeader pcapHeader;
-		pcapHeader.magic_number = kPcapMagicNativeNanosec;
-		pcapHeader.version_major = 2;
-		pcapHeader.version_minor = 4;
-		pcapHeader.thiszone = 0;
-		pcapHeader.sigfigs = 0;
-		pcapHeader.snaplen = CAPTURE_LENGTH;
-		pcapHeader.network = LINKTYPE_RAW;
-
-		pcapBytesIn.append((const char*)&pcapHeader, sizeof(PcapHeader));
-		pcapBytesOut.append((const char*)&pcapHeader, sizeof(PcapHeader));
-		pcapBytesDrop.append((const char*)&pcapHeader, sizeof(PcapHeader));
-
-		bool warnNullPacket = true;
-		foreach (RecordedQueuedPacketData qe, edgeEvents) {
-			RecordedPacketData p = rec.packetByID(qe.packet_id);
-			if (p.isNull()) {
-				if (warnNullPacket) {
-					qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
-					warnNullPacket = false;
-				}
-				continue;
-			}
-			PcapPacketHeader pcapPacketHeader;
-			pcapPacketHeader.ts_nsec = quint32(qe.ts_enqueue % 1000000000ULL);
-			pcapPacketHeader.ts_sec = quint32(qe.ts_enqueue / 1000000000ULL);
-			pcapPacketHeader.incl_len = CAPTURE_LENGTH;
-			IPHeader iph;
-			TCPHeader tcph;
-			UDPHeader udph;
-			ICMPHeader icmph;
-			if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
-				pcapPacketHeader.orig_len = iph.totalLength;
-			} else {
-				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse the IP header for a packet";
-				pcapPacketHeader.orig_len = CAPTURE_LENGTH; // not correct
-			}
-
-			// input
-			pcapBytesIn.append((const char*)&pcapPacketHeader, sizeof(PcapPacketHeader));
-			pcapBytesIn.append((const char*)p.buffer, CAPTURE_LENGTH);
-			if (qe.decision != 0) {
-				// drop
-				pcapBytesDrop.append((const char*)&pcapPacketHeader, sizeof(PcapPacketHeader));
-				pcapBytesDrop.append((const char*)p.buffer, CAPTURE_LENGTH);
-			} else {
-				// output
-				pcapPacketHeader.ts_nsec = quint32(qe.ts_exit % 1000000000ULL);
-				pcapPacketHeader.ts_sec = quint32(qe.ts_exit / 1000000000ULL);
-				pcapBytesOut.append((const char*)&pcapPacketHeader, sizeof(PcapPacketHeader));
-				pcapBytesOut.append((const char*)p.buffer, CAPTURE_LENGTH);
-			}
-		}
-
-		saveFile(expPath + "/" + QString("edge-%1-in.pcap").arg(e.index + 1), pcapBytesIn);
-		saveFile(expPath + "/" + QString("edge-%1-out.pcap").arg(e.index + 1), pcapBytesOut);
-		saveFile(expPath + "/" + QString("edge-%1-drop.pcap").arg(e.index + 1), pcapBytesDrop);
+		input[e.index].init(expPath + "/capture-data/" + QString("edge-%1-in.pcap").arg(e.index + 1), LINKTYPE_RAW);
+		dropped[e.index].init(expPath + "/capture-data/" + QString("edge-%1-drop.pcap").arg(e.index + 1), LINKTYPE_RAW);
+		output[e.index].init(expPath + "/capture-data/" + QString("edge-%1-out.pcap").arg(e.index + 1), LINKTYPE_RAW);
 	}
 
-	// Create one global pcap file with everything that entered the emulator
-	{
-		QByteArray pcapBytesIn;
+	qDebug() << "Generating link pcap files...";
+	rec.recordedQueuedPacketData.setProgressLogOn();
+	for (qint64 qei = 0; qei < rec.recordedQueuedPacketData.count(); qei++) {
+		RecordedQueuedPacketData qe = rec.recordedQueuedPacketData[qei];
+		int e = qe.edge_index;
 
-		PcapHeader pcapHeader;
-		pcapHeader.magic_number = kPcapMagicNativeNanosec;
-		pcapHeader.version_major = 2;
-		pcapHeader.version_minor = 4;
-		pcapHeader.thiszone = 0;
-		pcapHeader.sigfigs = 0;
-		pcapHeader.snaplen = CAPTURE_LENGTH;
-		pcapHeader.network = LINKTYPE_RAW;
-		pcapBytesIn.append((const char*)&pcapHeader, sizeof(PcapHeader));
-
-		foreach (RecordedPacketData p, rec.recordedPacketData) {
-			if (p.isNull()) {
-				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
-				return false;
-			}
-			PcapPacketHeader pcapPacketHeader;
-			pcapPacketHeader.ts_nsec = quint32(p.ts_userspace_rx % 1000000000ULL);
-			pcapPacketHeader.ts_sec = quint32(p.ts_userspace_rx / 1000000000ULL);
-			pcapPacketHeader.incl_len = CAPTURE_LENGTH;
-			IPHeader iph;
-			TCPHeader tcph;
-			UDPHeader udph;
-			ICMPHeader icmph;
-			if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
-				pcapPacketHeader.orig_len = iph.totalLength;
-			} else {
-				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
-				pcapPacketHeader.orig_len = CAPTURE_LENGTH; // not correct
-			}
-			pcapBytesIn.append((const char*)&pcapPacketHeader, sizeof(PcapPacketHeader));
-			pcapBytesIn.append((const char*)p.buffer, CAPTURE_LENGTH);
+		RecordedPacketData p = rec.packetByID(qe.packet_id);
+		if (p.isNull()) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
+			continue;
 		}
 
-		saveFile(expPath + "/" + QString("emulator-in.pcap"), pcapBytesIn);
+		QByteArray buffer = QByteArray((const char*)p.buffer, CAPTURE_LENGTH);
+		int originalLength = getOriginalPacketLength(buffer);
+
+		// input
+		input[e].writePacket(qe.ts_enqueue, originalLength, buffer);
+		if (qe.decision != 0) {
+			// drop
+			dropped[e].writePacket(qe.ts_enqueue, originalLength, buffer);
+		} else {
+			// output
+			output[e].writePacket(qe.ts_exit, originalLength, buffer);
+		}
+	}
+	rec.recordedQueuedPacketData.setProgressLogOff();
+
+	qDebug() << "Generating global pcap files...";
+	// Create one global pcap files with everything that entered the emulator
+	PcapWriter inputGlobal(expPath + "/capture-data/" + "emulator-in.pcap", LINKTYPE_RAW);
+	PcapWriter droppedGlobal(expPath + "/capture-data/" + "emulator-drop.pcap", LINKTYPE_RAW);
+	PcapWriter outputGlobal(expPath + "/capture-data/" + "emulator-out.pcap", LINKTYPE_RAW);
+
+	OVector<quint64, qint64> packetExitTimestamp;
+	OVector<qint32, qint64> packetExitLink;
+	OVector<bool, qint64> packetDropped;
+	generatePacketInfo(rec, packetExitTimestamp, packetExitLink, packetDropped);
+
+	for (qint64 pIndex = 0; pIndex < rec.recordedPacketData.count(); pIndex++) {
+		if (pIndex % 1000000 == 0) {
+			qDebug() << "Progress:" << (pIndex * 100) / rec.recordedPacketData.count() << "%";
+		}
+		RecordedPacketData p = rec.recordedPacketData[pIndex];
+		if (p.isNull()) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
+			continue;
+		}
+		bool foundPath;
+		NetGraphPath path = g.pathByNodeIndexTry(p.src_id, p.dst_id, foundPath);
+		if (!foundPath || path.edgeList.isEmpty()) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "No path for packet (bad route)";
+			continue;
+		}
+
+		QByteArray buffer = QByteArray((const char*)p.buffer, CAPTURE_LENGTH);
+		int originalLength = getOriginalPacketLength(buffer);
+		inputGlobal.writePacket(p.ts_userspace_rx, originalLength, buffer);
+		if (packetDropped[pIndex]) {
+			droppedGlobal.writePacket(packetExitTimestamp[pIndex], originalLength, buffer);
+		} else {
+			outputGlobal.writePacket(packetExitTimestamp[pIndex], originalLength, buffer);
+		}
+	}
+#else
+	Q_UNUSED(expPath);
+	Q_UNUSED(rec);
+	Q_UNUSED(g);
+#endif
+
+	return true;
+}
+
+bool indexCaptureFiles(QString expPath, RecordedData &rec, NetGraph g)
+{
+	OVector<QFile> fileLinkEvents(g.edges.count());
+	OVector<QDataStream> sLinkEvents(g.edges.count());
+	OVector<qint64> nLinkEvents(g.edges.count());
+
+	for (int e = 0; e < g.edges.count(); e++) {
+		fileLinkEvents[e].setFileName(expPath + QString("/capture-data/link-events-%1.dat").arg(e));
+		if (!fileLinkEvents[e].open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		sLinkEvents[e].setDevice(&fileLinkEvents[e]);
+		sLinkEvents[e].setVersion(QDataStream::Qt_4_0);
+		nLinkEvents[e] = 0;
+		// Compatible with OVector and OLazyVector, so start with the count. Write zero now and overwrite later.
+		sLinkEvents[e] << nLinkEvents[e];
 	}
 
-	// Create one global pcap file with everything that exited the emulator
-	{
-		QByteArray pcapBytesOut;
+	OVector<QFile> filePathEvents(g.paths.count());
+	OVector<QDataStream> sPathEvents(g.paths.count());
+	OVector<qint64> nPathEvents(g.paths.count());
 
-		PcapHeader pcapHeader;
-		pcapHeader.magic_number = kPcapMagicNativeNanosec;
-		pcapHeader.version_major = 2;
-		pcapHeader.version_minor = 4;
-		pcapHeader.thiszone = 0;
-		pcapHeader.sigfigs = 0;
-		pcapHeader.snaplen = CAPTURE_LENGTH;
-		pcapHeader.network = LINKTYPE_RAW;
-		pcapBytesOut.append((const char*)&pcapHeader, sizeof(PcapHeader));
+	for (int p = 0; p < g.paths.count(); p++) {
+		filePathEvents[p].setFileName(expPath + QString("/capture-data/path-events-%1.dat").arg(p));
+		if (!filePathEvents[p].open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		sPathEvents[p].setDevice(&filePathEvents[p]);
+		sPathEvents[p].setVersion(QDataStream::Qt_4_0);
+		nPathEvents[p] = 0;
+		// Compatible with OVector and OLazyVector, so start with the count. Write zero now and overwrite later.
+		sPathEvents[p] << nPathEvents[p];
+	}
 
-		foreach (RecordedPacketData p, rec.recordedPacketData) {
-			if (p.isNull()) {
-				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
+	OVector<QFile> fileLinkPathEvents(g.edges.count() * g.paths.count());
+	OVector<QDataStream> sLinkPathEvents(g.edges.count() * g.paths.count());
+	OVector<qint64> nLinkPathEvents(g.edges.count() * g.paths.count());
+
+	for (int e = 0; e < g.edges.count(); e++) {
+		for (int p = 0; p < g.paths.count(); p++) {
+			fileLinkPathEvents[e * g.paths.count() + p].setFileName(expPath + QString("/capture-data/link-path-events-%1-%2.dat").arg(e).arg(p));
+			if (!fileLinkPathEvents[e * g.paths.count() + p].open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+				qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file" << fileLinkPathEvents[e * g.paths.count() + p].errorString();
 				return false;
 			}
+			sLinkPathEvents[e * g.paths.count() + p].setDevice(&fileLinkPathEvents[e * g.paths.count() + p]);
+			sLinkPathEvents[e * g.paths.count() + p].setVersion(QDataStream::Qt_4_0);
+			nLinkPathEvents[e * g.paths.count() + p] = 0;
+			// Compatible with OVector and OLazyVector, so start with the count. Write zero now and overwrite later.
+			sLinkPathEvents[e * g.paths.count() + p] << nLinkPathEvents[e * g.paths.count() + p];
+		}
+	}
 
-			QList<RecordedQueuedPacketData> queueEvents = rec.queueEventsByPacketID(p.packet_id);
-			if (queueEvents.isEmpty()) {
-				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Missing packet events";
-				return false;
-			}
-			bool foundPath;
-			NetGraphPath path = g.pathByNodeIndexTry(p.src_id, p.dst_id, foundPath);
-			if (!foundPath || path.edgeList.isEmpty()) {
-				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "No path for packet (bad route)";
-				return false;
-			}
-			if (queueEvents.last().decision == RecordedQueuedPacketData::Queued &&
-				queueEvents.last().edge_index == path.edgeList.last().index) {
-				// transmitted
-				PcapPacketHeader pcapPacketHeader;
-				pcapPacketHeader.ts_nsec = quint32(queueEvents.last().ts_exit % 1000000000ULL);
-				pcapPacketHeader.ts_sec = quint32(queueEvents.last().ts_exit / 1000000000ULL);
-				pcapPacketHeader.incl_len = CAPTURE_LENGTH;
-				IPHeader iph;
-				TCPHeader tcph;
-				UDPHeader udph;
-				ICMPHeader icmph;
-				if (decodePacket(QByteArray((const char*)p.buffer, CAPTURE_LENGTH), iph, tcph, udph, icmph)) {
-					pcapPacketHeader.orig_len = iph.totalLength;
-				} else {
-					qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
-					pcapPacketHeader.orig_len = CAPTURE_LENGTH; // not correct
-				}
-				pcapBytesOut.append((const char*)&pcapPacketHeader, sizeof(PcapPacketHeader));
-				pcapBytesOut.append((const char*)p.buffer, CAPTURE_LENGTH);
-			}
+	QHash<NodePair, qint32> nodes2pathIndex;
+	for (int i = 0; i < g.paths.count(); i++) {
+		nodes2pathIndex[NodePair(g.paths[i].source, g.paths[i].dest)] = i;
+	}
+
+	qDebug() << "Grouping queuing events...";
+	rec.recordedQueuedPacketData.setProgressLogOn();
+	for (qint64 qei = 0; qei < rec.recordedQueuedPacketData.count(); qei++) {
+		RecordedQueuedPacketData qe = rec.recordedQueuedPacketData[qei];
+
+		sLinkEvents[qe.edge_index] << qe;
+		nLinkEvents[qe.edge_index]++;
+
+		RecordedPacketData p = rec.packetByID(qe.packet_id);
+		if (p.isNull()) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
+			continue;
 		}
 
-		saveFile(expPath + "/" + QString("emulator-out.pcap"), pcapBytesOut);
+		if (nodes2pathIndex.contains(NodePair(p.src_id, p.dst_id))) {
+			qint32 path = nodes2pathIndex[NodePair(p.src_id, p.dst_id)];
+			sPathEvents[path] << qe;
+			nPathEvents[path]++;
+
+			qint32 edge = qe.edge_index;
+			sLinkPathEvents[edge * g.paths.count() + path] << qe;
+			nLinkPathEvents[edge * g.paths.count() + path]++;
+		} else {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "No path for endpoints";
+			continue;
+		}
+	}
+	rec.recordedQueuedPacketData.setProgressLogOff();
+
+	for (int e = 0; e < g.edges.count(); e++) {
+		fileLinkEvents[e].seek(0);
+		sLinkEvents[e] << nLinkEvents[e];
+	}
+
+	for (int p = 0; p < g.paths.count(); p++) {
+		filePathEvents[p].seek(0);
+		sPathEvents[p] << nPathEvents[p];
+	}
+
+	for (int e = 0; e < g.edges.count(); e++) {
+		for (int p = 0; p < g.paths.count(); p++) {
+			fileLinkPathEvents[e * g.paths.count() + p].seek(0);
+			sLinkPathEvents[e * g.paths.count() + p] << nLinkPathEvents[e * g.paths.count() + p];
+		}
+	}
+
+	OVector<QFile> filePathPackets(g.paths.count());
+	OVector<QDataStream> sPathPackets(g.paths.count());
+	OVector<qint64> nPathPackets(g.paths.count());
+
+	for (int p = 0; p < g.paths.count(); p++) {
+		filePathPackets[p].setFileName(expPath + QString("/capture-data/path-packets-%1.dat").arg(p));
+		if (!filePathPackets[p].open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		sPathPackets[p].setDevice(&filePathPackets[p]);
+		sPathPackets[p].setVersion(QDataStream::Qt_4_0);
+		nPathPackets[p] = 0;
+		// Compatible with OVector and OLazyVector, so start with the count. Write zero now and overwrite later.
+		sPathPackets[p] << nPathPackets[p];
+	}
+
+	qDebug() << "Grouping packet events...";
+	for (qint64 pi = 0; pi < rec.recordedPacketData.count(); pi++) {
+		if (pi % 1000000 == 0) {
+			qDebug() << "Progress:" << (pi * 100) / rec.recordedPacketData.count() << "%";
+		}
+		RecordedPacketData p = rec.recordedPacketData[pi];
+		if (nodes2pathIndex.contains(NodePair(p.src_id, p.dst_id))) {
+			qint32 path = nodes2pathIndex[NodePair(p.src_id, p.dst_id)];
+			sPathPackets[path] << p;
+			nPathPackets[path]++;
+		} else {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "No path for endpoints";
+			continue;
+		}
+	}
+
+	for (int p = 0; p < g.paths.count(); p++) {
+		filePathPackets[p].seek(0);
+		sPathPackets[p] << nPathPackets[p];
 	}
 
 	return true;
 }
 
-bool extractConversations(RecordedData rec,
+bool extractConversations(RecordedData &rec,
 						  NetGraph g,
 						  QHash<NodePair, PathConversations> &allPathConversations,
 						  quint64 &tsStart,
 						  quint64 &tsEnd)
 {
-	allPathConversations.clear();
-
+	// Compute start,end timestamps
 	tsStart = 0xFFffFFffFFffFFffULL;
 	tsEnd = 0;
-	foreach (RecordedPacketData p, rec.recordedPacketData) {
+	qDebug() << "Computing start/end timestamps...";
+	for (qint64 pIndex = 0; pIndex < rec.recordedPacketData.count(); pIndex++) {
+		if (pIndex % 1000000 == 0) {
+			qDebug() << "Progress:" << (pIndex * 100) / rec.recordedPacketData.count() << "%";
+		}
+		RecordedPacketData p = rec.recordedPacketData[pIndex];
 		tsStart = qMin(tsStart, p.ts_userspace_rx);
 		tsEnd = qMax(tsEnd, p.ts_userspace_rx);
 	}
-	foreach (RecordedQueuedPacketData qe, rec.recordedQueuedPacketData) {
+	qDebug() << "Computing start/end timestamps...";
+	rec.recordedQueuedPacketData.setProgressLogOn();
+	for (qint64 qei = 0; qei < rec.recordedQueuedPacketData.count(); qei++) {
+		RecordedQueuedPacketData qe = rec.recordedQueuedPacketData[qei];
 		if (qe.decision == RecordedQueuedPacketData::Queued) {
 			tsEnd = qMax(tsEnd, qe.ts_exit);
 		}
 	}
+	rec.recordedQueuedPacketData.setProgressLogOff();
 	if (tsStart == 0xFFffFFffFFffFFffULL) {
 		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Possibly an empty experiment";
 		tsStart = 0;
 	}
 
-	foreach (RecordedPacketData p, rec.recordedPacketData) {
+	// Compute packet drop info + timings
+	OVector<quint64, qint64> packetExitTimestamp;
+	OVector<qint32, qint64> packetExitLink;
+	OVector<bool, qint64> packetDropped;
+	generatePacketInfo(rec, packetExitTimestamp, packetExitLink, packetDropped);
+
+	// Write
+	QFile fileFlowPackets("./capture-data/flow-packets.data");
+	if (!fileFlowPackets.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+		qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+		return false;
+	}
+	QDataStream sFlowPackets(&fileFlowPackets);
+	sFlowPackets.setVersion(QDataStream::Qt_4_0);
+	qint64 nextFlowPacketIndex = 0;
+	// Compatible with OVector and OLazyVector, so start with the count. Write zero now and overwrite later.
+	sFlowPackets << nextFlowPacketIndex;
+
+	allPathConversations.clear();
+
+	qDebug() << "Extracting flows...";
+	for (qint64 pIndex = 0; pIndex < rec.recordedPacketData.count(); pIndex++) {
+		if (pIndex % 1000000 == 0) {
+			qDebug() << "Progress:" << (pIndex * 100) / rec.recordedPacketData.count() << "%";
+		}
+		RecordedPacketData p = rec.recordedPacketData[pIndex];
 		IPHeader iph;
 		TCPHeader tcph;
 		UDPHeader udph;
@@ -277,6 +483,7 @@ bool extractConversations(RecordedData rec,
 		NodePair nodePair;
 		ProtoPortPair portPair;
 		bool forward;
+		bool newFlow = false;
 		if (iph.protocolString == "TCP") {
 			if (tcph.flagSyn && !tcph.flagAck) {
 				nodePair = nodePairFwd;
@@ -286,44 +493,33 @@ bool extractConversations(RecordedData rec,
 					allPathConversations[nodePair].maxPossibleBandwidthFwd = 1000.0 * g.pathMaximumBandwidth(nodePair.first, nodePair.second);
 					allPathConversations[nodePair].maxPossibleBandwidthRet = 1000.0 * g.pathMaximumBandwidth(nodePair.second, nodePair.first);
 				}
+				PathConversations &pathConversations = allPathConversations[nodePair];
+				pathConversations.conversations[portPair] << Conversation(portPair.second.first, portPair.second.second, portPair.first);
+				newFlow = true;
 				forward = true;
 				found = true;
-			} else if (allPathConversations.contains(nodePairFwd)) {
-				PathConversations &pathConversations = allPathConversations[nodePairFwd];
-				if (pathConversations.conversations.contains(portPairFwd)) {
-					// TODO check FIN otherwise we confuse flows that reuse ports
-					nodePair = nodePairFwd;
-					portPair = portPairFwd;
-					forward = true;
-					found = true;
-				}
-			} else if (allPathConversations.contains(nodePairRet)) {
-				PathConversations &pathConversations = allPathConversations[nodePairRet];
-				if (pathConversations.conversations.contains(portPairRet)) {
-					// TODO check FIN otherwise we confuse flows that reuse ports
-					nodePair = nodePairRet;
-					portPair = portPairRet;
-					forward = false;
-					found = true;
-				}
+			} else if (allPathConversations.contains(nodePairFwd) && allPathConversations[nodePairFwd].conversations.contains(portPairFwd)) {
+				nodePair = nodePairFwd;
+				portPair = portPairFwd;
+				forward = true;
+				found = true;
+			} else if (allPathConversations.contains(nodePairRet) && allPathConversations[nodePairRet].conversations.contains(portPairRet)) {
+				nodePair = nodePairRet;
+				portPair = portPairRet;
+				forward = false;
+				found = true;
 			}
 		} else if (iph.protocolString == "UDP") {
-			if (allPathConversations.contains(nodePairFwd)) {
-				PathConversations &pathConversations = allPathConversations[nodePairFwd];
-				if (pathConversations.conversations.contains(portPairFwd)) {
-					nodePair = nodePairFwd;
-					portPair = portPairFwd;
-					forward = true;
-					found = true;
-				}
-			} else if (allPathConversations.contains(nodePairRet)) {
-				PathConversations &pathConversations = allPathConversations[nodePairRet];
-				if (pathConversations.conversations.contains(portPairRet)) {
-					nodePair = nodePairRet;
-					portPair = portPairRet;
-					forward = false;
-					found = true;
-				}
+			if (allPathConversations.contains(nodePairFwd) && allPathConversations[nodePairFwd].conversations.contains(portPairFwd)) {
+				nodePair = nodePairFwd;
+				portPair = portPairFwd;
+				forward = true;
+				found = true;
+			} else if (allPathConversations.contains(nodePairRet) && allPathConversations[nodePairRet].conversations.contains(portPairRet)) {
+				nodePair = nodePairRet;
+				portPair = portPairRet;
+				forward = false;
+				found = true;
 			}
 			if (!found) {
 				nodePair = nodePairFwd;
@@ -333,53 +529,81 @@ bool extractConversations(RecordedData rec,
 					allPathConversations[nodePair].maxPossibleBandwidthFwd = 1000.0 * g.pathMaximumBandwidth(nodePair.first, nodePair.second);
 					allPathConversations[nodePair].maxPossibleBandwidthRet = 1000.0 * g.pathMaximumBandwidth(nodePair.second, nodePair.first);
 				}
+				PathConversations &pathConversations = allPathConversations[nodePair];
+				pathConversations.conversations[portPair] << Conversation(portPair.second.first, portPair.second.second, portPair.first);
+				newFlow = true;
 				forward = true;
 				found = true;
 			}
 		}
 		if (!found) {
 			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Incomplete stream (no SYN)";
-			// TODO append anyway ? not necessary in normal cases
+			exit(0);
 			continue;
 		}
-		PathConversations &pathConversations = allPathConversations[nodePair];
-		if (!pathConversations.conversations.contains(portPair)) {
-			pathConversations.conversations[portPair] << Conversation(portPair.second.first, portPair.second.second, portPair.first);
+
+		if (newFlow) {
+			if (iph.protocolString == "TCP") {
+				qDebug() << "New flow:" << iph.sourceString << iph.destString << iph.protocolString
+						 << tcph.sourcePort << tcph.destPort
+						 << (tcph.flagSyn ? "SYN" : "")
+						 << (tcph.flagAck ? "ACK" : "")
+						 << (tcph.flagRst ? "RST" : "")
+						 << (tcph.flagFin ? "FIN" : "");
+			} else if (iph.protocolString == "UDP") {
+				qDebug() << "New flow:" << iph.sourceString << iph.destString << iph.protocolString
+						 << udph.sourcePort << udph.destPort;
+			}
 		}
+
+		PathConversations &pathConversations = allPathConversations[nodePair];
 		Conversation &conversation = pathConversations.conversations[portPair].last();
 		Flow &flow = forward ? conversation.fwdFlow : conversation.retFlow;
 
-		FlowPacket flowPacket;
-		flowPacket.packetId = p.packet_id;
-		flowPacket.tsSent = p.ts_userspace_rx;
-		QList<RecordedQueuedPacketData> queueEvents = rec.queueEventsByPacketID(p.packet_id);
-		if (queueEvents.isEmpty()) {
-			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "No queueing events for packet (bad route or capture limit reached)";
-			continue;
-		}
 		bool foundPath;
 		NetGraphPath path = g.pathByNodeIndexTry(p.src_id, p.dst_id, foundPath);
 		if (!foundPath || path.edgeList.isEmpty()) {
 			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "No path for packet (bad route)";
+			exit(0);
 			continue;
 		}
-		flowPacket.received = queueEvents.last().decision == RecordedQueuedPacketData::Queued &&
-							  queueEvents.last().edge_index == path.edgeList.last().index;
+
+		FlowPacket flowPacket;
+		flowPacket.packetId = p.packet_id;
+		flowPacket.packetIndex = pIndex;
+		flowPacket.tsSent = p.ts_userspace_rx;
+		flowPacket.received = !packetDropped[pIndex];
 		if (flowPacket.received) {
-			flowPacket.tsReceived = queueEvents.last().ts_exit;
+			flowPacket.tsReceived = packetExitTimestamp[pIndex];
 		} else {
 			flowPacket.tsReceived = 0;
 		}
-		flowPacket.dropped = queueEvents.last().decision != RecordedQueuedPacketData::Queued;
+		flowPacket.dropped = packetDropped[pIndex];
 		if (flowPacket.dropped) {
-			flowPacket.dropEdgeId = queueEvents.last().edge_index;
-			flowPacket.tsDrop = queueEvents.last().ts_enqueue;
+			flowPacket.dropEdgeId = packetExitLink[pIndex];
+			flowPacket.tsDrop = packetExitTimestamp[pIndex];
 		}
 		flowPacket.ipHeader = iph;
 		flowPacket.tcpHeader = tcph;
 		flowPacket.udpHeader = udph;
-		flow.packets << flowPacket;
+
+		sFlowPackets << flowPacket;
+		flow.packets << nextFlowPacketIndex;
+		nextFlowPacketIndex++;
 	}
+
+	fileFlowPackets.seek(0);
+	sFlowPackets << nextFlowPacketIndex;
+
+	QFile fileAllPathConversations("./capture-data/all-path-conversations.data");
+	if (!fileAllPathConversations.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+		qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+		return false;
+	}
+	QDataStream sAllPathConversations(&fileAllPathConversations);
+	sAllPathConversations.setVersion(QDataStream::Qt_4_0);
+	sAllPathConversations << allPathConversations;
+
 	return true;
 }
 
@@ -715,6 +939,7 @@ void generateLossAnnotation(QList<FlowIntDataItem> &flowLosses,
 
 // Data amount in bits
 QList<FlowIntDataItem> computeReceivedRawForFlow(Flow flow,
+												 OLazyVector<FlowPacket> flowPackets,
 												 QString flowName,
 												 quint64 tsStart,
 												 QList<FlowIntDataItem> flowLosses,
@@ -725,7 +950,8 @@ QList<FlowIntDataItem> computeReceivedRawForFlow(Flow flow,
 
 	// time -> size of packet received
 	QMap<quint64, QList<FlowIntDataItem> > receivedRaw;
-	foreach (FlowPacket p, flow.packets) {
+	foreach (qint64 pi, flow.packets) {
+		FlowPacket p = flowPackets[pi];
 		if (p.received) {
 			FlowIntDataItem item = FlowIntDataItem(flowName, ns2ms(p.tsReceived - tsStart), p.ipHeader.totalLength * 8);
 			receivedRaw[item.time] << item;
@@ -758,6 +984,7 @@ QList<FlowIntDataItem> computeReceivedRawForFlow(Flow flow,
 
 // Throughput in bytes/second
 QList<FlowIntDataItem> computeReceivedRawThroughputForFlow(Flow flow,
+														   OLazyVector<FlowPacket> flowPackets,
 														   QString flowName,
 														   quint64 tsStart,
 														   QList<FlowIntDataItem> flowLosses,
@@ -765,6 +992,7 @@ QList<FlowIntDataItem> computeReceivedRawThroughputForFlow(Flow flow,
 														   qreal window = 0)
 {
 	QList<FlowIntDataItem> receivedRaw = computeReceivedRawForFlow(flow,
+																   flowPackets,
 																   flowName,
 																   tsStart,
 																   QList<FlowIntDataItem>(),
@@ -818,6 +1046,7 @@ QList<FlowIntDataItem> computeReceivedRawThroughputForFlow(Flow flow,
 
 // Receive window in bits
 QList<FlowIntDataItem> computeRwinForFlow(Flow flow,
+										  OLazyVector<FlowPacket> flowPackets,
 										  QString flowName,
 										  quint64 tsStart,
 										  QList<FlowIntDataItem> flowLosses,
@@ -832,7 +1061,8 @@ QList<FlowIntDataItem> computeRwinForFlow(Flow flow,
 	// time -> size of receive window
 	QMap<quint64, QList<FlowIntDataItem> > rwin;
 	qint64 windowScaleFactor = 1;
-	foreach (FlowPacket p, flow.packets) {
+	foreach (qint64 pi, flow.packets) {
+		FlowPacket p = flowPackets[pi];
 		if (p.tcpHeader.windowScaleFactor > 0) {
 			windowScaleFactor = p.tcpHeader.windowScaleFactor;
 		}
@@ -861,6 +1091,7 @@ QList<FlowIntDataItem> computeRwinForFlow(Flow flow,
 // RTT in miliseconds
 QList<FlowIntDataItem> computeRttForFlow(Flow fwdFlow,
 										 Flow retFlow,
+										 OLazyVector<FlowPacket> flowPackets,
 										 QString flowName,
 										 quint64 tsStart,
 										 QList<FlowIntDataItem> flowLosses,
@@ -872,12 +1103,14 @@ QList<FlowIntDataItem> computeRttForFlow(Flow fwdFlow,
 	// time -> (fwd-delay, ret-delay) in ms
 	// only one of the two might be set, zero delay means undefined
 	QMap<quint64, QPair<quint64, quint64> > oneWayDelays;
-	foreach (FlowPacket p, fwdFlow.packets) {
+	foreach (qint64 pi, fwdFlow.packets) {
+		FlowPacket p = flowPackets[pi];
 		if (p.received) {
 			oneWayDelays[ns2ms(p.tsReceived - tsStart)].first = ns2ms(p.tsReceived - p.tsSent);
 		}
 	}
-	foreach (FlowPacket p, retFlow.packets) {
+	foreach (qint64 pi, retFlow.packets) {
+		FlowPacket p = flowPackets[pi];
 		if (p.received) {
 			oneWayDelays[ns2ms(p.tsSent - tsStart)].second = ns2ms(p.tsReceived - p.tsSent);
 		}
@@ -912,6 +1145,7 @@ QList<FlowIntDataItem> computeRttForFlow(Flow fwdFlow,
 
 // Number of packets or bits in flight
 QList<FlowIntDataItem> computePacketsInFlightForFlow(Flow flow,
+													 OLazyVector<FlowPacket> flowPackets,
 													 QString flowName,
 													 quint64 tsStart,
 													 QList<FlowIntDataItem> flowLosses,
@@ -923,7 +1157,8 @@ QList<FlowIntDataItem> computePacketsInFlightForFlow(Flow flow,
 
 	// time -> size of receive window
 	QMap<quint64, qint64> inflightDeltaNs;
-	foreach (FlowPacket p, flow.packets) {
+	foreach (qint64 pi, flow.packets) {
+		FlowPacket p = flowPackets[pi];
 		inflightDeltaNs[p.tsSent - tsStart] += bytes ? p.ipHeader.totalLength * 8 : 1;
 		if (p.dropped) {
 			inflightDeltaNs[p.tsDrop - tsStart] -= bytes ? p.ipHeader.totalLength * 8 : 1;
@@ -1011,18 +1246,24 @@ QList<FlowIntDataItem> computeMptrForFlow(QList<FlowIntDataItem> rwin,
 }
 
 // LossFwd means loss on fwd path; LossRet means loss on return path
-QList<FlowIntDataItem> computeLossesForFlow(Flow fwdFlow, Flow retFlow, QString flowName, quint64 tsStart)
+QList<FlowIntDataItem> computeLossesForFlow(Flow fwdFlow,
+											Flow retFlow,
+											OLazyVector<FlowPacket> flowPackets,
+											QString flowName,
+											quint64 tsStart)
 {
 	QList<FlowIntDataItem> result;
 
 	// time -> code (0/1 as specified above)
 	QMap<quint64, QList<qint64> > losses;
-	foreach (FlowPacket p, fwdFlow.packets) {
+	foreach (qint64 pi, fwdFlow.packets) {
+		FlowPacket p = flowPackets[pi];
 		if (p.dropped) {
 			losses[ns2ms(p.tsDrop - tsStart)] << LossFwd;
 		}
 	}
-	foreach (FlowPacket p, retFlow.packets) {
+	foreach (qint64 pi, retFlow.packets) {
+		FlowPacket p = flowPackets[pi];
 		if (p.dropped) {
 			losses[ns2ms(p.tsDrop - tsStart)] << LossRet;
 		}
@@ -1045,6 +1286,14 @@ void doSeqAckAnalysis(QString rootPath,
 					  quint64 tsStart,
 					  quint64 tsEnd)
 {
+	QFile fileFlowPackets(expPath + "/capture-data/flow-packets.data");
+	if (!fileFlowPackets.open(QIODevice::ReadOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << fileFlowPackets.fileName();
+		return;
+	}
+
+	OLazyVector<FlowPacket> flowPackets(&fileFlowPackets, FlowPacket::getSerializedSize());
+
 	// time(ms) -> list of items for that time
 	QMap<quint64, QList<FlowIntDataItem> > flowReceivedRawSorted;
 	QMap<quint64, QList<FlowAnnotation> > flowReceivedRawAnnotationSorted;
@@ -1085,6 +1334,7 @@ void doSeqAckAnalysis(QString rootPath,
 				// compute losses
 				QList<FlowIntDataItem> flowLossesBoth = computeLossesForFlow(conversation.fwdFlow,
 																			 conversation.retFlow,
+																			 flowPackets,
 																			 fwdFlowName,
 																			 tsStart);
 				// compute RTT(t)
@@ -1092,6 +1342,7 @@ void doSeqAckAnalysis(QString rootPath,
 				QList<FlowAnnotation> flowRTTLossAnnotations;
 				QList<FlowIntDataItem> flowRTT = computeRttForFlow(conversation.fwdFlow,
 																   conversation.retFlow,
+																   flowPackets,
 																   fwdFlowName,
 																   tsStart,
 																   flowLossesBoth,
@@ -1106,11 +1357,13 @@ void doSeqAckAnalysis(QString rootPath,
 					// compute losses
 					QList<FlowIntDataItem> flowLosses = computeLossesForFlow(namedFlow.first == fwdFlowName ? conversation.fwdFlow : conversation.retFlow,
 																			 namedFlow.first == fwdFlowName ? conversation.retFlow : conversation.fwdFlow,
+																			 flowPackets,
 																			 namedFlow.first,
 																			 tsStart);
 					// compute raw received data(t)
 					QList<FlowAnnotation> flowReceivedRawLossAnnotations;
 					QList<FlowIntDataItem> flowReceivedRaw = computeReceivedRawForFlow(namedFlow.second,
+																					   flowPackets,
 																					   namedFlow.first,
 																					   tsStart,
 																					   flowLosses,
@@ -1124,6 +1377,7 @@ void doSeqAckAnalysis(QString rootPath,
 					// compute raw throughput(t) with window=100ms
 					QList<FlowAnnotation> flowReceivedThroughputRawLossAnnotations;
 					QList<FlowIntDataItem> flowReceivedThroughputRaw = computeReceivedRawThroughputForFlow(namedFlow.second,
+																										   flowPackets,
 																										   namedFlow.first,
 																										   tsStart,
 																										   flowLosses,
@@ -1137,6 +1391,7 @@ void doSeqAckAnalysis(QString rootPath,
 					}
 					// compute raw throughput(t) with window=500ms
 					flowReceivedThroughputRaw = computeReceivedRawThroughputForFlow(namedFlow.second,
+																					flowPackets,
 																					namedFlow.first,
 																					tsStart,
 																					flowLosses,
@@ -1150,6 +1405,7 @@ void doSeqAckAnalysis(QString rootPath,
 					}
 					// compute raw throughput(t) with window=1000ms
 					flowReceivedThroughputRaw = computeReceivedRawThroughputForFlow(namedFlow.second,
+																					flowPackets,
 																					namedFlow.first,
 																					tsStart,
 																					flowLosses,
@@ -1164,6 +1420,7 @@ void doSeqAckAnalysis(QString rootPath,
 					// compute receive window(t)
 					QList<FlowAnnotation> flowRwinLossAnnotations;
 					QList<FlowIntDataItem> flowRwin = computeRwinForFlow(namedFlow.first == fwdFlowName ? conversation.retFlow : conversation.fwdFlow,
+																		 flowPackets,
 																		 namedFlow.first,
 																		 tsStart,
 																		 flowLosses,
@@ -1217,6 +1474,7 @@ void doSeqAckAnalysis(QString rootPath,
 					// compute #packets in flight(t)
 					QList<FlowAnnotation> flowPacketsInFlightLossAnnotations;
 					QList<FlowIntDataItem> flowPacketsInFlight = computePacketsInFlightForFlow(namedFlow.second,
+																							   flowPackets,
 																							   namedFlow.first,
 																							   tsStart,
 																							   flowLosses,
@@ -1231,6 +1489,7 @@ void doSeqAckAnalysis(QString rootPath,
 					// compute #bytes in flight(t)
 					QList<FlowAnnotation> flowBytesInFlightLossAnnotations;
 					QList<FlowIntDataItem> flowBytesInFlight = computePacketsInFlightForFlow(namedFlow.second,
+																							 flowPackets,
 																							 namedFlow.first,
 																							 tsStart,
 																							 flowLosses,
@@ -1367,10 +1626,23 @@ bool processLineRecord(QString rootPath, QString expPath, int &packetCount, int 
 		return false;
 	}
 
+	{
+		QDir dir;
+		dir.cd(expPath);
+		dir.mkpath(QString("capture-data"));
+	}
+
 	packetCount = rec.recordedPacketData.count();
 	queueEventCount = rec.recordedQueuedPacketData.count();
 	qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Packet count:" << rec.recordedPacketData.count();
 	qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Queue events:" << rec.recordedQueuedPacketData.count();
+	if (rec.saturated) {
+		qint64 durationPackets = rec.recordedPacketData.last().ts_userspace_rx - rec.recordedPacketData.first().ts_userspace_rx;
+		qint64 durationEvents = rec.recordedQueuedPacketData.last().ts_enqueue - rec.recordedQueuedPacketData.first().ts_enqueue;
+		qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "WARNING: recording truncated due to memory limit!!!! at duration"
+				 << withCommasStr(qMin(durationPackets, durationEvents)) << "ns <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
+
+	}
 
 	NetGraph g;
 	if (!loadGraph(expPath, g)) {
@@ -1379,6 +1651,11 @@ bool processLineRecord(QString rootPath, QString expPath, int &packetCount, int 
 	}
 
 	if (!createPcapFiles(expPath, rec, g)) {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Aborting";
+		return false;
+	}
+
+	if (!indexCaptureFiles(expPath, rec, g)) {
 		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Aborting";
 		return false;
 	}
@@ -1402,7 +1679,1289 @@ bool processLineRecord(QString rootPath, QString expPath, int &packetCount, int 
 	}
 
 	// SEQ ACK analysis
-	doSeqAckAnalysis(rootPath, expPath, allPathConversations, tsStart, tsEnd);
+	if (rec.recordedPacketData.count() < 10 * 1000)
+		doSeqAckAnalysis(rootPath, expPath, allPathConversations, tsStart, tsEnd);
+
+	return true;
+}
+
+bool loadFlowPackets(OLazyVector<FlowPacket> &flowPackets, QFile &fileFlowPackets)
+{
+	if (!fileFlowPackets.open(QIODevice::ReadOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << fileFlowPackets.fileName();
+		return false;
+	}
+
+	QDataStream in(&fileFlowPackets);
+	in.setVersion(QDataStream::Qt_4_0);
+	flowPackets.init(&fileFlowPackets, RecordedPacketData::getSerializedSize());
+
+	if (in.status() != QDataStream::Ok) {
+		qDebug() << __FILE__ << __LINE__ << "Error reading file:" << fileFlowPackets.fileName();
+		return false;
+	}
+
+	return true;
+}
+
+bool loadAllPathConversations(QHash<NodePair, PathConversations> &allPathConversations, QString expPath)
+{
+	QFile fileAllPathConversations(expPath + "/capture-data/all-path-conversations.data");
+	if (!fileAllPathConversations.open(QIODevice::ReadOnly)) {
+		qError() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+		return false;
+	}
+	QDataStream sAllPathConversations(&fileAllPathConversations);
+	sAllPathConversations.setVersion(QDataStream::Qt_4_0);
+	sAllPathConversations >> allPathConversations;
+	if (sAllPathConversations.status() != QDataStream::Ok) {
+		qDebug() << __FILE__ << __LINE__ << "Error reading file:" << fileAllPathConversations.fileName();
+		return false;
+	}
+	return true;
+}
+
+bool postProcessLineRecordShowFlows(QString expPath, NetGraph &g)
+{
+	QFile fileFlowPackets(expPath + "/capture-data/flow-packets.data");
+	OLazyVector<FlowPacket> flowPackets;
+	if (!loadFlowPackets(flowPackets, fileFlowPackets))
+		return false;
+
+	QHash<NodePair, PathConversations> allPathConversations;
+	if (!loadAllPathConversations(allPathConversations, expPath))
+		return false;
+
+	QHash<NodePair, qint32> nodes2pathIndex;
+	for (int i = 0; i < g.paths.count(); i++) {
+		nodes2pathIndex[NodePair(g.paths[i].source, g.paths[i].dest)] = i;
+	}
+
+	int numFlows = 0;
+	foreach (NodePair nodePair, allPathConversations.uniqueKeys()) {
+		int numFlowsPath = 0;
+		PathConversations &pathConversations = allPathConversations[nodePair];
+		foreach (ProtoPortPair portPair, pathConversations.conversations.uniqueKeys()) {
+			foreach (Conversation conversation, pathConversations.conversations[portPair]) {
+				foreach (Flow flow, conversation.flows()) {
+					numFlowsPath++;
+				}
+			}
+		}
+		QString pString = QString("p%1").arg(nodes2pathIndex[nodePair]+1);
+		QString pMaxString = QString("p%1").arg(g.paths.count());
+		while (pString.length() < pMaxString.length()) {
+			pString = QString(" ") + pString;
+		}
+		qDebug() << "path =" << pString << "nodePair0 =" << nodePair << "numFlows =" << numFlowsPath;
+		numFlows += numFlowsPath;
+	}
+	qDebug() << "numFlows =" << numFlows;
+
+	return true;
+}
+
+qreal interpolateQueueLoad(const NetGraphEdge &e, quint64 t1, qreal y1, quint64 t2)
+{
+	qreal qcapacity = e.queueLength * ETH_FRAME_LEN;
+	qreal load1 = y1 * qcapacity;
+	qreal load2 = qMax(0.0, load1 - (t2 - t1) * e.bandwidth / 1.0e6);
+	qreal y2 = load2 / qcapacity;
+	return y2;
+}
+
+typedef qreal (*RecordFunction)(qreal, qreal);
+
+qreal recordFunctionMax(qreal a, qreal b)
+{
+	return qMax(a, b);
+}
+
+qreal recordFunctionSum(qreal a, qreal b)
+{
+	return a + b;
+}
+
+void recordSample(qreal &sink, qreal value, RecordFunction recordFunction)
+{
+	sink = recordFunction(sink, value);
+}
+
+class IntervalLossiness {
+public:
+	QSet<Link> lossyLinks;
+	QSet<Path> lossyPaths;
+	QSet<Link> trafficLinks;
+	QSet<Path> trafficPaths;
+};
+
+QString toJson(const IntervalLossiness &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.lossyLinks);
+	jsonObjectPrinterAddMember(p, d.lossyPaths);
+	jsonObjectPrinterAddMember(p, d.trafficLinks);
+	jsonObjectPrinterAddMember(p, d.trafficPaths);
+	return p.json();
+}
+
+QColor getLoadColor(qreal load, qreal loss)
+{
+	QColor color;
+	if (load == 0 && loss == 0) {
+		color = Qt::white;
+	} else {
+		const qreal hueGreen = 120/360.0;
+		const qreal hueYellow = 60/360.0;
+		const qreal hueRed = 0;
+
+		if (loss == 0) {
+			qreal hue = hueGreen;
+			qreal sat = 1.0;
+			qreal val = 1.0 - qMax(0.0, qMin(1.0, load)) * 0.5;
+			color.setHsvF(hue, sat, val, 1.0);
+		} else {
+			qreal hue = hueYellow + qMax(0.0, qMin(1.0, loss)) * (hueRed - hueYellow);
+			qreal sat = 1.0;
+			qreal val = 1.0 - qMax(0.0, qMin(1.0, load)) * 0.5;
+			color.setHsvF(hue, sat, val, 1.0);
+		}
+	}
+	return color;
+}
+
+QImage makeQueueLoadLegend()
+{
+	int padding = 40;
+	int h = 14;
+	int blockSize = 10;
+	int numBlocks = 51;
+	int yOffset = 0;
+	int w = 2 * padding + numBlocks * blockSize;
+
+	QImage image(w, 11 * h, QImage::Format_RGB32);
+	image.fill(Qt::white);
+
+	QPainter painter;
+	painter.begin(&image);
+
+	yOffset += h;
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter,
+					 QString("The link load is computed as the queue occupancy, normalized to [0, 1]."));
+	yOffset += h;
+	yOffset += h;
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter, QString("Legend: link load, without drops"));
+	yOffset += h;
+	for (int s = 0; s < numBlocks; s++) {
+		painter.setPen(Qt::black);
+		QColor color = getLoadColor(s / (qreal)numBlocks, 0);
+		painter.fillRect(padding + s * blockSize,
+						 yOffset + (h - blockSize) / 2,
+						 blockSize,
+						 blockSize,
+						 color);
+		if (s == 0 ||
+			s == numBlocks - 1 ||
+			s == numBlocks / 2) {
+			painter.drawText(padding + (s - 2) * blockSize,
+							 yOffset + h,
+							 5 * blockSize,
+							 h,
+							 Qt::AlignCenter,
+							 QString("%1").arg(s/(qreal)(numBlocks-1)));
+		}
+	}
+	painter.setPen(Qt::black);
+	painter.drawRect(padding,
+					 yOffset + (h - blockSize) / 2,
+					 numBlocks * blockSize,
+					 blockSize);
+	yOffset += h; // plot
+	yOffset += h; // text labels
+	yOffset += h; // space
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter, QString("Legend: link load, with drops"));
+	yOffset += h;
+	for (int s = 0; s < numBlocks; s++) {
+		painter.setPen(Qt::black);
+		QColor color = getLoadColor(0, 1);
+		painter.fillRect(padding + s * blockSize,
+						 yOffset + (h - blockSize) / 2,
+						 blockSize,
+						 blockSize,
+						 color);
+		if (s == 0 ||
+			s == numBlocks - 1 ||
+			s == numBlocks / 2) {
+			painter.drawText(padding + (s - 2) * blockSize,
+							 yOffset + h,
+							 5 * blockSize,
+							 h,
+							 Qt::AlignCenter,
+							 QString("%1").arg(s/(qreal)(numBlocks-1)));
+		}
+	}
+	painter.setPen(Qt::black);
+	painter.drawRect(padding,
+					 yOffset + (h - blockSize) / 2,
+					 numBlocks * blockSize,
+					 blockSize);
+	yOffset += h; // plot
+	yOffset += h; // text labels
+	yOffset += h; // space
+
+	painter.end();
+	return image;
+}
+
+QImage makePathLoadLegend()
+{
+	int padding = 40;
+	int h = 14;
+	int blockSize = 10;
+	int numBlocks = 51;
+	int numDropPlots = 4;
+	int yOffset = 0;
+	int w = 2 * padding + numBlocks * blockSize;
+
+	QImage image(w, ((numDropPlots + 1) * 4 + 3) * h, QImage::Format_RGB32);
+	image.fill(Qt::white);
+
+	QPainter painter;
+	painter.begin(&image);
+
+	yOffset += h;
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter,
+					 QString("The path load is computed as the number of packets / 10, normalized to [0,1]."));
+	yOffset += h;
+	yOffset += h;
+
+	for (int d = 0; d <= numDropPlots; d++) {
+		painter.setPen(Qt::black);
+		painter.setBrush(Qt::NoBrush);
+		painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter,
+						 QString("Legend: path load, loss rate %1%").arg(d * 100.0 / (qreal)numDropPlots));
+		yOffset += h;
+		for (int s = 0; s < numBlocks; s++) {
+			painter.setPen(Qt::black);
+			QColor color = getLoadColor(s / (qreal)numBlocks, d / (qreal)numDropPlots);
+			painter.fillRect(padding + s * blockSize,
+							 yOffset + (h - blockSize) / 2,
+							 blockSize,
+							 blockSize,
+							 color);
+			if (s == 0 ||
+				s == numBlocks - 1 ||
+				s == numBlocks / 2) {
+				painter.drawText(padding + (s - 2) * blockSize,
+								 yOffset + h,
+								 5 * blockSize,
+								 h,
+								 Qt::AlignCenter,
+								 QString("%1").arg(s/(qreal)(numBlocks-1)));
+			}
+		}
+		painter.setPen(Qt::black);
+		painter.drawRect(padding,
+						 yOffset + (h - blockSize) / 2,
+						 numBlocks * blockSize,
+						 blockSize);
+		yOffset += h; // plot
+		yOffset += h; // text labels
+		yOffset += h; // space
+	}
+
+	painter.end();
+	return image;
+}
+
+QColor getDelayColor(qreal delay, qreal load, qreal loss)
+{
+	QColor color;
+	if (load == 0) {
+		color = Qt::white;
+	} else if (loss == 1.0) {
+		color = Qt::black;
+	} else {
+		const qreal hueBlue = 240/360.0;
+		const qreal hueGreen = 120/360.0;
+		const qreal hueOrange = 42/360.0;
+		const qreal hueRed = 0;
+
+		if (delay <= 50.0) {
+			qreal hue = hueBlue;
+			qreal sat = 1.0;
+			qreal val = 1.0;
+			color.setHsvF(hue, sat, val, 1.0);
+		} else if (delay <= 120.0) {
+			qreal hue = hueBlue + (delay - 50.0)/(120.0 - 50.0) * (hueGreen - hueBlue);
+			qreal sat = 1.0;
+			qreal val = 1.0;
+			color.setHsvF(hue, sat, val, 1.0);
+		} else if (delay <= 250.0) {
+			qreal hue = hueGreen + (delay - 120.0)/(250.0 - 120.0) * (hueOrange - hueGreen);
+			qreal sat = 1.0;
+			qreal val = 1.0;
+			color.setHsvF(hue, sat, val, 1.0);
+		} else if (delay <= 500.0) {
+			qreal hue = hueOrange + (delay - 250.0)/(500.0 - 250.0) * (hueRed - hueOrange);
+			qreal sat = 1.0;
+			qreal val = 1.0;
+			color.setHsvF(hue, sat, val, 1.0);
+		} else {
+			qreal hue = hueRed;
+			qreal sat = 1.0;
+			qreal val = 1.0;
+			color.setHsvF(hue, sat, val, 1.0);
+		}
+	}
+	return color;
+}
+
+QImage makePathDelayLegend()
+{
+	int padding = 40;
+	int h = 14;
+	int blockSize = 10;
+	int numBlocks = 51;
+	int yOffset = 0;
+	int w = 2 * padding + numBlocks * blockSize;
+
+	QImage image(w, 14 * h, QImage::Format_RGB32);
+	image.fill(Qt::white);
+
+	QPainter painter;
+	painter.begin(&image);
+
+	yOffset += h;
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter,
+					 QString("Legend: path delay, loss rate < 100%"));
+	yOffset += h;
+	for (int s = 0; s < numBlocks; s++) {
+		qreal d = s * 500.0 / (qreal)(numBlocks - 1);
+		painter.setPen(Qt::black);
+		QColor color = getDelayColor(d, 1, 0);
+		painter.fillRect(padding + s * blockSize,
+						 yOffset + (h - blockSize) / 2,
+						 blockSize,
+						 blockSize,
+						 color);
+		if (s == 0 ||
+			s == numBlocks - 1 ||
+			s == numBlocks / 2 ||
+			s == numBlocks / 4 ||
+			s == 3 * numBlocks / 4) {
+			painter.drawText(padding + (s - 2) * blockSize,
+							 yOffset + h,
+							 5 * blockSize,
+							 h,
+							 Qt::AlignCenter,
+							 QString("%1 ms").arg(d));
+		}
+	}
+	painter.setPen(Qt::black);
+	painter.drawRect(padding,
+					 yOffset + (h - blockSize) / 2,
+					 numBlocks * blockSize,
+					 blockSize);
+	yOffset += h; // plot
+	yOffset += h; // text labels
+	yOffset += h; // space
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter,
+					 QString("Legend: path delay, loss rate 100%"));
+	yOffset += h;
+	for (int s = 0; s < numBlocks; s++) {
+		qreal d = s * 500.0 / (qreal)(numBlocks - 1);
+		painter.setPen(Qt::black);
+		QColor color = getDelayColor(d, 1, 1);
+		painter.fillRect(padding + s * blockSize,
+						 yOffset + (h - blockSize) / 2,
+						 blockSize,
+						 blockSize,
+						 color);
+		if (s == 0 ||
+			s == numBlocks - 1 ||
+			s == numBlocks / 2 ||
+			s == numBlocks / 4 ||
+			s == 3 * numBlocks / 4) {
+			painter.drawText(padding + (s - 2) * blockSize,
+							 yOffset + h,
+							 5 * blockSize,
+							 h,
+							 Qt::AlignCenter,
+							 QString("%1 ms").arg(d));
+		}
+	}
+	painter.setPen(Qt::black);
+	painter.drawRect(padding,
+					 yOffset + (h - blockSize) / 2,
+					 numBlocks * blockSize,
+					 blockSize);
+	yOffset += h; // plot
+	yOffset += h; // text labels
+	yOffset += h; // space
+
+	painter.setPen(Qt::black);
+	painter.setBrush(Qt::NoBrush);
+	painter.drawText(padding, yOffset, w - padding, h, Qt::AlignLeft | Qt::AlignVCenter,
+					 QString("Legend: path delay, no traffic"));
+	yOffset += h;
+	for (int s = 0; s < numBlocks; s++) {
+		qreal d = s * 500.0 / (qreal)(numBlocks - 1);
+		painter.setPen(Qt::black);
+		QColor color = getDelayColor(d, 0, 0);
+		painter.fillRect(padding + s * blockSize,
+						 yOffset + (h - blockSize) / 2,
+						 blockSize,
+						 blockSize,
+						 color);
+		if (s == 0 ||
+			s == numBlocks - 1 ||
+			s == numBlocks / 2 ||
+			s == numBlocks / 4 ||
+			s == 3 * numBlocks / 4) {
+			painter.drawText(padding + (s - 2) * blockSize,
+							 yOffset + h,
+							 5 * blockSize,
+							 h,
+							 Qt::AlignCenter,
+							 QString("%1 ms").arg(d));
+		}
+	}
+	painter.setPen(Qt::black);
+	painter.drawRect(padding,
+					 yOffset + (h - blockSize) / 2,
+					 numBlocks * blockSize,
+					 blockSize);
+	yOffset += h; // plot
+	yOffset += h; // text labels
+	yOffset += h; // space
+
+	painter.end();
+	return image;
+}
+
+bool postProcessLineRecord(QString expPath, QString srcDir, QString tag)
+{
+	{
+		QDir dir;
+		dir.cd(expPath);
+		dir.mkpath(QString("capture-plots"));
+	}
+	makeQueueLoadLegend().save(QString("%1/capture-plots/legend-link-load.png").arg(expPath));
+	makePathLoadLegend().save(QString("%1/capture-plots/legend-path-load.png").arg(expPath));
+	makePathDelayLegend().save(QString("%1/capture-plots/legend-path-delay.png").arg(expPath));
+
+	NetGraph g;
+	if (!loadGraph(expPath, g)) {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Aborting";
+		return false;
+	}
+
+	ErrorAnalysisData errorAnalysisData;
+	if (!errorAnalysisData.loadFromFile(tag + "/error-analysis-point-measurements.data")) {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Aborting";
+		return false;
+	}
+
+	postProcessLineRecordShowFlows(expPath, g);
+
+	RecordedData rec;
+	if (!rec.load(expPath + "/" + "recorded.line-rec")) {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not open/read file";
+		return false;
+	}
+
+	OVector<quint64, qint64> packetExitTimestamp;
+	OVector<qint32, qint64> packetExitLink;
+	OVector<bool, qint64> packetDropped;
+	generatePacketInfo(rec, packetExitTimestamp, packetExitLink, packetDropped);
+
+	OVector<quint16, qint64> packetSize(rec.recordedPacketData.count());
+	for (qint64 pIndex = 0; pIndex < rec.recordedPacketData.count(); pIndex++) {
+		RecordedPacketData p = rec.recordedPacketData[pIndex];
+		QByteArray buffer = QByteArray((const char*)p.buffer, CAPTURE_LENGTH);
+		packetSize[pIndex] = getOriginalPacketLength(buffer) + 14;
+	}
+
+	QVector<QVector<QVector<qint64> > > link2interval2eventIndices(g.edges.count());
+	for (int e = 0; e < g.edges.count(); e++) {
+		link2interval2eventIndices[e].resize(errorAnalysisData.numIntervals);
+
+		QFile fileLinkEvents(expPath + QString("/capture-data/link-events-%1.dat").arg(e));
+		if (!fileLinkEvents.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<RecordedQueuedPacketData> linkEvents(&fileLinkEvents, RecordedQueuedPacketData::getSerializedSize());
+
+		for (qint64 qei = 0; qei < linkEvents.count(); qei++) {
+			RecordedQueuedPacketData event = linkEvents[qei];
+			int i = errorAnalysisData.time2interval(event.ts_enqueue);
+			if (i < 0)
+				continue;
+			link2interval2eventIndices[e][i].append(qei);
+		}
+	}
+
+	qDebug() << "Generating per interval, link, path pcap files...";
+	for (int i = 0; i < errorAnalysisData.numIntervals; i++) {
+		QDir dir;
+		dir.cd(expPath);
+		dir.mkpath(QString("capture-data/i%1").arg(i+1));
+	}
+	QHash<NodePair, qint32> nodes2pathIndex;
+	for (int i = 0; i < g.paths.count(); i++) {
+		nodes2pathIndex[NodePair(g.paths[i].source, g.paths[i].dest)] = i;
+	}
+
+#if WRITE_PCAP
+	for (Link e = 0; e < g.edges.count(); e++) {
+		qDebug() << "Link" << (e+1);
+
+		QFile fileLinkEvents(expPath + QString("/capture-data/link-events-%1.dat").arg(e));
+		if (!fileLinkEvents.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<RecordedQueuedPacketData> linkEvents(&fileLinkEvents, RecordedQueuedPacketData::getSerializedSize());
+
+		for (int i = 0; i < errorAnalysisData.numIntervals; i++) {
+			PcapWriter input;
+			OVector<PcapWriter> inputPerPath(g.paths.count());
+
+			input.init(expPath + "/capture-data/" + QString("i%1/edge-%2-in-i%1.pcap").arg(i+1).arg(e+1), LINKTYPE_RAW);
+			foreach (Path p, errorAnalysisData.link2paths[e]) {
+				inputPerPath[p].init(expPath + "/capture-data/" + QString("i%1/edge-%2-path-%3-in-i%1.pcap").arg(i+1).arg(e+1).arg(p+1), LINKTYPE_RAW);
+			}
+
+			foreach (qint64 qei, link2interval2eventIndices[e][i]) {
+				RecordedQueuedPacketData qe = linkEvents[qei];
+				Q_ASSERT_FORCE(e == qe.edge_index);
+
+				RecordedPacketData p = rec.packetByID(qe.packet_id);
+				if (p.isNull()) {
+					qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Null packet";
+					continue;
+				}
+
+				QByteArray buffer = QByteArray((const char*)p.buffer, CAPTURE_LENGTH);
+				int originalLength = getOriginalPacketLength(buffer);
+
+				input.writePacket(qe.ts_enqueue, originalLength, buffer);
+				if (nodes2pathIndex.contains(NodePair(p.src_id, p.dst_id))) {
+					qint32 path = nodes2pathIndex[NodePair(p.src_id, p.dst_id)];
+					inputPerPath[path].writePacket(qe.ts_enqueue, originalLength, buffer);
+				} else {
+					qDebug() << "bad path";
+				}
+			}
+		}
+	}
+	qDebug() << "Generating per interval, path pcap files...";
+	{
+		OVector<PcapWriter> inputPath(g.paths.count());
+		OVector<qint32> inputPathInterval(g.paths.count(), -1);
+		for (qint64 ip = 0; ip < rec.recordedPacketData.count(); ip++) {
+			RecordedPacketData p = rec.recordedPacketData[ip];
+			if (nodes2pathIndex.contains(NodePair(p.src_id, p.dst_id))) {
+				Path path = nodes2pathIndex[NodePair(p.src_id, p.dst_id)];
+				qint32 i = errorAnalysisData.time2interval(p.ts_userspace_rx);
+				if (i < 0)
+					continue;
+
+				while (inputPathInterval[path] < i) {
+					inputPath[path].cleanup();
+					inputPathInterval[path]++;
+					inputPath[path].init(expPath + "/capture-data/" + QString("i%1/path-%2-in-i%1.pcap").arg(inputPathInterval[path]+1).arg(path+1), LINKTYPE_RAW);
+				}
+				Q_ASSERT_FORCE(inputPathInterval[path] == i);
+
+				QByteArray buffer = QByteArray((const char*)p.buffer, CAPTURE_LENGTH);
+				int originalLength = getOriginalPacketLength(buffer);
+				inputPath[path].writePacket(p.ts_userspace_rx, originalLength, buffer);
+			} else {
+				qDebug() << "bad path";
+			}
+		}
+		for (Path path = 0; path < g.paths.count(); path++) {
+			while (inputPathInterval[path] < errorAnalysisData.numIntervals - 1) {
+				inputPath[path].cleanup();
+				inputPathInterval[path]++;
+				inputPath[path].init(expPath + "/capture-data/" + QString("i%1/path-%2-in-i%1.pcap").arg(inputPathInterval[path]+1).arg(path+1), LINKTYPE_RAW);
+			}
+			inputPath[path].cleanup();
+		}
+	}
+#endif
+
+	QVector<QVector<QVector<qint64> > > path2interval2eventIndices(g.paths.count());
+	for (int p = 0; p < g.paths.count(); p++) {
+		path2interval2eventIndices[p].resize(errorAnalysisData.numIntervals);
+
+		QFile filePathEvents(expPath + QString("/capture-data/path-events-%1.dat").arg(p));
+		if (!filePathEvents.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<RecordedQueuedPacketData> pathEvents(&filePathEvents, RecordedQueuedPacketData::getSerializedSize());
+
+		for (qint64 pei = 0; pei < pathEvents.count(); pei++) {
+			RecordedQueuedPacketData event = pathEvents[pei];
+			int i = errorAnalysisData.time2interval(event.ts_enqueue);
+			if (i < 0)
+				continue;
+			path2interval2eventIndices[p][i].append(pei);
+		}
+	}
+
+	for (int i = 0; i < errorAnalysisData.numIntervals; i++) {
+		QDir dir;
+		dir.cd(expPath);
+		dir.mkpath(QString("capture-plots/i%1").arg(i + 1));
+	}
+
+	// Plotting parameters
+
+	// Number of samples per interval
+	// 1 ms = 1M ns
+	errorAnalysisData.samplingPeriod = 1ULL * 1000 * 1000;
+
+	const qint64 nSamples = errorAnalysisData.intervalSize / errorAnalysisData.samplingPeriod;
+	Q_ASSERT_FORCE(errorAnalysisData.intervalSize % errorAnalysisData.samplingPeriod == 0);
+
+	// Index intervals with losses
+	QVector<IntervalLossiness> intervalLossiness(errorAnalysisData.numIntervals);
+
+	const int textWidth = 70;
+	const int blockSize = 10;
+	const int textPadding = 4;
+	const int w = textWidth + nSamples * blockSize + textWidth;
+	const int h = 14;
+	const qreal maxPPS = 10.0;
+	// The same value is used in the emulator when taking interval measurements
+	const int minPacketSize = 1400;
+
+	// for each link
+	//   for each interval
+	//     plot queue state
+
+	qDebug() << "Per link interval plots (data)";
+	for (Link e = 0; e < g.edges.count(); e++) {
+		qDebug() << "Link" << (e+1);
+		QFile fileLinkEvents(expPath + QString("/capture-data/link-events-%1.dat").arg(e));
+		if (!fileLinkEvents.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<RecordedQueuedPacketData> linkEvents(&fileLinkEvents, RecordedQueuedPacketData::getSerializedSize());
+
+		QFile fileLinkState(expPath + QString("/capture-data/link-state-sampled-%1.dat").arg(e));
+		if (!fileLinkState.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		QDataStream sLinkState(&fileLinkState);
+		sLinkState.setVersion(QDataStream::Qt_4_0);
+		// Compatibility with OLazyVector
+		sLinkState << qint64(0);
+
+		QFile fileLinkDrops(expPath + QString("/capture-data/link-drops-sampled-%1.dat").arg(e));
+		if (!fileLinkDrops.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		QDataStream sLinkDrops(&fileLinkDrops);
+		sLinkDrops.setVersion(QDataStream::Qt_4_0);
+		// Compatibility with OLazyVector
+		sLinkDrops << qint64(0);
+
+		QVector<qreal> queueLoad(nSamples);
+		queueLoad.fill(0.0, nSamples);
+
+		QVector<qreal> queueDrops(nSamples);
+		queueDrops.fill(0.0, nSamples);
+
+		quint64 t1 = errorAnalysisData.tsStart;
+		qint64 i1 = errorAnalysisData.time2interval(t1);
+		Q_ASSERT_FORCE(i1 >= 0);
+		qint64 s1 = errorAnalysisData.time2sample(t1);
+		qreal y1 = 0.0;
+
+		for (qint64 qei = 0; qei <= linkEvents.count(); qei++) {
+			bool dummy = false;
+			RecordedQueuedPacketData event;
+			if (qei < linkEvents.count()) {
+				event = linkEvents[qei];
+				if (packetSize[rec.packetIndexByID(event.packet_id)] < minPacketSize)
+					continue;
+			} else {
+				// Dummy event for the last timestamp
+				event.ts_enqueue = errorAnalysisData.tsEnd;
+				event.qload = 0;
+				event.qcapacity = 1;
+				event.decision = RecordedQueuedPacketData::Queued;
+				dummy = true;
+			}
+
+			quint64 t2 = event.ts_enqueue;
+			qint64 i2 = errorAnalysisData.time2interval(t2);
+			if (i2 < 0)
+				continue;
+			Q_ASSERT_FORCE(i2 >= i1);
+			qint64 s2 = errorAnalysisData.time2sample(t2);
+			qreal y2 = event.qload / (qreal)event.qcapacity;
+			qreal d2 = (event.decision != RecordedQueuedPacketData::Queued) ? 1 : 0;
+			qint64 s1o = s1;
+			if (!dummy)
+				intervalLossiness[i2].trafficLinks.insert(e);
+			if (d2 > 0) {
+				intervalLossiness[i2].lossyLinks.insert(e);
+			}
+
+			while (i1 <= i2) {
+				for (qint64 s = s1; s <= s2; s++) {
+					if (errorAnalysisData.sample2interval(s) != i1) {
+						s1 = s;
+						break;
+					}
+					QPair<quint64, quint64> sampleTimestamps = errorAnalysisData.sample2time(s);
+					if (s > s1o) {
+						qreal ys = interpolateQueueLoad(g.edges[e], t1, y1, sampleTimestamps.first);
+						recordSample(queueLoad[s % nSamples], ys, recordFunctionMax);
+					}
+					if (s < s2) {
+						qreal ye = interpolateQueueLoad(g.edges[e], t1, y1, sampleTimestamps.second);
+						recordSample(queueLoad[s % nSamples], ye, recordFunctionMax);
+					}
+				}
+				if (i1 < i2) {
+					// dump samples for interval i1
+					foreach (qreal sample, queueLoad) {
+						sLinkState << sample;
+					}
+					queueLoad.fill(0.0, nSamples);
+
+					foreach (qreal sample, queueDrops) {
+						sLinkDrops << sample;
+					}
+					queueDrops.fill(0.0, nSamples);
+				}
+				i1++;
+			}
+			if (!dummy) {
+				recordSample(queueLoad[s2 % nSamples], y2, recordFunctionMax);
+				recordSample(queueDrops[s2 % nSamples], d2, recordFunctionSum);
+			}
+			i1 = i2;
+			s1 = s2;
+			y1 = y2;
+			t1 = t2;
+		}
+
+		fileLinkState.seek(0);
+		sLinkState << qint64(errorAnalysisData.numIntervals * nSamples);
+
+		fileLinkDrops.seek(0);
+		sLinkDrops << qint64(errorAnalysisData.numIntervals * nSamples);
+	}
+
+	// Plot
+	qDebug() << "Per link interval plots (plots)";
+	for (Link e = 0; e < g.edges.count(); e++) {
+		qDebug() << "Link" << (e+1);
+		QFile fileLinkState(expPath + QString("/capture-data/link-state-sampled-%1.dat").arg(e));
+		if (!fileLinkState.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<qreal> linkState(&fileLinkState);
+
+		QFile fileLinkDrops(expPath + QString("/capture-data/link-drops-sampled-%1.dat").arg(e));
+		if (!fileLinkDrops.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<qreal> linkDrops(&fileLinkDrops);
+
+		for (int i = 0; i < errorAnalysisData.numIntervals; i++) {
+			QVector<qreal> queueLoad(nSamples);
+			queueLoad.fill(0.0, nSamples);
+
+			QVector<qreal> queueDrops(nSamples);
+			queueDrops.fill(0.0, nSamples);
+
+			for (int s = 0; s < nSamples; s++) {
+				queueLoad[s] = linkState[i * nSamples + s];
+				queueDrops[s] = linkDrops[i * nSamples + s];
+			}
+
+			// Plot
+			QImage image(w, h, QImage::Format_RGB32);
+			image.fill(Qt::white);
+
+			QPainter painter;
+			painter.begin(&image);
+			painter.setPen(Qt::black);
+			painter.setBrush(Qt::NoBrush);
+			painter.drawText(textPadding, 0, textWidth - 2 * textPadding, h, Qt::AlignLeft | Qt::AlignVCenter, QString("e%1").arg(e + 1));
+			for (int s = 0; s < nSamples; s++) {
+				painter.setPen(Qt::black);
+				QColor color = getLoadColor(queueDrops[s] == 0 ? queueLoad[s] : 0, qMin(queueDrops[s], 1.0));
+				painter.fillRect(textWidth + s * blockSize,
+								 (h - blockSize) / 2,
+								 blockSize,
+								 blockSize, color);
+				painter.drawRect(textWidth + s * blockSize,
+								 (h - blockSize) / 2,
+								 blockSize,
+								 blockSize);
+			}
+			painter.end();
+			image.save(QString("%1/capture-plots/i%2/e%3.png")
+					   .arg(expPath)
+					   .arg(i + 1)
+					   .arg(e + 1));
+		}
+	}
+
+	// for each link
+	//   for each interval
+	//     plot queue state
+
+	qDebug() << "Per path interval plots (data)";
+	for (Path p = 0; p < g.paths.count(); p++) {
+		qDebug() << "Path" << (p+1);
+		QFile filePathPackets(expPath + QString("/capture-data/path-packets-%1.dat").arg(p));
+		if (!filePathPackets.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<RecordedPacketData> pathPackets(&filePathPackets, RecordedPacketData::getSerializedSize());
+
+		QFile filePathPacketCounters(expPath + QString("/capture-data/path-packets-sampled-%1.dat").arg(p));
+		if (!filePathPacketCounters.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		QDataStream sPathPackets(&filePathPacketCounters);
+		sPathPackets.setVersion(QDataStream::Qt_4_0);
+		// Compatibility with OLazyVector
+		sPathPackets << qint64(0);
+
+		QFile filePathDrops(expPath + QString("/capture-data/path-drops-sampled-%1.dat").arg(p));
+		if (!filePathDrops.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		QDataStream sPathDrops(&filePathDrops);
+		sPathDrops.setVersion(QDataStream::Qt_4_0);
+		// Compatibility with OLazyVector
+		sPathDrops << qint64(0);
+
+		QFile filePathDelay(expPath + QString("/capture-data/path-delay-sampled-%1.dat").arg(p));
+		if (!filePathDelay.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		QDataStream sPathDelay(&filePathDelay);
+		sPathDelay.setVersion(QDataStream::Qt_4_0);
+		// Compatibility with OLazyVector
+		sPathDelay << qint64(0);
+
+		QVector<qreal> packets(nSamples);
+		packets.fill(0.0, nSamples);
+
+		QVector<qreal> drops(nSamples);
+		drops.fill(0.0, nSamples);
+
+		QVector<qreal> delay(nSamples);
+		delay.fill(0.0, nSamples);
+
+		quint64 t1 = errorAnalysisData.tsStart;
+		qint64 i1 = errorAnalysisData.time2interval(t1);
+		Q_ASSERT_FORCE(i1 >= 0);
+
+		for (qint64 pi = 0; pi <= pathPackets.count(); pi++) {
+			bool dummy = false;
+			RecordedPacketData packet;
+			if (pi < pathPackets.count()) {
+				packet = pathPackets[pi];
+				QByteArray buffer = QByteArray((const char*)packet.buffer, CAPTURE_LENGTH);
+				int size = getOriginalPacketLength(buffer) + 14;
+				if (size < minPacketSize)
+					continue;
+			} else {
+				// Dummy event for the last timestamp
+				packet.packet_id = ULONG_LONG_MAX;
+				packet.ts_userspace_rx = errorAnalysisData.tsEnd;
+				dummy = true;
+			}
+
+			quint64 t2 = packet.ts_userspace_rx;
+			qint64 i2 = errorAnalysisData.time2interval(t2);
+			if (i2 < 0)
+				continue;
+			Q_ASSERT_FORCE(i2 >= i1);
+			qint64 s2 = errorAnalysisData.time2sample(t2);
+			qreal p2 = !dummy ? 1.0 : 0.0;
+			qreal drop2 = !dummy ? packetDropped[rec.packetIndexByID(packet.packet_id)] : 0.0;
+			qreal delay2 = !dummy
+						   ? (packetDropped[rec.packetIndexByID(packet.packet_id)]
+							 ? 0.0
+							 : packetExitTimestamp[rec.packetIndexByID(packet.packet_id)] - packet.ts_userspace_rx)
+					: 0.0;
+			if (!dummy)
+				intervalLossiness[i2].trafficPaths.insert(p);
+			if (drop2 > 0) {
+				intervalLossiness[i2].lossyPaths.insert(p);
+			}
+
+			while (i1 < i2) {
+				// dump samples for interval i1
+				foreach (qreal sample, packets) {
+					sPathPackets << sample;
+				}
+				packets.fill(0.0, nSamples);
+
+				foreach (qreal sample, drops) {
+					sPathDrops << sample;
+				}
+				drops.fill(0.0, nSamples);
+
+				foreach (qreal sample, delay) {
+					sPathDelay << sample;
+				}
+				delay.fill(0.0, nSamples);
+
+				i1++;
+			}
+			if (!dummy) {
+				recordSample(packets[s2 % nSamples], p2, recordFunctionSum);
+				recordSample(drops[s2 % nSamples], drop2, recordFunctionSum);
+				recordSample(delay[s2 % nSamples], delay2, recordFunctionMax);
+			}
+			i1 = i2;
+			t1 = t2;
+		}
+
+		filePathPacketCounters.seek(0);
+		sPathPackets << qint64(errorAnalysisData.numIntervals * nSamples);
+
+		filePathDrops.seek(0);
+		sPathDrops << qint64(errorAnalysisData.numIntervals * nSamples);
+
+		filePathDelay.seek(0);
+		sPathDelay << qint64(errorAnalysisData.numIntervals * nSamples);
+	}
+
+	// Plot
+	qDebug() << "Per path interval plots (plots)";
+	for (Path p = 0; p < g.paths.count(); p++) {
+		qDebug() << "Path" << (p+1);
+		QFile filePathPackets(expPath + QString("/capture-data/path-packets-sampled-%1.dat").arg(p));
+		if (!filePathPackets.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<qreal> pathPackets(&filePathPackets);
+
+		QFile filePathDrops(expPath + QString("/capture-data/path-drops-sampled-%1.dat").arg(p));
+		if (!filePathDrops.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<qreal> pathDrops(&filePathDrops);
+
+		QFile filePathDelay(expPath + QString("/capture-data/path-delay-sampled-%1.dat").arg(p));
+		if (!filePathDelay.open(QIODevice::ReadOnly)) {
+			qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+			return false;
+		}
+		OLazyVector<qreal> pathDelay(&filePathDelay);
+
+		for (int i = 0; i < errorAnalysisData.numIntervals; i++) {
+			QVector<qreal> packets(nSamples);
+			packets.fill(0.0, nSamples);
+
+			QVector<qreal> drops(nSamples);
+			drops.fill(0.0, nSamples);
+
+			QVector<qreal> delay(nSamples);
+			delay.fill(0.0, nSamples);
+
+			for (int s = 0; s < nSamples; s++) {
+				packets[s] = pathPackets[i * nSamples + s];
+				drops[s] = pathDrops[i * nSamples + s];
+				delay[s] = pathDelay[i * nSamples + s] * 1.0e-6;
+			}
+
+			// Plot
+			// Throughput & loss
+			QImage image(w, h, QImage::Format_RGB32);
+			image.fill(Qt::white);
+
+			QPainter painter;
+			painter.begin(&image);
+			painter.setPen(errorAnalysisData.pathClass[p] == 0 ? Qt::blue : Qt::red);
+			painter.setBrush(Qt::NoBrush);
+			painter.drawText(textPadding, 0, textWidth - 2 * textPadding, h, Qt::AlignLeft | Qt::AlignVCenter, QString("p%1").arg(p + 1));
+			for (int s = 0; s < nSamples; s++) {
+				painter.setPen(Qt::black);
+				QColor color = getLoadColor(packets[s] / maxPPS, drops[s] / qMax(packets[s], 1.0));
+				painter.fillRect(textWidth + s * blockSize,
+								 (h - blockSize) / 2,
+								 blockSize,
+								 blockSize, color);
+				painter.drawRect(textWidth + s * blockSize,
+								 (h - blockSize) / 2,
+								 blockSize,
+								 blockSize);
+			}
+			painter.end();
+			image.save(QString("%1/capture-plots/i%2/p%3.png")
+					   .arg(expPath)
+					   .arg(i + 1)
+					   .arg(p + 1));
+
+			// Delay
+			image.fill(Qt::white);
+
+			painter.begin(&image);
+			painter.setPen(errorAnalysisData.pathClass[p] == 0 ? Qt::blue : Qt::red);
+			painter.setBrush(Qt::NoBrush);
+			painter.drawText(textPadding, 0, textWidth - 2 * textPadding, h, Qt::AlignLeft | Qt::AlignVCenter, QString("p%1").arg(p + 1));
+			for (int s = 0; s < nSamples; s++) {
+				painter.setPen(Qt::black);
+				QColor color = getDelayColor(delay[s], packets[s], drops[s] / qMax(packets[s], 1.0));
+				painter.fillRect(textWidth + s * blockSize,
+								 (h - blockSize) / 2,
+								 blockSize,
+								 blockSize, color);
+				painter.drawRect(textWidth + s * blockSize,
+								 (h - blockSize) / 2,
+								 blockSize,
+								 blockSize);
+			}
+
+			qreal delayMax = 0;
+			for (int s = 0; s < nSamples; s++) {
+				delayMax = qMax(delayMax, delay[s]);
+			}
+			painter.setPen(Qt::black);
+			painter.setBrush(Qt::NoBrush);
+			painter.drawText(textWidth + nSamples * blockSize + textPadding,
+							 0,
+							 textWidth - 2 * textPadding,
+							 h,
+							 Qt::AlignCenter | Qt::AlignVCenter,
+							 QString("%1 ms").arg((int)delayMax));
+
+			painter.end();
+			image.save(QString("%1/capture-plots/i%2/pdelay%3.png")
+					   .arg(expPath)
+					   .arg(i + 1)
+					   .arg(p + 1));
+		}
+	}
+
+	// for each link
+	//   for each path
+	//     for each interval
+	//       plot p
+
+	qDebug() << "Per link, path interval plots (data)";
+	for (Link e = 0; e < g.edges.count(); e++) {
+		qDebug() << "Link" << (e+1);
+		foreach (Path p, errorAnalysisData.link2paths[e]) {
+			QFile fileLinkPathEvents(expPath + QString("/capture-data/link-path-events-%1-%2.dat").arg(e).arg(p));
+			if (!fileLinkPathEvents.open(QIODevice::ReadOnly)) {
+				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+				return false;
+			}
+			OLazyVector<RecordedQueuedPacketData> linkPathEvents(&fileLinkPathEvents, RecordedQueuedPacketData::getSerializedSize());
+
+			QFile fileLinkPathState(expPath + QString("/capture-data/link-path-state-sampled-%1-%2.dat").arg(e).arg(p));
+			if (!fileLinkPathState.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+				return false;
+			}
+			QDataStream sLinkPathState(&fileLinkPathState);
+			sLinkPathState.setVersion(QDataStream::Qt_4_0);
+			// Compatibility with OLazyVector
+			sLinkPathState << qint64(0);
+
+			QFile fileLinkPathPackets(expPath + QString("/capture-data/link-path-packets-sampled-%1-%2.dat").arg(e).arg(p));
+			if (!fileLinkPathPackets.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+				return false;
+			}
+			QDataStream sLinkPathPackets(&fileLinkPathPackets);
+			sLinkPathPackets.setVersion(QDataStream::Qt_4_0);
+			// Compatibility with OLazyVector
+			sLinkPathPackets << qint64(0);
+
+			QVector<qreal> pathPackets(nSamples);
+			pathPackets.fill(0, nSamples);
+			QVector<qreal> pathDrops(nSamples);
+			pathDrops.fill(0, nSamples);
+
+			quint64 t1 = errorAnalysisData.tsStart;
+			qint64 i1 = errorAnalysisData.time2interval(t1);
+			Q_ASSERT_FORCE(i1 >= 0);
+
+			for (qint64 qei = 0; qei <= linkPathEvents.count(); qei++) {
+				bool dummy = false;
+				RecordedQueuedPacketData event;
+				if (qei < linkPathEvents.count()) {
+					event = linkPathEvents[qei];
+					Q_ASSERT_FORCE(event.edge_index == e);
+					if (packetSize[rec.packetIndexByID(event.packet_id)] < minPacketSize)
+						continue;
+				} else {
+					// Dummy event for the last timestamp
+					event.ts_enqueue = errorAnalysisData.tsEnd;
+					event.qload = 0;
+					event.qcapacity = 1;
+					dummy = true;
+				}
+
+				quint64 t2 = event.ts_enqueue;
+				qint64 i2 = errorAnalysisData.time2interval(t2);
+				if (i2 < 0)
+					continue;
+				Q_ASSERT_FORCE(i2 >= i1);
+				qint64 s2 = errorAnalysisData.time2sample(t2);
+				qreal packets2 = !dummy ? 1 : 0;
+				qreal drops2 = dummy ? 0 : (event.decision == RecordedQueuedPacketData::Queued ? 0 : 1);
+
+				while (i1 < i2) {
+					// dump samples for interval i1
+					for (int rs = 0; rs < pathPackets.count(); rs++) {
+						sLinkPathState << (pathPackets[rs] > 0 ? (pathPackets[rs] - pathDrops[rs]) / pathPackets[rs] : 1.0);
+					}
+					foreach (qreal sample, pathPackets) {
+						sLinkPathPackets << sample;
+					}
+					pathPackets.fill(0, nSamples);
+					pathDrops.fill(0, nSamples);
+					i1++;
+				}
+				if (!dummy) {
+					recordSample(pathPackets[s2 % nSamples], packets2, recordFunctionSum);
+					recordSample(pathDrops[s2 % nSamples], drops2, recordFunctionSum);
+				}
+				i1 = i2;
+				t1 = t2;
+			}
+
+			fileLinkPathState.seek(0);
+			sLinkPathState << qint64(errorAnalysisData.numIntervals * nSamples);
+
+			fileLinkPathPackets.seek(0);
+			sLinkPathPackets << qint64(errorAnalysisData.numIntervals * nSamples);
+		}
+	}
+
+	// Plot
+	qDebug() << "Per link, path interval plots (plots)";
+	for (Link e = 0; e < g.edges.count(); e++) {
+		qDebug() << "Link" << (e+1);
+		foreach (Path p, errorAnalysisData.link2paths[e]) {
+			QFile fileLinkPathState(expPath + QString("/capture-data/link-path-state-sampled-%1-%2.dat").arg(e).arg(p));
+			if (!fileLinkPathState.open(QIODevice::ReadOnly)) {
+				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+				return false;
+			}
+			OLazyVector<qreal> linkPathState(&fileLinkPathState);
+
+			QFile fileLinkPathPackets(expPath + QString("/capture-data/link-path-packets-sampled-%1-%2.dat").arg(e).arg(p));
+			if (!fileLinkPathPackets.open(QIODevice::ReadOnly)) {
+				qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Cannot open file";
+				return false;
+			}
+			OLazyVector<qreal> linkPathPackets(&fileLinkPathPackets);
+
+			for (int i = 0; i < errorAnalysisData.numIntervals; i++) {
+				QVector<qreal> pathState(nSamples);
+				pathState.fill(0.0, nSamples);
+
+				QVector<qreal> pathPackets(nSamples);
+				pathPackets.fill(0.0, nSamples);
+
+				for (int s = 0; s < nSamples; s++) {
+					pathState[s] = linkPathState[i * nSamples + s];
+					pathPackets[s] = linkPathPackets[i * nSamples + s];
+				}
+
+				// Plot
+				QImage image(w, h, QImage::Format_RGB32);
+				image.fill(Qt::white);
+
+				QPainter painter;
+				painter.begin(&image);
+				painter.setPen(errorAnalysisData.pathClass[p] == 0 ? Qt::blue : Qt::red);
+				painter.setBrush(Qt::NoBrush);
+				painter.drawText(textPadding, 0,
+								 textWidth - 2 * textPadding, h,
+								 Qt::AlignLeft | Qt::AlignVCenter,
+								 QString("e%1 p%2").arg(e + 1).arg(p + 1));
+				for (int s = 0; s < nSamples; s++) {
+					painter.setPen(Qt::black);
+					QColor color = getLoadColor(pathPackets[s] / maxPPS, 1.0 - pathState[s]);
+					painter.fillRect(textWidth + s * blockSize,
+									 (h - blockSize) / 2,
+									 blockSize,
+									 blockSize, color);
+					painter.drawRect(textWidth + s * blockSize,
+									 (h - blockSize) / 2,
+									 blockSize,
+									 blockSize);
+				}
+				painter.end();
+				image.save(QString("%1/capture-plots/i%2/e%3-p%4.png")
+						   .arg(expPath)
+						   .arg(i + 1)
+						   .arg(e + 1)
+						   .arg(p + 1));
+			}
+		}
+	}
+
+	{
+		QFile file(expPath + "/capture-data/interval-lossiness.json");
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			qDebug() << __FILE__ << __LINE__ << "Failed to open file";
+			return false;
+		}
+		QTextStream out(&file);
+
+		out << toJson(intervalLossiness) << "\n";
+
+		if (out.status() != QTextStream::Ok)
+			return false;
+	}
+
+	QFile::copy(srcDir + "/www/error-analysis/error-analysis-captures.html",
+				expPath + "/error-analysis-captures.html");
+	copyDir(srcDir + "/www/error-analysis/error-analysis-www", expPath);
 
 	return true;
 }
@@ -1424,9 +2983,152 @@ Conversation::Conversation(quint16 sourcePort, quint16 destPort, QString protoco
 {
 }
 
+QList<Flow> Conversation::flows()
+{
+	return QList<Flow>() << fwdFlow << retFlow;
+}
+
 Flow::Flow(quint16 sourcePort, quint16 destPort, QString protocolString)
 	: sourcePort(sourcePort),
 	  destPort(destPort),
 	  protocolString(protocolString)
 {
+}
+
+QDataStream& operator<<(QDataStream& s, const FlowPacket& d)
+{
+	qint32 ver = 1;
+
+	s << ver;
+
+	s << d.packetId;
+	s << d.packetIndex;
+	s << d.tsSent;
+	s << d.received;
+	s << d.dropped;
+	s << d.dropEdgeId;
+	s << d.tsDrop;
+	s << d.tsReceived;
+
+	return s;
+}
+
+QDataStream& operator>>(QDataStream& s, FlowPacket& d)
+{
+	qint32 ver;
+
+	s >> ver;
+	Q_ASSERT_FORCE(1 <= ver && ver <= 1);
+
+	s >> d.packetId;
+	s >> d.packetIndex;
+	s >> d.tsSent;
+	s >> d.received;
+	s >> d.dropped;
+	s >> d.dropEdgeId;
+	s >> d.tsDrop;
+	s >> d.tsReceived;
+
+	return s;
+}
+
+qint64 FlowPacket::getSerializedSize()
+{
+	QByteArray buffer;
+	QDataStream stream(&buffer, QIODevice::WriteOnly);
+	stream.setVersion(QDataStream::Qt_4_0);
+	FlowPacket dummy;
+	stream << dummy;
+	return buffer.length();
+}
+
+QDataStream& operator<<(QDataStream& s, const Flow& d)
+{
+	qint32 ver = 1;
+
+	s << ver;
+
+	s << d.sourcePort;
+	s << d.destPort;
+	s << d.protocolString;
+	s << d.packets;
+
+	return s;
+}
+
+QDataStream& operator>>(QDataStream& s, Flow& d)
+{
+	qint32 ver;
+
+	s >> ver;
+	Q_ASSERT_FORCE(1 <= ver && ver <= 1);
+
+	s >> d.sourcePort;
+	s >> d.destPort;
+	s >> d.protocolString;
+	s >> d.packets;
+
+	return s;
+}
+
+QDataStream& operator<<(QDataStream& s, const Conversation& d)
+{
+	qint32 ver = 1;
+
+	s << ver;
+
+	s << d.sourcePort;
+	s << d.destPort;
+	s << d.protocolString;
+	s << d.fwdFlow;
+	s << d.retFlow;
+
+	return s;
+}
+
+QDataStream& operator>>(QDataStream& s, Conversation& d)
+{
+	qint32 ver;
+
+	s >> ver;
+	Q_ASSERT_FORCE(1 <= ver && ver <= 1);
+
+	s >> d.sourcePort;
+	s >> d.destPort;
+	s >> d.protocolString;
+	s >> d.fwdFlow;
+	s >> d.retFlow;
+
+	return s;
+}
+
+QDataStream& operator<<(QDataStream& s, const PathConversations& d)
+{
+	qint32 ver = 1;
+
+	s << ver;
+
+	s << d.sourceNodeId;
+	s << d.destNodeId;
+	s << d.maxPossibleBandwidthFwd;
+	s << d.maxPossibleBandwidthRet;
+	s << d.conversations;
+
+	return s;
+}
+
+QDataStream& operator>>(QDataStream& s, PathConversations& d)
+{
+	qint32 ver;
+
+	s >> ver;
+	Q_ASSERT_FORCE(1 <= ver && ver <= 1);
+
+	s >> d.sourceNodeId;
+	s >> d.destNodeId;
+	s >> d.maxPossibleBandwidthFwd;
+	s >> d.maxPossibleBandwidthRet;
+	s >> d.conversations;
+
+	return s;
 }

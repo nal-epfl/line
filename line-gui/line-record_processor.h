@@ -29,6 +29,8 @@ class FlowPacket {
 public:
 	// matches RecordedPacketData::packet_id
 	quint64 packetId;
+	// Index of the packet in RecordedData::recordedPacketData
+	qint64 packetIndex;
 	quint64 tsSent;
 	// the packet reached the destination
 	bool received;
@@ -44,7 +46,11 @@ public:
 	IPHeader ipHeader;
 	TCPHeader tcpHeader;
 	UDPHeader udpHeader;
+
+	static qint64 getSerializedSize();
 };
+QDataStream& operator<<(QDataStream& s, const FlowPacket& d);
+QDataStream& operator>>(QDataStream& s, FlowPacket& d);
 
 class Flow {
 public:
@@ -53,8 +59,11 @@ public:
 	quint16 destPort;
 	QString protocolString;
 	// ordered by tsSent
-	QList<FlowPacket> packets;
+	// value is an index in the list of FlowPacket stored in the flow-packets.data file
+	QList<qint64> packets;
 };
+QDataStream& operator<<(QDataStream& s, const Flow& d);
+QDataStream& operator>>(QDataStream& s, Flow& d);
 
 class Conversation {
 public:
@@ -67,7 +76,11 @@ public:
 	quint16 destPort;
 	QString protocolString;
 	// internal: bool finished; // FIN
+
+	QList<Flow> flows();
 };
+QDataStream& operator<<(QDataStream& s, const Conversation& d);
+QDataStream& operator>>(QDataStream& s, Conversation& d);
 
 class PathConversations {
 public:
@@ -79,8 +92,22 @@ public:
 	qreal maxPossibleBandwidthFwd;
 	qreal maxPossibleBandwidthRet;
 };
+QDataStream& operator<<(QDataStream& s, const PathConversations& d);
+QDataStream& operator>>(QDataStream& s, PathConversations& d);
 
 // Processes the captures recorded by the emulator (packet headers and queue events).
+// rootPath = path to the root of the repository
+// expPath = path to the experiment directory
 bool processLineRecord(QString rootPath, QString expPath, int &packetCount, int &queueEventCount);
+
+bool postProcessLineRecord(QString expPath, QString srcDir, QString tag);
+
+class NetGraph;
+bool loadGraph(QString expPath, NetGraph &g);
+int getOriginalPacketLength(QByteArray buffer);
+quint32 getPacketFlow(QByteArray buffer, bool &freshFlow);
+qint64 getSeqNo(QByteArray buffer, qint64 lastKnownSeqNo = -1);
+
+QColor getLoadColor(qreal load, qreal loss);
 
 #endif // LINERECORD_PROCESSOR_H

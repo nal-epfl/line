@@ -19,41 +19,7 @@
 #ifndef INTERVALMEASUREMENTS_H
 #define INTERVALMEASUREMENTS_H
 
-#include <QtCore>
-#include "../util/bitarray.h"
-
-class LinkIntervalMeasurement
-{
-public:
-    LinkIntervalMeasurement();
-	qint64 numPacketsInFlight;
-	qint64 numPacketsDropped;
-    // 1: forward, 0: drop
-    BitArray events;
-	qreal successRate(bool *ok = NULL) const;
-	void clear();
-
-    void sample(int packetCount);
-
-	friend bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-	friend bool operator !=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-	friend bool operator <(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-	friend bool operator <=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-	friend bool operator >(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-	friend bool operator >=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-
-	LinkIntervalMeasurement& operator+=(LinkIntervalMeasurement other);
-};
-
-bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-bool operator !=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-bool operator <(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-bool operator <=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-bool operator >(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-bool operator >=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
-
-QDataStream& operator>>(QDataStream& s, LinkIntervalMeasurement& d);
-QDataStream& operator<<(QDataStream& s, const LinkIntervalMeasurement& d);
+#include "end_to_end_measurements.h"
 
 class GraphIntervalMeasurements
 {
@@ -62,78 +28,56 @@ public:
 	// Sets all the counters to zero
 	void clear();
 	// Index: edge
-    QVector<LinkIntervalMeasurement> edgeMeasurements;
+    QVector<LinkIntervalMeasurement> linkMeasurements;
     // Index: path
     QVector<LinkIntervalMeasurement> pathMeasurements;
-    // first index: edge; second index: path
-	// QVector<QVector<LinkIntervalMeasurement> > perPathEdgeMeasurements;
-	QHash<QPair<qint32, qint32>, LinkIntervalMeasurement> perPathEdgeMeasurements;
+    // first index: link; second index: path
+	QHash<LinkPath, LinkIntervalMeasurement> perPathLinkMeasurements;
 	// The object other must have been initialized with the same routing matrix.
 	GraphIntervalMeasurements& operator+=(GraphIntervalMeasurements other);
 };
-
 QDataStream& operator>>(QDataStream& s, GraphIntervalMeasurements& d);
 QDataStream& operator<<(QDataStream& s, const GraphIntervalMeasurements& d);
 
-class ExperimentIntervalMeasurements
+class ExperimentIntervalMeasurements : public EndToEndMeasurements
 {
 public:
     void initialize(quint64 tsStart,
                     quint64 expectedDuration,
                     quint64 intervalSize,
-                    int numEdges,
+                    int numLinks,
 					int numPaths,
-                    QList<QPair<qint32, qint32> > sparseRoutingMatrixTransposed,
-                    int packetSizeThreshold);
+                    QList<LinkPath> sparseRoutingMatrixTransposed,
+					int packetSizeThreshold);
 
-    // These functions update the counters
-    void countPacketInFLightEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
-    void countPacketInFLightPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier);
-    void countPacketDropped(int edge, int path, quint64 tsIn, quint64 tsDrop, int size, int multiplier);
+	bool recordPacketLink(PathPair pp, LinkPath ep, Timestamp tsIn, Timestamp tsOut, int size, bool forwarded, Timestamp delay);
+	bool recordPacketPath(PathPair pp, LinkPath ep, Timestamp tsIn, Timestamp tsOut, int size, bool forwarded, Timestamp delay);
 
-    // Updates the events bitmask
-    void recordPacketEventPath(int path, quint64 tsIn, quint64 tsOut, int size, int multiplier, bool forwarded);
-    void recordPacketEventEdge(int edge, int path, quint64 tsIn, quint64 tsOut, int size, int multiplier, bool forwarded);
-
-    // Returns the index of the interval that includes a timestamp.
-    // Also resizes the vector of intervals if the index is outside of the current range.
-    int timestampToInterval(quint64 ts);
-
-    int timestampToOpenInterval(quint64 ts);
-
-	int numIntervals();
-
-    bool save(QString fileName);
-    bool load(QString fileName);
+	LinkIntervalMeasurement readLink(PathPair pp, Link e, int i) const;
+	LinkIntervalMeasurement readLinkPath(PathPair pp, LinkPath ep, int i) const;
+	LinkIntervalMeasurement readPath(PathPair pp, LinkPath ep, int i) const;
 
     void trim();
 
-	bool exportText(QString fileName,
-					QVector<bool> trueEdgeNeutrality,
-					QVector<int> pathTrafficClass);
-	bool exportText(QIODevice *device,
-					QVector<bool> trueEdgeNeutrality,
-					QVector<int> pathTrafficClass);
+	void saveToStream(QDataStream &s);
+	void loadFromStream(QDataStream &s);
 
-	// Returns a new ExperimentIntervalMeasurements object resampled at this period.
-	// If resamplePeriod is smaller than intervalSize (including zero), no resampling is performed
-	// and a copy of this object is returned.
-	// If resamplePeriod is higher than intervalSize, but not an exact multiple, it is adjusted by
-	// rounding up to the next multiple.
-	ExperimentIntervalMeasurements resample(quint64 resamplePeriod) const;
+	// Returns a new ExperimentIntervalMeasurements object resampled at an exact multiple of intervalSize.
+    ExperimentIntervalMeasurements resample(int factor, int firstActiveInterval = 0) const;
+
+	// Returns a new ExperimentIntervalMeasurements object containing traffic only for the specified paths, with
+	// intervals filtered by the given function (returns true if the interval should be kept)
+	// See intervalFilterMin1Packet as an example filtering function.
+	ExperimentIntervalMeasurements extractPathTuple(QList<Path> paths,
+													bool (*intervalFilter)(QList<LinkIntervalMeasurement> measurements)) const;
 
     // Index: interval
     QVector<GraphIntervalMeasurements> intervalMeasurements;
-    GraphIntervalMeasurements globalMeasurements;
-
-    quint64 tsStart;
-	quint64 tsLast;
-    quint64 intervalSize;
-    int numEdges;
-    int numPaths;
-    int packetSizeThreshold;
+	GraphIntervalMeasurements globalMeasurements;
 };
 QDataStream& operator>>(QDataStream& s, ExperimentIntervalMeasurements& d);
 QDataStream& operator<<(QDataStream& s, const ExperimentIntervalMeasurements& d);
+
+bool intervalFilterMin1Packet(QList<LinkIntervalMeasurement> measurements);
 
 #endif // INTERVALMEASUREMENTS_H

@@ -69,9 +69,9 @@ inline bool operator!=(const QTriple<T1, T2, T3> &p1, const QTriple<T1, T2, T3> 
 template <class T1, class T2, class T3>
 inline bool operator<(const QTriple<T1, T2, T3> &p1, const QTriple<T1, T2, T3> &p2)
 {
-    return p1.first < p2.first ||
-            (!(p2.first < p1.first) && p1.second < p2.second ||
-             (!(p2.second < p1.second) && p1.third < p2.third));
+    return (p1.first < p2.first) ||
+            (!(p2.first < p1.first) && p1.second < p2.second) ||
+             (!(p2.second < p1.second) && p1.third < p2.third);
 }
 
 template <class T1, class T2, class T3>
@@ -110,6 +110,12 @@ inline QDataStream& operator<<(QDataStream& s, const QTriple<T1, T2, T3>& p)
 {
     s << p.first << p.second << p.third;
     return s;
+}
+
+template <class T1, class T2, class T3>
+uint qHash(const QTriple<T1, T2, T3> &t)
+{
+    return qHash(t.first) ^ qHash(t.second) ^ qHash(t.third);
 }
 
 ///////// QUAD
@@ -169,9 +175,9 @@ template <class T1, class T2, class T3, class T4>
 inline bool operator<(const QQuad<T1, T2, T3, T4> &p1, const QQuad<T1, T2, T3, T4> &p2)
 {
     return p1.first < p2.first ||
-            (!(p2.first < p1.first) && p1.second < p2.second ||
-             (!(p2.second < p1.second) && p1.third < p2.third ||
-              (!(p2.third < p1.third) && p1.fourth < p2.fourth)));
+            (!(p2.first < p1.first) && p1.second < p2.second) ||
+             (!(p2.second < p1.second) && p1.third < p2.third) ||
+              (!(p2.third < p1.third) && p1.fourth < p2.fourth);
 }
 
 template <class T1, class T2, class T3, class T4>
@@ -275,10 +281,10 @@ template <class T1, class T2, class T3, class T4, class T5>
 inline bool operator<(const QQuint<T1, T2, T3, T4, T5> &p1, const QQuint<T1, T2, T3, T4, T5> &p2)
 {
     return p1.first < p2.first ||
-            (!(p2.first < p1.first) && p1.second < p2.second ||
-             (!(p2.second < p1.second) && p1.third < p2.third ||
+            (!(p2.first < p1.first) && p1.second < p2.second) ||
+             (!(p2.second < p1.second) && p1.third < p2.third) ||
               (!(p2.third < p1.third) && p1.fourth < p2.fourth) ||
-              (!(p2.fourth < p1.fourth) && p1.fifth < p2.fifth)));
+              (!(p2.fourth < p1.fourth) && p1.fifth < p2.fifth);
 }
 
 template <class T1, class T2, class T3, class T4, class T5>

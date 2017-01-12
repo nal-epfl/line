@@ -29,6 +29,7 @@
 #include "netgraphconnection.h"
 #include "traffictrace.h"
 #include "util.h"
+#include "json.h"
 
 #ifndef LINE_EMULATOR
 #include "gephilayoutnetgraph.h"
@@ -238,21 +239,14 @@ public:
 
 	QList<QPair<qint32, qint32> > getSparseRoutingMatrixTransposed();
 
-    // The connections must have been flattened.
     QList<QPair<qint32, qint32> > getSparseConnectionRoutingMatrixTransposed();
 
-    // Removes multipliers and instead creates etra connections. Does not work with TCPx (but TCP xn works).
-    // Has no effect if the connections are already flattened.
-    void flattenConnections();
-
-    // Assigns port numbers to connections. Flattens connections if necessary.
+	// Assigns port numbers to connections.
     void assignPorts();
 
-    // Returns the index of the connection using the specified port number, or -1.
-    // Only works after calling assignPorts().
-    qint32 getConnectionIndex(quint16 port) const;
-
+	void setBasePort(quint16 port);
     quint16 getBasePort() const;
+	quint16 basePort;
 
 	//Q_DISABLE_COPY(NetGraph)
 };
@@ -260,5 +254,7 @@ public:
 QDataStream& operator>>(QDataStream& s, NetGraph& n);
 
 QDataStream& operator<<(QDataStream& s, const NetGraph& n);
+
+QString toJson(const NetGraph& d);
 
 #endif // NETGRAPH_H

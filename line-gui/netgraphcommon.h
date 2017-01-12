@@ -27,4 +27,6 @@ typedef unsigned int QRgb;
 #include <qrgb.h>
 #endif
 
+#include "isnan.h"
+
 #endif // NETGRAPHCOMMON_H

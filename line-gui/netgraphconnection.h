@@ -22,6 +22,7 @@
 #include <QtCore>
 
 #include "netgraphcommon.h"
+#include "json.h"
 
 #ifndef QT_GUI_LIB
 typedef unsigned int QRgb;
@@ -32,6 +33,12 @@ typedef unsigned int QRgb;
 class NetGraphConnection
 {
 public:
+	enum Implementation {
+		Libev = 1,
+		Iperf2 = 2,
+		Iperf3 = 3
+	};
+
 	NetGraphConnection();
 	NetGraphConnection(int source, int dest, QString encodedType, QByteArray data);
 
@@ -54,9 +61,6 @@ public:
 	// various fields to be used freely by any code
 	QString serverKey;
 	QString clientKey;
-	qint32 port;
-    qint32 serverFD;
-    qint32 clientFD;
 	// <= 0 means OS default
 	qint32 tcpReceiveWindowSize;
 	QString tcpCongestionControl;
@@ -84,12 +88,14 @@ public:
 	quint64 paretoScale_b;
 	qreal rate_Mbps;
 	bool poisson;
+	// Note: not all types of traffic may be available through non-libev implementations
+	Implementation implementation;
 	// For poisson connections, if sequential is true, do not create a new transfer before the old one has finished.
 	// After the old one has finished, wait for a delay distributed exponentially according to the poissonRate.
 	bool sequential;
     qreal bufferingRate_Mbps;
     qreal bufferingTime_s;
-    qreal streamingPeriod_s;
+	qreal streamingPeriod_s;
 
 	// 0 means auto color by index
 	QRgb color;
@@ -119,5 +125,7 @@ public:
 QDataStream& operator>>(QDataStream& s, NetGraphConnection& c);
 
 QDataStream& operator<<(QDataStream& s, const NetGraphConnection& c);
+
+QString toJson(const NetGraphConnection& d);
 
 #endif // NETGRAPHCONNECTION_H

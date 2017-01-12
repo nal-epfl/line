@@ -42,6 +42,11 @@ typedef QQuad<QString, QString, QString, QString> QStringQuad;
 typedef QSet<qint32> QInt32Set;
 typedef QList<qint32> QInt32List;
 
+inline QString sourceDir()
+{
+	return SRCDIR;
+}
+
 template <class T>
 uint qHash(const QSet<T>& set) {
 	uint seed = 0;

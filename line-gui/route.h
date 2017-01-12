@@ -20,6 +20,7 @@
 #define ROUTE_H
 
 #include <QtCore>
+#include "json.h"
 
 class Route {
 public:
@@ -61,8 +62,10 @@ inline QDebug operator<<(QDebug debug, const Route &route)
 
 QDataStream& operator>>(QDataStream& s, Route& r);
 QDataStream& operator<<(QDataStream& s, const Route& r);
+QString toJson(const Route& d);
 
 QDataStream& operator>>(QDataStream& s, RoutingTable& t);
 QDataStream& operator<<(QDataStream& s, const RoutingTable& t);
+QString toJson(const RoutingTable& d);
 
 #endif // ROUTE_H

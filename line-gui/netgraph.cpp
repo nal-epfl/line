@@ -36,6 +36,7 @@ NetGraph::NetGraph()
 	viewportZoom = 1.0;
 	viewportCenter = QPointF(0, 0);
 	rootId = -1;
+	basePort = 8000;
 }
 
 NetGraph::~NetGraph()
@@ -286,7 +287,7 @@ void NetGraph::setFileName(QString newFileName)
 
 QDataStream& operator<<(QDataStream& s, const NetGraph& n)
 {
-	qint32 ver = 2;
+	qint32 ver = 3;
 
 	if (!unversionedStreams) {
 		s << ver;
@@ -310,6 +311,10 @@ QDataStream& operator<<(QDataStream& s, const NetGraph& n)
 		s << n.trafficTraces;
 	}
 
+	if (ver >= 3) {
+		s << n.basePort;
+	}
+
 	return s;
 }
 
@@ -320,6 +325,8 @@ QDataStream& operator>>(QDataStream& s, NetGraph& n)
 	if (!unversionedStreams) {
 		s >> ver;
 	}
+
+	Q_ASSERT_FORCE(0 <= ver && ver <= 3);
 
 	s >> n.nodes;
 	s >> n.edges;
@@ -337,6 +344,12 @@ QDataStream& operator>>(QDataStream& s, NetGraph& n)
 		s >> n.trafficTraces;
 	}
 
+	if (ver >= 3) {
+		s >> n.basePort;
+	} else {
+		n.basePort = 8000;
+	}
+
 	return s;
 }
 
@@ -352,6 +365,10 @@ bool NetGraph::saveToFile()
 	out.setVersion(QDataStream::Qt_4_0);
 
 	out << *this;
+
+	// added by Zhiyong
+	qDebug() << QDir().currentPath();
+	saveFile(fileName + ".txt", toText());
 
 	return true;
 }
@@ -524,6 +541,10 @@ void NetGraph::recordTimelinesEverywhere(quint64 interval)
 	foreach (NetGraphEdge e, edges) {
 		edges[e.index].recordSampledTimeline = true;
 		edges[e.index].timelineSamplingPeriod = interval;
+	}
+	for (int p = 0; p < paths.count(); p++) {
+		paths[p].recordSampledTimeline = true;
+		paths[p].timelineSamplingPeriod = interval;
 	}
 }
 
@@ -1219,7 +1240,7 @@ QVector<int> NetGraph::getPathTrafficClassStrict(bool heavy)
     QVector<qint32> connection2path = getConnection2PathMapping();
 
     QVector<int> result(paths.count());
-    const int uninitialized = -1;
+    const int uninitialized = -9999;
     result.fill(uninitialized);
     for (int c = 0; c < connections.count(); c++) {
         if (heavy && connections[c].isLight()) {
@@ -1304,63 +1325,41 @@ QList<QPair<qint32, qint32> > NetGraph::getSparseConnectionRoutingMatrixTranspos
     return result;
 }
 
-void NetGraph::flattenConnections()
-{
-    QList<NetGraphConnection> newConnections;
-    for (int c = 0; c < connections.count(); c++) {
-        for (int i = 1; i < connections[c].multiplier; i++) {
-            newConnections << connections[c];
-            newConnections.last().index = connections.count() + newConnections.count() - 1;
-            newConnections.last().multiplier = 1;
-            //connections[c].multiplier = 1;
-        }
-        //Zhiyong: should this line be here, instead of the inner for loop??
-        connections[c].multiplier = 1;
-    }
-    connections.append(newConnections);
-}
-
 void NetGraph::assignPorts()
 {
-    flattenConnections();
-
     int port = getBasePort();
-    foreach (NetGraphConnection c, connections) {
-        if (c.basicType == "TCP") {
-            connections[c.index].port = port;
-            port++;
-        } else if (c.basicType == "TCP-Poisson-Pareto") {
-            connections[c.index].port = port;
-            port++;
-        } else if (c.basicType == "TCP-DASH") {
-            connections[c.index].port = port;
-            port++;
-        } else if (c.basicType == "UDP-CBR") {
-            connections[c.index].ports.clear();
-            connections[c.index].port = port;
-            port++;
-        } else if (c.basicType == "UDP-VBR") {
-            connections[c.index].ports.clear();
-            connections[c.index].port = port;
-            port++;
-        } else if (c.basicType == "UDP-VCBR") {
-            connections[c.index].ports.clear();
-            connections[c.index].port = port;
-            port++;
-        } else {
-            qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters:" << c.encodedType;
-            Q_ASSERT_FORCE(false);
-        }
+	foreach (NetGraphConnection c, connections) {
+		connections[c.index].ports.clear();
+		for (int i = 0; i < c.multiplier; i++) {
+			if (c.basicType == "TCP") {
+				connections[c.index].ports << port;
+				port++;
+			} else if (c.basicType == "TCP-Poisson-Pareto") {
+				connections[c.index].ports << port;
+				port++;
+			} else if (c.basicType == "TCP-DASH") {
+				connections[c.index].ports << port;
+				port++;
+			} else if (c.basicType == "UDP-CBR") {
+				connections[c.index].ports << port;
+				port++;
+			} else if (c.basicType == "UDP-VBR") {
+				connections[c.index].ports << port;
+				port++;
+			} else if (c.basicType == "UDP-VCBR") {
+				connections[c.index].ports << port;
+				port++;
+			} else {
+				qDebug() << __FILE__ << __LINE__ << __FUNCTION__ << "Could not parse parameters:" << c.encodedType;
+				Q_ASSERT_FORCE(false);
+			}
+		}
     }
 }
 
-qint32 NetGraph::getConnectionIndex(quint16 port) const
+void NetGraph::setBasePort(quint16 port)
 {
-    qint32 result = port;
-    result -= getBasePort();
-    if (result >= 0 && result < connections.count())
-        return result;
-    return -1;
+	basePort = port;
 }
 
 quint16 NetGraph::getBasePort() const
@@ -1368,5 +1367,20 @@ quint16 NetGraph::getBasePort() const
     // We should never assign ports that might be used as ephemeral ports.
     // See https://en.wikipedia.org/wiki/Ephemeral_port
     // This means no ports >= 32768, and no ports in [1024, 5000].
-    return 8000;
+    return basePort;
+}
+
+QString toJson(const NetGraph &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.nodes);
+	jsonObjectPrinterAddMember(p, d.edges);
+	jsonObjectPrinterAddMember(p, d.connections);
+	jsonObjectPrinterAddMember(p, d.domains);
+	jsonObjectPrinterAddMember(p, d.paths);
+	jsonObjectPrinterAddMember(p, d.fileName);
+	jsonObjectPrinterAddMember(p, d.rootId);
+	jsonObjectPrinterAddMember(p, d.viewportCenter);
+	jsonObjectPrinterAddMember(p, d.viewportZoom);
+	return p.json();
 }

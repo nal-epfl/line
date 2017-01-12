@@ -296,4 +296,3 @@ bool decodePacket(QByteArray buffer, IPHeader &iph, TCPHeader &tcph, UDPHeader &
 
 	return true;
 }
-

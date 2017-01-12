@@ -9,6 +9,8 @@ exists( ../line.pro ) {
 	TEMPLATE = subdirs
 }
 
+DEFINES += \'SRCDIR=\"$$_PRO_FILE_PWD_\"\'
+
 !exists( ../line.pro ) {
 	QT       += core xml
 
@@ -28,11 +30,12 @@ exists( ../line.pro ) {
 
 	INCLUDEPATH += ../util/
 	INCLUDEPATH += ../line-gui/
+  INCLUDEPATH += ../line-runner/
 
 	PF_RING_DIR = ../PF_RING-5.6.1
 	#INCLUDEPATH += $$PF_RING_DIR/userland/c++ $$PF_RING_DIR/kernel $$PF_RING_DIR/kernel/plugins $$PF_RING_DIR/userland/libpcap-1.1.1-ring $$PF_RING_DIR/userland/lib
 	#QMAKE_LIBS += $$PF_RING_DIR/userland/c++/libpfring_cpp.a $$PF_RING_DIR/userland/lib/libpfring.a $$PF_RING_DIR/userland/libpcap-1.1.1-ring/libpcap.a
-  QMAKE_LIBS += /usr/local/lib/libpfring.a /usr/local/lib/libpcap.a -lunwind -lz
+  QMAKE_LIBS += /usr/local/lib/libpfring.a /usr/local/lib/libpcap.a -lunwind -lpcap
 	
 	QMAKE_STRIP = echo
 
@@ -73,6 +76,10 @@ exists( ../line.pro ) {
   QMAKE_CFLAGS_DEBUG += -g -fno-omit-frame-pointer -rdynamic
   QMAKE_CXXFLAGS_DEBUG += -g -fno-omit-frame-pointer -rdynamic
   QMAKE_LFLAGS_DEBUG += -g -fno-omit-frame-pointer -rdynamic
+
+#  QMAKE_CFLAGS += -fsanitize=address -fno-omit-frame-pointer
+#  QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+#  QMAKE_LFLAGS += -fsanitize=address -fno-omit-frame-pointer
 
 	SOURCES += main.cpp \
 		pfcount.cpp \
@@ -143,10 +150,20 @@ HEADERS += \
     ../tomo/pcap-qt.h \
     ../util/tinyhistogram.h \
     ../util/embed-file.h \
-    ../util/gitinfo.h
+    ../util/gitinfo.h \
+    ../util/json.h \
+    ../line-gui/end_to_end_measurements.h \
+    ../tomo/fastpcap.h \
+    ../tomo/pcap-common.h \
+    ../line-gui/graph_types.h \
+    ../util/compresseddevice.h
 
 SOURCES += \
     ../line-gui/traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
     ../util/tinyhistogram.cpp \
-    ../util/gitinfo.cpp
+    ../util/gitinfo.cpp \
+    ../util/json.cpp \
+    ../line-gui/end_to_end_measurements.cpp \
+    ../tomo/fastpcap.cpp \
+    ../util/compresseddevice.cpp

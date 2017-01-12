@@ -50,6 +50,9 @@ class NetGraph;
 class FlowIdentifier {
 public:
     FlowIdentifier(Packet *p = 0);
+#ifndef LINE_EMULATOR
+	FlowIdentifier(QByteArray buffer);
+#endif
     quint32 ipSrc;
     quint32 ipDst;
     quint16 portSrc;
@@ -302,7 +305,7 @@ public:
     QString tooltip();    // shows bw, delay etc
     double metric();
 
-	bool isNeutral();
+	bool isNeutral() const;
 
 #ifdef LINE_EMULATOR
 	quint64 rate_Bps;        // link rate in bytes/s
@@ -366,5 +369,7 @@ QDataStream& operator>>(QDataStream& s, NetGraphEdge& e);
 QDataStream& operator<<(QDataStream& s, const NetGraphEdge& e);
 
 QDebug &operator<<(QDebug &stream, const NetGraphEdge &e);
+
+QString toJson(const NetGraphEdge& d);
 
 #endif // NETGRAPHEDGE_H

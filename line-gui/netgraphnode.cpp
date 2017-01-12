@@ -197,3 +197,29 @@ QRgb NetGraphNode::colorFromType(int nodeType)
 	}
 	return 0xFFaaAAaa;
 }
+
+QString toJson(const NetGraphNode &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.index);
+	jsonObjectPrinterAddMember(p, d.x);
+	jsonObjectPrinterAddMember(p, d.y);
+	jsonObjectPrinterAddMember(p, d.nodeType);
+	jsonObjectPrinterAddMember(p, d.ASNumber);
+	jsonObjectPrinterAddMember(p, d.loadBalancing);
+	jsonObjectPrinterAddMember(p, d.used);
+	jsonObjectPrinterAddMember(p, d.routes);
+	jsonObjectPrinterAddMember(p, d.tags);
+	jsonObjectPrinterAddMember(p, d.customLabel);
+	jsonObjectPrinterAddMember(p, d.bgColor);
+	jsonObjectPrinterAddMember(p, d.web);
+	jsonObjectPrinterAddMember(p, d.vvoip);
+	jsonObjectPrinterAddMember(p, d.p2p);
+	jsonObjectPrinterAddMember(p, d.iptv);
+	jsonObjectPrinterAddMember(p, d.server);
+	jsonObjectPrinterAddMember(p, d.heavy);
+	jsonObjectPrinterAddMember(p, d.customIp);
+	jsonObjectPrinterAddMember(p, d.customIpForeign);
+	jsonObjectPrinterAddMember(p, d.maskedOut);
+	return p.json();
+}

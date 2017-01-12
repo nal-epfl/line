@@ -21,8 +21,13 @@
 #endif
 
 #include "netgraphedge.h"
-
 #include "netgraph.h"
+#ifndef LINE_EMULATOR
+#include "readpacket.h"
+#endif
+
+#include <netinet/in.h>
+#include "compresseddevice.h"
 
 #ifdef LINE_EMULATOR
 bool comparePacketEvent(const packetEvent &a, const packetEvent &b)
@@ -47,8 +52,44 @@ FlowIdentifier::FlowIdentifier(Packet *p)
         portSrc = 0;
         portDst = 0;
 #endif
-    }
+	}
 }
+
+#ifndef LINE_EMULATOR
+FlowIdentifier::FlowIdentifier(QByteArray buffer)
+{
+	IPHeader iph;
+	TCPHeader tcph;
+	UDPHeader udph;
+	ICMPHeader icmph;
+	if (decodePacket(buffer, iph, tcph, udph, icmph)) {
+		ipSrc = iph.sourceAddr;
+		ipDst = iph.destAddr;
+		protocol = iph.protocol;
+		portSrc = iph.protocol == IPPROTO_TCP
+				  ? tcph.sourcePort
+				  : iph.protocol == IPPROTO_UDP
+					? udph.sourcePort
+					: iph.protocol == IPPROTO_ICMP
+					  ? icmph.icmpId
+					  : 0;
+		portDst = iph.protocol == IPPROTO_TCP
+				  ? tcph.destPort
+				  : iph.protocol == IPPROTO_UDP
+					? udph.destPort
+					: iph.protocol == IPPROTO_ICMP
+					  ? icmph.icmpId
+					  : 0;
+	} else {
+		qWarning() << __FILE__ << __LINE__ << __FUNCTION__ << "Warning: could not parse the IP header for a packet";
+		ipSrc = 0;
+		ipDst = 0;
+		protocol = 0;
+		portSrc = 0;
+		portDst = 0;
+	}
+}
+#endif
 
 bool FlowIdentifier::operator==(const FlowIdentifier &other) const
 {
@@ -267,7 +308,9 @@ bool readEdgeTimelines(EdgeTimelines &d, NetGraph *g, QString workingDir)
 {
     QFile file(QString("%1/edge-timelines.dat").arg(workingDir));
     if (file.open(QIODevice::ReadOnly)) {
-        QDataStream s(&file);
+		CompressedDevice device(&file);
+		device.open(QIODevice::ReadOnly);
+		QDataStream s(&device);
         s.setVersion(QDataStream::Qt_4_0);
         s >> d;
         return s.status() == QDataStream::Ok;
@@ -409,7 +452,7 @@ double NetGraphEdge::metric()
 	return referenceBw_KBps / bandwidth;
 }
 
-bool NetGraphEdge::isNeutral()
+bool NetGraphEdge::isNeutral() const
 {
 	return queueCount == 1 && policerCount == 1;
 }
@@ -563,4 +606,29 @@ QDataStream& operator>>(QDataStream& s, NetGraphEdge& e)
 QDebug &operator<<(QDebug &stream, const NetGraphEdge &e)
 {
     stream << QString("%1 -> %2").arg(e.source).arg(e.dest); return stream.maybeSpace();
+}
+
+
+QString toJson(const NetGraphEdge &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.index);
+	jsonObjectPrinterAddMember(p, d.source);
+	jsonObjectPrinterAddMember(p, d.dest);
+	jsonObjectPrinterAddMember(p, d.delay_ms);
+	jsonObjectPrinterAddMember(p, d.lossBernoulli);
+	jsonObjectPrinterAddMember(p, d.queueLength);
+	jsonObjectPrinterAddMember(p, d.bandwidth);
+	jsonObjectPrinterAddMember(p, d.color);
+	jsonObjectPrinterAddMember(p, d.width);
+	jsonObjectPrinterAddMember(p, d.extraTooltip);
+	jsonObjectPrinterAddMember(p, d.used);
+	jsonObjectPrinterAddMember(p, d.recordSampledTimeline);
+	jsonObjectPrinterAddMember(p, d.timelineSamplingPeriod);
+	jsonObjectPrinterAddMember(p, d.recordFullTimeline);
+	jsonObjectPrinterAddMember(p, d.policerCount);
+	jsonObjectPrinterAddMember(p, d.policerWeights);
+	jsonObjectPrinterAddMember(p, d.queueCount);
+	jsonObjectPrinterAddMember(p, d.queueWeights);
+	return p.json();
 }

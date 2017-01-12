@@ -23,6 +23,7 @@
 
 #include "netgraphcommon.h"
 #include "route.h"
+#include "json.h"
 
 #define NETGRAPH_NODE_RADIUS 16
 #define NETGRAPH_NODE_RADIUS_FAST 16
@@ -96,7 +97,7 @@ public:
 #endif
 
 	static QString ip(int i) {
-		return QString("10.%1.%2.%3")
+		return QString("1.%1.%2.%3")
 				.arg(((i+IP_OFFSET) & 0x00FF0000) >> 16)
 				.arg(((i+IP_OFFSET) & 0x0000FF00) >> 8)
 				.arg(((i+IP_OFFSET) & 0x000000FF) >> 0);
@@ -112,5 +113,7 @@ public:
 QDataStream& operator>>(QDataStream& s, NetGraphNode& n);
 
 QDataStream& operator<<(QDataStream& s, const NetGraphNode& n);
+
+QString toJson(const NetGraphNode& d);
 
 #endif // NETGRAPHNODE_H

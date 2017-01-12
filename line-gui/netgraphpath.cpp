@@ -18,6 +18,8 @@
 
 #include "netgraphpath.h"
 #include "netgraph.h"
+#include "json.h"
+#include "compresseddevice.h"
 
 NetGraphPath::NetGraphPath()
 {
@@ -187,4 +189,156 @@ QDataStream& operator>>(QDataStream& s, NetGraphPath& p)
     return s;
 }
 
+QString toJson(const NetGraphPath &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.edgeSet);
+	jsonObjectPrinterAddMember(p, d.edgeList);
+	jsonObjectPrinterAddMember(p, d.source);
+	jsonObjectPrinterAddMember(p, d.dest);
+	jsonObjectPrinterAddMember(p, d.recordSampledTimeline);
+	jsonObjectPrinterAddMember(p, d.timelineSamplingPeriod);
+	jsonObjectPrinterAddMember(p, d.retraceFailed);
+	jsonObjectPrinterAddMember(p, d.connections);
+	return p.json();
+}
 
+void PathTimelineItem::clear()
+{
+	timestamp = 0;
+	arrivals_p = 0;
+	arrivals_B = 0;
+	exits_p = 0;
+	exits_B = 0;
+	drops_p = 0;
+	drops_B = 0;
+	delay_total = 0;
+	delay_max = 0;
+	delay_min = 0;
+}
+
+bool comparePathTimelineItem(const PathTimelineItem &a, const PathTimelineItem &b)
+{
+	return a.timestamp < b.timestamp;
+}
+
+QDataStream& operator<<(QDataStream& s, const PathTimelineItem& d)
+{
+    qint32 ver = 1;
+
+    s << ver;
+
+    s << d.timestamp;
+    s << d.arrivals_p;
+    s << d.arrivals_B;
+    s << d.exits_p;
+    s << d.exits_B;
+    s << d.drops_p;
+    s << d.drops_B;
+    s << d.delay_total;
+    s << d.delay_max;
+    s << d.delay_min;
+
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, PathTimelineItem& d)
+{
+    qint32 ver = 0;
+
+    s >> ver;
+
+	s >> d.timestamp;
+    s >> d.arrivals_p;
+    s >> d.arrivals_B;
+    s >> d.exits_p;
+    s >> d.exits_B;
+    s >> d.drops_p;
+    s >> d.drops_B;
+    s >> d.delay_total;
+    s >> d.delay_max;
+    s >> d.delay_min;
+
+    Q_ASSERT_FORCE(ver <= 1);
+
+    return s;
+}
+
+PathTimeline::PathTimeline()
+{
+    pathIndex = -1;
+    tsMin = 1;
+    tsMax = 0;
+    timelineSamplingPeriod = 0;
+}
+
+QDataStream& operator<<(QDataStream& s, const PathTimeline& d)
+{
+    qint32 ver = 1;
+
+    s << ver;
+
+    s << d.pathIndex;
+    s << d.tsMin;
+    s << d.tsMax;
+    s << d.timelineSamplingPeriod;
+    s << d.items;
+
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, PathTimeline& d)
+{
+    qint32 ver = 0;
+
+    s >> ver;
+
+    s >> d.pathIndex;
+    s >> d.tsMin;
+    s >> d.tsMax;
+    s >> d.timelineSamplingPeriod;
+    s >> d.items;
+
+    Q_ASSERT_FORCE(ver <= 1);
+
+    return s;
+}
+
+QDataStream& operator<<(QDataStream& s, const PathTimelines& d)
+{
+    qint32 ver = 1;
+
+    s << ver;
+
+    s << d.timelines;
+
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, PathTimelines& d)
+{
+    qint32 ver = 0;
+
+    s >> ver;
+
+    s >> d.timelines;
+
+    Q_ASSERT_FORCE(ver <= 1);
+
+    return s;
+}
+
+bool readPathTimelines(PathTimelines &d, NetGraph *, QString workingDir)
+{
+    QFile file(QString("%1/path-timelines.dat").arg(workingDir));
+	if (file.open(QIODevice::ReadOnly)) {
+		CompressedDevice device(&file);
+		device.open(QIODevice::ReadOnly);
+		QDataStream s(&device);
+		s.setVersion(QDataStream::Qt_4_0);
+		s >> d;
+		return s.status() == QDataStream::Ok;
+	}
+
+    return false;
+}

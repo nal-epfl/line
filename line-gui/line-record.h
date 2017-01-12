@@ -22,6 +22,7 @@
 #include <QtCore>
 #include "ovector.h"
 #include "queuing-decisions.h"
+#include "netgraphedge.h"
 
 #ifdef LINE_EMULATOR
 class Packet;
@@ -50,6 +51,8 @@ public:
 
     // Returns true if nothing is stored.
 	bool isNull();
+
+	static qint64 getSerializedSize();
 };
 QDataStream& operator>>(QDataStream& s, RecordedPacketData& d);
 QDataStream& operator<<(QDataStream& s, const RecordedPacketData& d);
@@ -79,6 +82,8 @@ public:
     // Timestamp for when the packet is removed from the queue (forwarding complete).
 	// Defined only if decision == Queued
     quint64 ts_exit;
+
+	static qint64 getSerializedSize();
 };
 QDataStream& operator>>(QDataStream& s, RecordedQueuedPacketData& d);
 QDataStream& operator<<(QDataStream& s, const RecordedQueuedPacketData& d);
@@ -87,22 +92,47 @@ QDataStream& operator<<(QDataStream& s, const RecordedQueuedPacketData& d);
 class RecordedData {
 public:
 	RecordedData();
+	~RecordedData();
     // Flag that specifies if recording packets/events is enabled.
     // If false, no data will be stored.
 	bool recordPackets;
 
+	// If non-zero, a single packet is recoded per key (with key an arbitrary integer, e.g. a path index)
+	// every samplingPeriod nanoseconds.
+	// If zero, all packets are recorded.
+	quint64 samplingPeriod;
+
+	// If false, recording has been truncated due to memory limit.
+	// Updated only during save() and load().
+	bool saturated;
+
+#ifdef LINE_EMULATOR
     // Packet headers. Never modify existing data in the vector, only append.
 	OVector<RecordedPacketData, qint64> recordedPacketData;
     // Queuing events. Never modify existing data in the vector, only append.
 	OVector<RecordedQueuedPacketData, qint64> recordedQueuedPacketData;
 
+	// Key: arbitrary integer as used by line-router (maybe a path index).
+	// Value: the last bin (packet timestamp/samplingPeriod) used for the key.
+	QHash<int, quint64> lastSampleBin;
+
 	bool save(QString fileName);
+#else
+	QFile *file;
+	OLazyVector<RecordedPacketData, qint64> recordedPacketData;
+	OLazyVector<RecordedQueuedPacketData, qint64> recordedQueuedPacketData;
+
 	bool load(QString fileName);
+
+	Q_DISABLE_COPY(RecordedData)
+#endif
+
 
     // Lookup a packet by its unique ID.
 	// This is slow at the first call, then very fast for subsequent calls
 	// (for any packetID).
 	RecordedPacketData packetByID(quint64 packetID);
+	qint64 packetIndexByID(quint64 packetID);
 
 	// Lookup a list of queuing events for a packet by its unique ID.
 	// This is slow at the first call, then very fast for subsequent calls
@@ -111,7 +141,7 @@ public:
 
 private:
 	// index of packet in recordedPacketData
-	QHash<quint64, int> packetID2Index;
+	QHash<quint64, qint64> packetID2Index;
 	// list of queue events for a packet ID in recordedQueuedPacketData, in chronological order
 	QHash<quint64, QList<RecordedQueuedPacketData> > packetID2QueueEvents;
 };

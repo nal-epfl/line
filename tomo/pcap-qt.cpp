@@ -6,6 +6,22 @@
 
 PcapReader::PcapReader(QString fileName)
 {
+	ok = false;
+	end = false;
+	this->device = NULL;
+	init(fileName);
+}
+
+PcapReader::PcapReader(QIODevice *device)
+{
+	ok = false;
+	end = false;
+	this->device = NULL;
+	init(device);
+}
+
+void PcapReader::init(QString fileName)
+{
 	ok = true;
 	end = false;
 	this->device = NULL;
@@ -20,7 +36,7 @@ PcapReader::PcapReader(QString fileName)
 	}
 }
 
-PcapReader::PcapReader(QIODevice *device)
+void PcapReader::init(QIODevice *device)
 {
 	this->device = device;
 	ownsDevice = false;
@@ -279,8 +295,34 @@ bool PcapReader::read(void *p, qint64 len)
 }
 
 
+PcapWriter::PcapWriter()
+{
+	ok = false;
+	this->device = NULL;
+	ownsDevice = false;
+}
+
 PcapWriter::PcapWriter(QString fileName, quint32 network)
 {
+	this->device = NULL;
+	init(fileName, network);
+}
+
+PcapWriter::PcapWriter(QIODevice *device, quint32 network)
+{
+	this->device = NULL;
+	init(device, network);
+}
+
+PcapWriter::~PcapWriter()
+{
+	close();
+	cleanup();
+}
+
+void PcapWriter::init(QString fileName, quint32 network)
+{
+	Q_ASSERT(this->device == NULL);
 	ok = true;
 	this->device = NULL;
 	QFile *file = new QFile(fileName);
@@ -294,21 +336,13 @@ PcapWriter::PcapWriter(QString fileName, quint32 network)
 	}
 }
 
-PcapWriter::PcapWriter(QIODevice *device, quint32 network)
+void PcapWriter::init(QIODevice *device, quint32 network)
 {
+	Q_ASSERT(this->device == NULL);
 	this->device = device;
 	ownsDevice = false;
 	ok = device != NULL;
 	writeHeader(network);
-}
-
-PcapWriter::~PcapWriter()
-{
-	close();
-	if (ownsDevice) {
-		delete device;
-		device = NULL;
-	}
 }
 
 bool PcapWriter::isOk()
@@ -350,8 +384,17 @@ bool PcapWriter::writeHeader(quint32 network)
 
 void PcapWriter::close()
 {
-	if (device)
+	if (device && device->isOpen())
 		device->close();
+}
+
+void PcapWriter::cleanup()
+{
+	close();
+	if (ownsDevice) {
+		delete device;
+	}
+	device = NULL;
 }
 
 bool PcapWriter::write(const void *p, qint64 len)
@@ -370,4 +413,21 @@ bool PcapWriter::write(const void *p, qint64 len)
 		len -= count;
 	}
 	return true;
+}
+
+qint64 pcapReaderCountPackets(QString fileName)
+{
+	PcapReader pcapReader(fileName);
+
+	qint64 numPackets = 0;
+
+	PcapPacketHeader packetHeader;
+	QByteArray packet;
+	while (pcapReader.isOk() && !pcapReader.atEnd()) {
+		if (pcapReader.readPacket(packetHeader, packet)) {
+			numPackets++;
+		}
+	}
+
+	return numPackets;
 }

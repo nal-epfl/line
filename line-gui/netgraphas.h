@@ -22,6 +22,7 @@
 #include <QtCore>
 
 #include "netgraphcommon.h"
+#include "json.h"
 
 class NetGraphAS
 {
@@ -40,5 +41,7 @@ public:
 QDataStream& operator>>(QDataStream& s, NetGraphAS& as);
 
 QDataStream& operator<<(QDataStream& s, const NetGraphAS& as);
+
+QString toJson(const NetGraphAS& d);
 
 #endif // NETGRAPHAS_H

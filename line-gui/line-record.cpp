@@ -21,12 +21,28 @@
 #endif
 
 #include "line-record.h"
+#include "debug.h"
 
 RecordedData::RecordedData()
 {
 	recordPackets = false;
+	saturated = false;
+	samplingPeriod = 0;
+
+#ifndef LINE_EMULATOR
+	file = NULL;
+#endif
 }
 
+RecordedData::~RecordedData()
+{
+#ifndef LINE_EMULATOR
+	delete file;
+	file = NULL;
+#endif
+}
+
+#ifdef LINE_EMULATOR
 bool RecordedData::save(QString fileName)
 {
 	QFile file(fileName);
@@ -41,6 +57,9 @@ bool RecordedData::save(QString fileName)
 	out << recordPackets;
 	out << recordedPacketData;
 	out << recordedQueuedPacketData;
+	saturated = recordedPacketData.count() == recordedPacketData.capacity() ||
+				recordedQueuedPacketData.count() == recordedQueuedPacketData.capacity();
+	out << saturated;
 
 	if (out.status() != QDataStream::Ok) {
 		qDebug() << __FILE__ << __LINE__ << "Error writing file:" << file.fileName();
@@ -48,46 +67,57 @@ bool RecordedData::save(QString fileName)
 	}
 	return true;
 }
-
+#else
 bool RecordedData::load(QString fileName)
 {
-	QFile file(fileName);
-	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file.fileName();
+	delete file;
+	file = new QFile(fileName);
+	if (!file->open(QIODevice::ReadOnly)) {
+		qDebug() << __FILE__ << __LINE__ << "Failed to open file:" << file->fileName();
 		return false;
 	}
 
-	QDataStream in(&file);
+	QDataStream in(file);
 	in.setVersion(QDataStream::Qt_4_0);
 
 	in >> recordPackets;
-	in >> recordedPacketData;
-	in >> recordedQueuedPacketData;
+	recordedPacketData.init(file, RecordedPacketData::getSerializedSize());
+	recordedQueuedPacketData.init(file, RecordedQueuedPacketData::getSerializedSize());
+	in >> saturated;
 
 	if (in.status() != QDataStream::Ok) {
-		qDebug() << __FILE__ << __LINE__ << "Error reading file:" << file.fileName();
+		qDebug() << __FILE__ << __LINE__ << "Error reading file:" << file->fileName();
 		return false;
 	}
 	return true;
 }
-
+#endif
 RecordedPacketData RecordedData::packetByID(quint64 packetID)
 {
+	qint64 i = packetIndexByID(packetID);
+	if (i < 0)
+		return RecordedPacketData();
+	return recordedPacketData[i];
+	return RecordedPacketData();
+}
+
+qint64 RecordedData::packetIndexByID(quint64 packetID)
+{
 	if (packetID2Index.isEmpty()) {
-		for (int i = 0; i < recordedPacketData.count(); i++) {
+		for (qint64 i = 0; i < recordedPacketData.count(); i++) {
 			packetID2Index[recordedPacketData[i].packet_id] = i;
 		}
 	}
 	if (packetID2Index.contains(packetID)) {
-		return recordedPacketData[packetID2Index[packetID]];
+		return packetID2Index[packetID];
 	}
-	return RecordedPacketData();
+	return -1;
 }
 
 QList<RecordedQueuedPacketData> RecordedData::queueEventsByPacketID(quint64 packetID)
 {
 	if (packetID2QueueEvents.isEmpty()) {
-		for (int i = 0; i < recordedQueuedPacketData.count(); i++) {
+		for (qint64 i = 0; i < recordedQueuedPacketData.count(); i++) {
 			packetID2QueueEvents[recordedQueuedPacketData[i].packet_id] << recordedQueuedPacketData[i];
 		}
 	}
@@ -143,6 +173,7 @@ QDataStream& operator>>(QDataStream& s, RecordedPacketData& d)
 	qint32 ver;
 
 	s >> ver;
+	Q_ASSERT_FORCE(1 <= ver && ver <= 1);
 
 	s >> d.packet_id;
 	s >> d.src_id;
@@ -154,6 +185,16 @@ QDataStream& operator>>(QDataStream& s, RecordedPacketData& d)
 	memcpy(d.buffer, bytes.constData(), CAPTURE_LENGTH);
 
 	return s;
+}
+
+qint64 RecordedPacketData::getSerializedSize()
+{
+	QByteArray buffer;
+	QDataStream stream(&buffer, QIODevice::WriteOnly);
+	stream.setVersion(QDataStream::Qt_4_0);
+	RecordedPacketData dummy;
+	stream << dummy;
+	return buffer.length();
 }
 
 QDataStream& operator<<(QDataStream& s, const RecordedQueuedPacketData& d)
@@ -178,6 +219,7 @@ QDataStream& operator>>(QDataStream& s, RecordedQueuedPacketData& d)
 	qint32 ver;
 
 	s >> ver;
+	Q_ASSERT_FORCE(1 <= ver && ver <= 1);
 
 	s >> d.packet_id;
 	s >> d.edge_index;
@@ -190,3 +232,12 @@ QDataStream& operator>>(QDataStream& s, RecordedQueuedPacketData& d)
 	return s;
 }
 
+qint64 RecordedQueuedPacketData::getSerializedSize()
+{
+	QByteArray buffer;
+	QDataStream stream(&buffer, QIODevice::WriteOnly);
+	stream.setVersion(QDataStream::Qt_4_0);
+	RecordedQueuedPacketData dummy;
+	stream << dummy;
+	return buffer.length();
+}

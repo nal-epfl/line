@@ -5,7 +5,7 @@ set -x #echo on
 eval "$(/bin/sh ../remote-config.sh)"
 
 PROJECT=line-router
-EXTRA_SOURCES='line-gui util tomo remote_config.h git-status.txt git-log.txt git-diff.txt'
+EXTRA_SOURCES='line-gui line-runner util tomo remote_config.h git-status.txt git-log.txt git-diff.txt'
 BUILD_DIR=$PWD
 REMOTE_USER=$REMOTE_USER_ROUTER
 REMOTE_HOST=$REMOTE_HOST_ROUTER
@@ -25,7 +25,7 @@ echo "make-remote.sh:1: warning: Local tree in $SRC_DIR "
 echo "make-remote.sh:1: warning: Compiling on $REMOTE_HOST ($(host $REMOTE_HOST | cut -d ' ' -f 5))"
 
 # Install PF_RING
-PF_RING='PF_RING-5.6.2'
+PF_RING='PF_RING-6.4.1'
 if $($INSTALL_PF_RING)
 then
 	cd $BUILD_DIR || exit 1

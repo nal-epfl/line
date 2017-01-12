@@ -167,6 +167,12 @@ bool NetGraphConnection::setParamsFromType()
 			if (!readString(tokens, tcpCongestionControl)) {
 				return false;
 			}
+		} else if (arg == "libev") {
+			implementation = NetGraphConnection::Libev;
+		} else if (arg == "iperf" || arg == "iperf3") {
+			implementation = NetGraphConnection::Iperf3;
+		} else if (arg == "iperf2") {
+			implementation = NetGraphConnection::Iperf2;
 		} else {
 			return false;
 		}
@@ -279,6 +285,19 @@ void NetGraphConnection::setTypeFromParams()
 					  .arg(encodedType)
 					  .arg(multiplier);
 	}
+	if (implementation != NetGraphConnection::Libev) {
+		if (implementation == NetGraphConnection::Iperf2) {
+			encodedType = QString("%1 %2")
+						  .arg(encodedType)
+						  .arg("iperf2");
+		} else if (implementation == NetGraphConnection::Iperf3) {
+			encodedType = QString("%1 %2")
+						  .arg(encodedType)
+						  .arg("iperf3");
+		} else {
+			Q_ASSERT_FORCE(false);
+		}
+	}
 }
 
 NetGraphConnection::NetGraphConnection(int source, int dest, QString encodedType, QByteArray data)
@@ -317,6 +336,7 @@ void NetGraphConnection::setDefaultParams()
 	delayStart = false;
 	ev_loop = NULL;
 	tcpCongestionControl = "";
+	implementation = NetGraphConnection::Libev;
 }
 
 QString NetGraphConnection::tooltip()
@@ -341,7 +361,7 @@ bool NetGraphConnection::isLight()
 
 QDataStream& operator<<(QDataStream& s, const NetGraphConnection& c)
 {
-    qint32 ver = 8;
+	qint32 ver = 10;
 
 	if (!unversionedStreams) {
 		s << ver;
@@ -357,7 +377,6 @@ QDataStream& operator<<(QDataStream& s, const NetGraphConnection& c)
 
 	s << c.serverKey;
 	s << c.clientKey;
-	s << c.port;
 	s << c.ports;
 
 	if (ver >= 1) {
@@ -403,6 +422,11 @@ QDataStream& operator<<(QDataStream& s, const NetGraphConnection& c)
         s << c.streamingPeriod_s;
     }
 
+	if (ver >= 10) {
+		const qint32 v = static_cast<qint32>(c.implementation);
+		s << v;
+	}
+
 	return s;
 }
 
@@ -424,7 +448,10 @@ QDataStream& operator>>(QDataStream& s, NetGraphConnection& c)
 
 	s >> c.serverKey;
 	s >> c.clientKey;
-	s >> c.port;
+	if (ver < 9) {
+		qint32 dummy;
+		s >> dummy;
+	}
 	s >> c.ports;
 
 	if (ver >= 1) {
@@ -487,7 +514,62 @@ QDataStream& operator>>(QDataStream& s, NetGraphConnection& c)
 	}
 	c.setParamsFromType();
 
-    Q_ASSERT_FORCE(ver <= 8);
+	if (ver >= 10) {
+		qint32 v = 0;
+		s >> v;
+		c.implementation = static_cast<NetGraphConnection::Implementation>(v);
+	}
+
+	Q_ASSERT_FORCE(ver <= 10);
 
 	return s;
+}
+
+QString toJson(const NetGraphConnection &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.index);
+	jsonObjectPrinterAddMember(p, d.source);
+	jsonObjectPrinterAddMember(p, d.dest);
+	jsonObjectPrinterAddMember(p, d.encodedType);
+	jsonObjectPrinterAddMember(p, d.basicType);
+	jsonObjectPrinterAddMember(p, d.data);
+	jsonObjectPrinterAddMember(p, d.serverCmd);
+	jsonObjectPrinterAddMember(p, d.clientCmd);
+	jsonObjectPrinterAddMember(p, d.serverKey);
+	jsonObjectPrinterAddMember(p, d.clientKey);
+	jsonObjectPrinterAddMember(p, d.tcpReceiveWindowSize);
+	jsonObjectPrinterAddMember(p, d.tcpCongestionControl);
+
+	jsonObjectPrinterAddMember(p, d.ports);
+	jsonObjectPrinterAddMember(p, d.serverKeys);
+	jsonObjectPrinterAddMember(p, d.clientKeys);
+	jsonObjectPrinterAddMember(p, d.serverFDs);
+	jsonObjectPrinterAddMember(p, d.clientFDs);
+
+	jsonObjectPrinterAddMember(p, d.trafficClass);
+	jsonObjectPrinterAddMember(p, d.onOff);
+	jsonObjectPrinterAddMember(p, d.onDurationMin);
+	jsonObjectPrinterAddMember(p, d.onDurationMax);
+	jsonObjectPrinterAddMember(p, d.offDurationMin);
+	jsonObjectPrinterAddMember(p, d.offDurationMax);
+
+	jsonObjectPrinterAddMember(p, d.multiplier);
+	jsonObjectPrinterAddMember(p, d.poissonRate);
+	jsonObjectPrinterAddMember(p, d.paretoAlpha);
+	jsonObjectPrinterAddMember(p, d.paretoScale_b);
+	jsonObjectPrinterAddMember(p, d.rate_Mbps);
+	jsonObjectPrinterAddMember(p, d.poisson);
+
+	jsonObjectPrinterAddMember(p, d.sequential);
+	jsonObjectPrinterAddMember(p, d.bufferingRate_Mbps);
+	jsonObjectPrinterAddMember(p, d.bufferingTime_s);
+	jsonObjectPrinterAddMember(p, d.streamingPeriod_s);
+
+	jsonObjectPrinterAddMember(p, d.color);
+	jsonObjectPrinterAddMember(p, d.pathIndex);
+
+	jsonObjectPrinterAddMember(p, d.maskedOut);
+	jsonObjectPrinterAddMember(p, d.delayStart);
+	return p.json();
 }

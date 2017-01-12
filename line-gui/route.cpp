@@ -54,3 +54,25 @@ QDataStream& operator<<(QDataStream& s, const RoutingTable& t)
 	return s;
 }
 
+
+
+QString toJson(const Route &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.destination);
+	jsonObjectPrinterAddMember(p, d.nextHop);
+	return p.json();
+}
+
+
+QString toJson(const RoutingTable &d)
+{
+	JsonObjectPrinter p;
+	jsonObjectPrinterAddMember(p, d.localRoutes);
+#if AS_AGGREGATION
+	jsonObjectPrinterAddMember(p, d.interASroutes);
+#else
+	jsonObjectPrinterAddMember(p, d.aggregateInterASroutes);
+#endif
+	return p.json();
+}

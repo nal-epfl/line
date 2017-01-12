@@ -57,6 +57,7 @@
 #include "../util/util.h"
 #include "../tomo/tomodata.h"
 #include "../util/tinyhistogram.h"
+#include "compresseddevice.h"
 
 /// topology stuff
 
@@ -290,20 +291,6 @@ NetGraphEdgeQueue::NetGraphEdgeQueue(const NetGraphEdge &edge, qint32 index)
 	tsMax = 0;
 }
 
-void pathTimelineItem::clear()
-{
-	timestamp = 0;
-	arrivals_p = 0;
-	arrivals_B = 0;
-	exits_p = 0;
-	exits_B = 0;
-	drops_p = 0;
-	drops_B = 0;
-	delay_total = 0;
-	delay_max = 0;
-	delay_min = 0;
-}
-
 void NetGraphPath::prepareEmulation()
 {
 	packets_in = 0;
@@ -314,7 +301,7 @@ void NetGraphPath::prepareEmulation()
 	total_actual_delay = 0;
 
 	if (recordSampledTimeline) {
-		pathTimelineItem current;
+		PathTimelineItem current;
 		current.clear();
 
 		quint64 ts_now = get_current_time();
@@ -329,7 +316,6 @@ void NetGraphPath::prepareEmulation()
 
 void NetGraph::prepareEmulation()
 {
-	flattenConnections();
 	assignPorts();
 
 	// An extra path is used for recording dummy statistics for injected traffic
@@ -676,6 +662,8 @@ bool NetGraphEdgeQueue::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 	p->theoretical_delay += ts_exit - ts_now;
 
 	p->ts_expected_exit = ts_exit;
+	p->queue_id = edgeIndex;
+	p->ts_enqueue = ts_now;
 	if (queuedIndex >= 0) {
 		if (queued_packets[queuedIndex].recordedQueuedPacketDataIndex >= 0) {
 			// Update recorded data
@@ -717,7 +705,8 @@ stats:
 	}
 	tsMax = ts_now;
 	if (recordedData->recordPackets &&
-		recordedData->recordedQueuedPacketData.count() < recordedData->recordedQueuedPacketData.capacity()) {
+		recordedData->recordedQueuedPacketData.count() < recordedData->recordedQueuedPacketData.capacity() &&
+		p->recorded) {
 		RecordedQueuedPacketData recordedQueuedPacketData;
 		recordedQueuedPacketData.packet_id = p->id;
 		recordedQueuedPacketData.edge_index = edgeIndex;
@@ -789,6 +778,7 @@ stats:
 bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 {
 	p->queue_id = this->index;
+	p->ts_enqueue = ts_now;
 
 	qint32 policerIndex = qMin(policerCount - 1, qMax(0, p->traffic_class));
 	qint32 queueIndex = qMin(queueCount - 1, qMax(0, p->traffic_class));
@@ -802,7 +792,8 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 		p->dropped = true;
 		// Add the packet to the capture
 		if (recordedData->recordPackets &&
-			recordedData->recordedQueuedPacketData.count() < recordedData->recordedQueuedPacketData.capacity()) {
+			recordedData->recordedQueuedPacketData.count() < recordedData->recordedQueuedPacketData.capacity() &&
+			p->recorded) {
 			RecordedQueuedPacketData recordedQueuedPacketData;
 			recordedQueuedPacketData.packet_id = p->id;
 			recordedQueuedPacketData.edge_index = index;
@@ -821,31 +812,32 @@ bool NetGraphEdge::enqueue(Packet *p, quint64 ts_now, quint64 &ts_exit)
 	}
 
 	if (!p->injected) {
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->countPacketInFLightEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->countPacketInFLightEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1);
-		// It is currently possible to have correct per-edge event recording only for tail-drop.
-		// For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops.
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->recordPacketEventEdge(this->index, p->path_id, ts_now, ts_exit, p->length, 1, queued);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->recordPacketEventEdge(this->index, p->connection_index, ts_now, ts_exit, p->length, 1, queued);
 		if (!queued) {
-			if (pathIntervalMeasurements)
-				pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-			if (flowIntervalMeasurements)
-				flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-			if (pathIntervalMeasurements)
-				pathIntervalMeasurements->countPacketDropped(this->index, p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-			if (flowIntervalMeasurements)
-				flowIntervalMeasurements->countPacketDropped(this->index, p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-			if (pathIntervalMeasurements)
-				pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, queued);
-			if (flowIntervalMeasurements)
-				flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, queued);
-			if (flowTracking) {
-				sampledPathFlowEvents->handlePacket(p, ts_now);
+			if (p->sampledForMeasurements) {
+				LinkPath ep(p->queue_id, p->path_id);
+				// It is currently possible to have correct per-edge event recording only for tail-drop.
+				// For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops
+				// (i.e. the order of the events will be wrong, although the counters will be correct).
+				PathPair dummy;
+				sampledPathIntervalMeasurements->recordPacketLink(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, queued, !queued ? 0 : p->ts_expected_exit - p->ts_enqueue);
+				if (!queued) {
+					sampledPathIntervalMeasurements->recordPacketPath(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, queued, 0);
+				}
+			}
+			// We always take raw measurements
+			{
+				LinkPath ep(p->queue_id, p->path_id);
+				// It is currently possible to have correct per-edge event recording only for tail-drop.
+				// For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops
+				// (i.e. the order of the events will be wrong, although the counters will be correct).
+				PathPair dummy;
+				rawPathIntervalMeasurements->recordPacketLink(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, queued, !queued ? 0 : p->ts_expected_exit - p->ts_enqueue);
+				if (!queued) {
+					rawPathIntervalMeasurements->recordPacketPath(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, queued, 0);
+					if (flowTracking) {
+						sampledPathFlowEvents->handlePacket(p, ts_now);
+					}
+				}
 			}
 		}
 	}
@@ -946,7 +938,39 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 
 	// is this a new packet?
 	if (p->trace.isEmpty()) {
-		// yes, update path ingress stats
+		// yes
+		if (recordedData->recordPackets && recordedData->recordedPacketData.count() < recordedData->recordedPacketData.capacity()) {
+			if (recordedData->samplingPeriod == 0) {
+				p->recorded = true;
+			} else {
+				int key = p->path_id;
+				quint64 bin = ts_now / recordedData->samplingPeriod;
+				if (bin > recordedData->lastSampleBin[key]) {
+					recordedData->lastSampleBin[key] = bin;
+					p->recorded = true;
+				}
+			}
+			if (p->recorded) {
+				RecordedPacketData data(p);
+				recordedData->recordedPacketData.append(data);
+			}
+		}
+
+		// Decide if the packet is sampled for measurements
+		if (takePathIntervalMeasurements) {
+			if (intervalMeasurementsSamplingPeriod == 0) {
+				p->sampledForMeasurements = true;
+			} else {
+				int key = p->path_id;
+				quint64 bin = ts_now / intervalMeasurementsSamplingPeriod;
+				if (bin > sampledPathIntervalMeasurements->lastSampleBin[key]) {
+					sampledPathIntervalMeasurements->lastSampleBin[key] = bin;
+					p->sampledForMeasurements = true;
+				}
+			}
+		}
+
+		// update path ingress stats
 		p->trace.append(p->src_id);
 		if (DEBUG_PACKETS)
 			printf("New packet %d.%d.%d.%d -> %d.%d.%d.%d\n",
@@ -958,7 +982,7 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 
 		if (path.recordSampledTimeline) {
 			if (ts_now >= path.timelineSampled.last().timestamp + path.timelineSamplingPeriod) {
-				pathTimelineItem &current = path.timelineSampled.append();
+				PathTimelineItem &current = path.timelineSampled.append();
 				memset(&current, 0, sizeof(current));
 				current.timestamp = (ts_now / path.timelineSamplingPeriod) * path.timelineSamplingPeriod;
 			}
@@ -978,6 +1002,27 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 	return PKT_QUEUED;
 #endif
 
+	// Measure packet at successful exit from queue (we do this late because of non-FIFO policies)
+	if (!p->dropped && p->queue_id >= 0) {
+		if (p->sampledForMeasurements) {
+			LinkPath ep(p->queue_id, p->path_id);
+			// It is currently possible to have correct per-edge event recording only for tail-drop.
+			// For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops
+			// (i.e. the order of the events will be wrong, although the counters will be correct).
+			PathPair dummy;
+			sampledPathIntervalMeasurements->recordPacketLink(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, true, ts_now - p->ts_enqueue);
+		}
+		// We always take raw measurements
+		{
+			LinkPath ep(p->queue_id, p->path_id);
+			// It is currently possible to have correct per-edge event recording only for tail-drop.
+			// For disciplines that produce async drops (such as random-drop or drop-head), we cannot track the delayed drops
+			// (i.e. the order of the events will be wrong, although the counters will be correct).
+			PathPair dummy;
+			rawPathIntervalMeasurements->recordPacketLink(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, true, ts_now - p->ts_enqueue);
+		}
+	}
+
 	// did it reach the destination?
 	if (p->trace.last() == p->dst_id) {
 		// yes, forward the packet
@@ -994,7 +1039,7 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 		path.total_actual_delay += p->ts_start_send - p->ts_userspace_rx;
 		if (path.recordSampledTimeline) {
 			if (ts_now >= path.timelineSampled.last().timestamp + path.timelineSamplingPeriod) {
-				pathTimelineItem &current = path.timelineSampled.append();
+				PathTimelineItem &current = path.timelineSampled.append();
 				memset(&current, 0, sizeof(current));
 				current.timestamp = (ts_now / path.timelineSamplingPeriod) * path.timelineSamplingPeriod;
 				current.delay_min = ULLONG_MAX;
@@ -1009,14 +1054,19 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 			sampledPathFlowEvents->handlePacket(p, ts_now);
 		}
 
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, true);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, true);
+		if (p->sampledForMeasurements) {
+			LinkPath ep(p->queue_id, p->path_id);
+
+			PathPair dummy;
+			sampledPathIntervalMeasurements->recordPacketPath(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, true, p->ts_start_send - p->ts_userspace_rx);
+		}
+		// We always take raw measurements
+		{
+			LinkPath ep(p->queue_id, p->path_id);
+
+			PathPair dummy;
+			rawPathIntervalMeasurements->recordPacketPath(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, true, p->ts_start_send - p->ts_userspace_rx);
+		}
 		return PKT_FORWARDED;
 	}
 
@@ -1030,7 +1080,7 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 				   p->trace.last());
 		if (path.recordSampledTimeline) {
 			if (ts_now >= path.timelineSampled.last().timestamp + path.timelineSamplingPeriod) {
-				pathTimelineItem &current = path.timelineSampled.append();
+				PathTimelineItem &current = path.timelineSampled.append();
 				memset(&current, 0, sizeof(current));
 				current.timestamp = (ts_now / path.timelineSamplingPeriod) * path.timelineSamplingPeriod;
 			}
@@ -1040,18 +1090,22 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 		if (flowTracking) {
 			sampledPathFlowEvents->handlePacket(p, ts_now);
 		}
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->countPacketInFLightPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->countPacketInFLightPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->countPacketDropped(p->queue_id, p->path_id, p->ts_start_proc, ts_now, p->length, 1);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->countPacketDropped(p->queue_id, p->connection_index, p->ts_start_proc, ts_now, p->length, 1);
-		if (pathIntervalMeasurements)
-			pathIntervalMeasurements->recordPacketEventPath(p->path_id, p->ts_start_proc, ts_now, p->length, 1, false);
-		if (flowIntervalMeasurements)
-			flowIntervalMeasurements->recordPacketEventPath(p->connection_index, p->ts_start_proc, ts_now, p->length, 1, false);
+
+		if (p->sampledForMeasurements) {
+			LinkPath ep(p->queue_id, p->path_id);
+
+			PathPair dummy;
+			sampledPathIntervalMeasurements->recordPacketLink(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, false, 0);
+			sampledPathIntervalMeasurements->recordPacketPath(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, false, 0);
+		}
+		// We always take raw measurements
+		{
+			LinkPath ep(p->queue_id, p->path_id);
+
+			PathPair dummy;
+			rawPathIntervalMeasurements->recordPacketLink(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, false, 0);
+			rawPathIntervalMeasurements->recordPacketPath(dummy, ep, p->ts_userspace_rx, p->ts_userspace_rx, p->length, false, 0);
+		}
 		return PKT_DROPPED;
 	}
 
@@ -1066,7 +1120,7 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 				   p->trace.last());
 		if (path.recordSampledTimeline) {
 			if (ts_now >= path.timelineSampled.last().timestamp + path.timelineSamplingPeriod) {
-				pathTimelineItem &current = path.timelineSampled.append();
+				PathTimelineItem &current = path.timelineSampled.append();
 				memset(&current, 0, sizeof(current));
 				current.timestamp = (ts_now / path.timelineSamplingPeriod) * path.timelineSamplingPeriod;
 			}
@@ -1094,7 +1148,7 @@ int routePacket(Packet *p, quint64 ts_now, quint64 &ts_next)
 			// packet dropped, update path stats
 			if (path.recordSampledTimeline) {
 				if (ts_now >= path.timelineSampled.last().timestamp + path.timelineSamplingPeriod) {
-					pathTimelineItem &current = path.timelineSampled.append();
+					PathTimelineItem &current = path.timelineSampled.append();
 					memset(&current, 0, sizeof(current));
 					current.timestamp = (ts_now / path.timelineSamplingPeriod) * path.timelineSamplingPeriod;
 				}
@@ -1179,12 +1233,73 @@ EdgeTimeline computeEdgeTimelinesBinary(NetGraphEdge e, int queue, quint64 tsMin
 	return timeline;
 }
 
-void saveEdgeTimelinesBinary(quint64 tsMin, quint64 tsMax)
+PathTimeline computePathTimelinesBinary(NetGraphPath p, quint64 tsMin, quint64 tsMax)
 {
-	QFile file(QString("edge-timelines.dat"));
-	file.open(QIODevice::WriteOnly);
-	QDataStream out(&file);
-	out.setVersion(QDataStream::Qt_4_0);
+	PathTimeline timeline;
+
+	// timeline range
+	if (!p.timelineSampled.isEmpty()) {
+		tsMin = qMin(tsMin, p.timelineSampled.first().timestamp);
+	}
+
+	tsMin = p.timelineSamplingPeriod ? (tsMin / p.timelineSamplingPeriod) * p.timelineSamplingPeriod : tsMin;
+
+	timeline.tsMin = tsMin;
+	timeline.tsMax = tsMax;
+	timeline.timelineSamplingPeriod = p.timelineSamplingPeriod;
+
+	const OVector<PathTimelineItem> &timelineSampled = p.timelineSampled;
+
+	// unroll RLE data
+	quint64 lastTs = 0;
+	quint64 samplingPeriod = p.timelineSamplingPeriod;
+
+	foreach (PathTimelineItem item, timelineSampled) {
+		// "extrapolate"
+		while (item.timestamp > tsMin + lastTs + samplingPeriod) {
+			lastTs += samplingPeriod;
+			PathTimelineItem newItem;
+			newItem.clear();
+			newItem.timestamp = lastTs;
+			timeline.items.append(newItem);
+		}
+
+		lastTs = item.timestamp - tsMin;
+
+		PathTimelineItem newItem;
+		newItem.clear();
+
+		newItem.timestamp = lastTs;
+		newItem.arrivals_p = item.arrivals_p;
+		newItem.arrivals_B = item.arrivals_B;
+		newItem.exits_p = item.exits_p;
+		newItem.exits_B = item.exits_B;
+		newItem.drops_p = item.drops_p;
+		newItem.drops_B = item.drops_B;
+		newItem.delay_total = item.delay_total;
+		newItem.delay_max = item.delay_max;
+		newItem.delay_min = item.delay_min;
+		timeline.items.append(newItem);
+	}
+
+	return timeline;
+}
+
+void saveTimelinesBinary(quint64 tsMin, quint64 tsMax)
+{
+	QFile fileEdges(QString("edge-timelines.dat"));
+	fileEdges.open(QIODevice::WriteOnly);
+	CompressedDevice deviceEdges(&fileEdges);
+	deviceEdges.open(QIODevice::WriteOnly);
+	QDataStream outEdges(&deviceEdges);
+	outEdges.setVersion(QDataStream::Qt_4_0);
+
+	QFile filePaths(QString("path-timelines.dat"));
+	filePaths.open(QIODevice::WriteOnly);
+	CompressedDevice devicePaths(&filePaths);
+	devicePaths.open(QIODevice::WriteOnly);
+	QDataStream outPaths(&devicePaths);
+	outPaths.setVersion(QDataStream::Qt_4_0);
 
 	foreach (NetGraphEdge e, netGraph->edges) {
 		if (!e.timelineSampled.isEmpty()) {
@@ -1192,8 +1307,13 @@ void saveEdgeTimelinesBinary(quint64 tsMin, quint64 tsMax)
 		}
 	}
 
-	EdgeTimelines edgeTmelines;
+	foreach (NetGraphPath p, netGraph->paths) {
+		if (!p.timelineSampled.isEmpty()) {
+			tsMin = qMin(tsMin, p.timelineSampled.first().timestamp);
+		}
+	}
 
+	EdgeTimelines edgeTmelines;
 	foreach (NetGraphEdge e, netGraph->edges) {
 		QVector<EdgeTimeline> edgeQueueTimelines;
 		for (int queue = -1; queue < e.queueCount; queue++) {
@@ -1201,8 +1321,13 @@ void saveEdgeTimelinesBinary(quint64 tsMin, quint64 tsMax)
 		}
 		edgeTmelines.timelines << edgeQueueTimelines;
 	}
+	outEdges << edgeTmelines;
 
-	out << edgeTmelines;
+	PathTimelines pathTmelines;
+	foreach (NetGraphPath p, netGraph->paths) {
+		pathTmelines.timelines << computePathTimelinesBinary(p, tsMin, tsMax);
+	}
+	outPaths << pathTmelines;
 }
 
 void saveEdgeStats() {
@@ -1415,8 +1540,8 @@ void saveRecordedData()
 
 	tomoData.save("tomo-records.dat");
 
-	// edge timeline aggregates/samples
-	saveEdgeTimelinesBinary(tomoData.tsMin, tomoData.tsMax);
+	// timeline aggregates/samples
+	saveTimelinesBinary(tomoData.tsMin, tomoData.tsMax);
 }
 
 static quint64 total_loop_delay;

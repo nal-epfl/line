@@ -986,7 +986,7 @@ For performance reasons, the number of packets that can be captured is limited b
                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In order to compute the probability of congestion for paths/links, we divide time into intervals of this size, and we use packet counters for each interval.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;This is unrelated to the &amp;quot;Timelines&amp;quot; shown in the Results tab, for which data is sampled every second.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
-                     <string>5s</string>
+                     <string>1s</string>
                     </property>
                    </widget>
                   </item>

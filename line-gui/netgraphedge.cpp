@@ -401,7 +401,11 @@ NetGraphEdge::NetGraphEdge()
 {
 	used = true;
 
+#ifdef QT_GUI_LIB
+	color = QApplication::palette().text().color().rgb();
+#else
 	color = 0xFF000000;
+#endif
 	width = 1.0;
 
 	recordSampledTimeline = false;

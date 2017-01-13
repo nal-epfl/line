@@ -39,6 +39,7 @@
 #include "tcpparetosource.h"
 #include "tcpdashsource.h"
 #include "evudp.h"
+#include "udpparetosource.h"
 #include "udpsource.h"
 #include "udpsink.h"
 #include "udpcbr.h"
@@ -90,6 +91,14 @@ void startConnectionServer(struct ev_loop *loop, NetGraphConnection &c)
 				int port = netGraph.connections[c.index].ports[i];
 				c.serverFDs.insert(tcp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
 								   TCPSink::makeTCPSink, new TCPSinkArg(true), c.tcpReceiveWindowSize, c.tcpCongestionControl));
+			}
+		} else if (c.basicType == "UDP-CBR-Poisson-Pareto") {
+			for (int i = 0; i < c.multiplier; i++) {
+				int port = netGraph.connections[c.index].ports[i];
+				c.serverFDs.insert(udp_server(loop, qPrintable(netGraph.nodes[c.dest].ip()), port,
+								   UDPSink::makeUDPSink));
+				// The first transmission is delayed exponentially
+				c.delayStart = true;
 			}
 		} else if (c.basicType == "UDP-CBR") {
 			for (int i = 0; i < c.multiplier; i++) {
@@ -181,7 +190,7 @@ void startConnectionClient(NetGraphConnection &c)
 								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
 						c.trafficClass, TCPSource::makeTCPSource, NULL, c.tcpReceiveWindowSize, c.tcpCongestionControl));
 			} else if (c.basicType == "TCP-Poisson-Pareto") {
-				TCPParetoSourceArg paretoParams;
+				ParetoSourceArg paretoParams;
 				paretoParams.alpha = c.paretoAlpha;
 				paretoParams.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
 
@@ -213,6 +222,30 @@ void startConnectionClient(NetGraphConnection &c)
 								   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
 						c.trafficClass, TCPDashSource::makeTCPDashSource, &params, c.tcpReceiveWindowSize,
 						c.tcpCongestionControl));
+			} else if (c.basicType == "UDP-CBR-Poisson-Pareto") {
+				CBRParetoSourceArg params;
+				params.pareto.alpha = c.paretoAlpha;
+				params.pareto.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
+				params.cbr = UDPCBRSourceArg(c.rate_Mbps * 1.0e6 / 8.0 / qreal(c.multiplier),
+											 1400,
+											 c.poisson);
+
+				if (!c.delayStart) {
+					qDebugT() << "Creating Poisson connection";
+					int port = netGraph.connections[c.index].ports[i];
+					c.clientFDs.insert(udp_client(loop, qPrintable(netGraph.nodes[c.source].ip()),
+									   qPrintable(netGraph.nodes[c.dest].ipForeign()), port,
+							c.trafficClass, UDPParetoSource::makeUDPParetoSource, &params,
+							c.sequential ? connectionTransferCompletedHandler : NULL,
+							c.sequential ? &c : NULL));
+				}
+				if (c.delayStart || !c.sequential) {
+					// schedule next start
+					c.delayStart = false;
+					qreal delay = -log(1.0 - frandex()) / c.poissonRate;
+					qDebugT() << "Delaying Poisson connection" << delay;
+					ev_once(loop, -1, 0, delay, poissonStartConnectionTimeoutHandler, &c);
+				}
 			} else if (c.basicType == "UDP-CBR") {
 				qreal rate_Bps = c.rate_Mbps * 1.0e6 / 8.0 / qreal(c.multiplier);
 				int port = netGraph.connections[c.index].ports[i];
@@ -240,7 +273,7 @@ void startConnectionClient(NetGraphConnection &c)
 		}
 	} else if (c.implementation == NetGraphConnection::Iperf2) {
 		if (c.basicType == "TCP-Poisson-Pareto") {
-			TCPParetoSourceArg paretoParams;
+			ParetoSourceArg paretoParams;
 			paretoParams.alpha = c.paretoAlpha;
 			paretoParams.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
 
@@ -278,7 +311,7 @@ void startConnectionClient(NetGraphConnection &c)
 		}
 	} else if (c.implementation == NetGraphConnection::Iperf3) {
 		if (c.basicType == "TCP-Poisson-Pareto") {
-			TCPParetoSourceArg paretoParams;
+			ParetoSourceArg paretoParams;
 			paretoParams.alpha = c.paretoAlpha;
 			paretoParams.scale = c.paretoScale_b / 8.0 / qreal(c.multiplier);
 
@@ -366,7 +399,14 @@ void connectionTransferCompleted(NetGraphConnection &c)
 		// Nothing to do
     } else if (c.basicType == "TCP-DASH") {
         // Nothing to do
-    } else if (c.basicType == "UDP-CBR") {
+	} else if (c.basicType == "UDP-CBR-Poisson-Pareto") {
+		netGraph.connections[c.index].delayStart = true;
+		ev_once(static_cast<struct ev_loop*>(c.ev_loop),
+				-1,
+				0,
+				0,
+				poissonStartConnectionTimeoutHandler, &netGraph.connections[c.index]);
+	} else if (c.basicType == "UDP-CBR") {
 		// Nothing to do
 	} else if (c.basicType == "UDP-VBR") {
 		// Nothing to do

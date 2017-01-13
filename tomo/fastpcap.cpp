@@ -66,6 +66,7 @@ qint64 fastpcapCountPackets(QString fileName)
 
 	return count;
 #else
+	Q_UNUSED(fileName);
 	return -1;
 #endif
 }

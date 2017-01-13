@@ -45,6 +45,8 @@ UDPClient::UDPClient(int fd) :
 	loop = NULL;
 	w_read = NULL;
 	w_write = NULL;
+	transferCompletedCallback = NULL;
+	transferCompletedCallbackArg = NULL;
 }
 
 UDPClient::~UDPClient()
@@ -195,6 +197,34 @@ void udp_close_client(int fd)
 		}
     }
 }
+
+QSet<int> udp_fds_to_close;
+
+void udp_deferred_close_client_helper(int, void *)
+{
+	foreach (int fd, udp_fds_to_close) {
+		qDebugT() << fd;
+		if (UDPClients.contains(fd)) {
+			UDPClient *c = UDPClients[fd];
+			if (c->transferCompletedCallback) {
+				c->transferCompletedCallback(c->transferCompletedCallbackArg, fd);
+			}
+		}
+		udp_close_client(fd);
+	}
+	udp_fds_to_close.clear();
+}
+
+void udp_deferred_close_client(int fd)
+{
+	qDebugT() << fd;
+	if (UDPClients.contains(fd)) {
+		UDPClient *c = UDPClients[fd];
+		udp_fds_to_close.insert(fd);
+		ev_once(c->loop, -1, 0, 0, udp_deferred_close_client_helper, 0);
+	}
+}
+
 
 #define BUFSIZE 65536
 static void udp_server_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
@@ -382,7 +412,9 @@ qint32 udp_server(struct ev_loop *loop, const char *address, int port,
   *  arg: argument to pass to clientFactoryCallback
   */
 qint32 udp_client(struct ev_loop *loop, const char *localAddress, const char *address, int port,
-                int trafficClass, UDPClientFactoryCallback clientFactoryCallback, void *arg)
+				  int trafficClass, UDPClientFactoryCallback clientFactoryCallback, void *arg,
+				  UDPClientTransferCompletedCallback transferCompletedCallback,
+				  void *transferCompletedCallbackArg)
 {
 	int client_fd;
 	struct ev_io *w_read = (struct ev_io*) malloc(sizeof(struct ev_io));
@@ -441,6 +473,8 @@ qint32 udp_client(struct ev_loop *loop, const char *localAddress, const char *ad
 
 	// UDPClients[client_fd] = new TCPSource(client_fd);
 	UDPClients[client_fd] = clientFactoryCallback(client_fd, arg);
+	UDPClients[client_fd]->transferCompletedCallback = transferCompletedCallback;
+	UDPClients[client_fd]->transferCompletedCallbackArg = transferCompletedCallbackArg;
 	UDPClients[client_fd]->remote_addr = addr;
 	UDPClients[client_fd]->localAddress = localAddress;
 	UDPClients[client_fd]->localPort = local_port;

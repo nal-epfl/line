@@ -122,7 +122,7 @@ public:
 	static qreal medianSorted(QList<qreal> v);
 	static void quartiles(QList<qreal> v, qreal &q1, qreal &q2, qreal &q3);
 
-	static QOPlotCurveData *makeLine(qreal x1, qreal y1, qreal x2, qreal y2, QColor c = Qt::black);
+	static QOPlotCurveData *makeLine(qreal x1, qreal y1, qreal x2, qreal y2, QColor c = QApplication::palette().text().color());
 };
 
 // Holds a data set to be plotted (e.g. a vector of points). Subclasses should specialize this.

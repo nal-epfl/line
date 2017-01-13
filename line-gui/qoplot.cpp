@@ -56,8 +56,8 @@ QOPlot::QOPlot()
 	legendPosition = BottomOutside;
 	legendAlpha = 200;
 
-	backgroundColor = Qt::white;
-	foregroundColor = Qt::black;
+	backgroundColor = QApplication::palette().background().color();
+	foregroundColor = QApplication::palette().text().color();
 	legendBackground = QColor(240, 240, 240);
 
 	drag_x_enabled = drag_y_enabled = zoom_x_enabled = zoom_y_enabled = true;
@@ -445,7 +445,7 @@ QOPlotData::QOPlotData()
 {
 	legendVisible = true;
 	legendLabel = "";
-	legendLabelColor = Qt::black;
+	legendLabelColor = QApplication::palette().text().color();
 }
 
 QOPlotDataHit QOPlotData::getHits(qreal x, qreal y, qreal aspectRatio)
@@ -458,7 +458,7 @@ QOPlotDataHit QOPlotData::getHits(qreal x, qreal y, qreal aspectRatio)
 QOPlotCurveData::QOPlotCurveData() : QOPlotData()
 {
 	dataType = "line";
-    pen = QPen(Qt::black, 1.0, Qt::SolidLine);
+	pen = QPen(QApplication::palette().text().color(), 1.0, Qt::SolidLine);
 	pen.setCosmetic(true);
 	pointSymbol = QString();
 	symbolSize = 6.0;

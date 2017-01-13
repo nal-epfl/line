@@ -219,8 +219,6 @@ private slots:
 
     void on_cmbTcpCc_currentIndexChanged(const QString &arg1);
 
-    void on_cmbTcpParetoCc_currentIndexChanged(const QString &arg1);
-
     void on_btnTcpParetoCongestionControl_clicked();
 
     void on_cmbTcpDashCc_currentIndexChanged(int index);

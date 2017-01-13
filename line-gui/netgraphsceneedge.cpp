@@ -49,7 +49,7 @@ NetGraphSceneEdge::NetGraphSceneEdge(int startIndex, int endIndex, int edgeIndex
 	unusedHidden = false;
 	edgesHidden = false;
 	flowEdge = false;
-	color = QColor(Qt::black);
+	color = QApplication::palette().text().color();
 	width = 2.0;
 	flowSpacing = 1.0;
 

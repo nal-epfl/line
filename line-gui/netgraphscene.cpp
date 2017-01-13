@@ -76,6 +76,7 @@ NetGraphScene::NetGraphScene(QObject *parent) :
 	pixmapGateway.load(":/icons/extra-resources/juanjo_Router_gateway_32.png");
 	tooltipTarget = 0;
 	selectAreaRect = 0;
+	setBackgroundBrush(QApplication::palette().background().color());
 	root = new QNetGraphSceneDummyItem();
 	addItem(root);
 	initTooltip();
@@ -893,7 +894,7 @@ void NetGraphScene::queueCountChanged(int val)
         netGraph->edges[selectedEdge->edgeIndex].queueCount = val;
 		netGraph->edges[selectedEdge->edgeIndex].queueWeights.resize(val);
 		selectedEdge->setText(netGraph->edges[selectedEdge->edgeIndex].tooltip());
-		selectedEdge->color = val == 1 ? Qt::black : Qt::red;
+		selectedEdge->color = val == 1 ? QApplication::palette().text().color() : Qt::red;
 		selectedEdge->updateColor();
 		emit edgeSelected(netGraph->edges[selectedEdge->edgeIndex]);
         emit graphChanged();

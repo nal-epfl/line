@@ -20,16 +20,11 @@
 #define TCPPARETOSOURCE_H
 
 #include "evtcp.h"
-
-class TCPParetoSourceArg {
-public:
-	qreal alpha;
-	qreal scale;
-};
+#include "pareto.h"
 
 class TCPParetoSource : public TCPClient {
 public:
-	TCPParetoSource(int fd, TCPParetoSourceArg params);
+	TCPParetoSource(int fd, ParetoSourceArg params);
 	static TCPClient* makeTCPParetoSource(int fd, void *arg);
 	virtual void onWrite();
 	virtual void onStop();

@@ -1104,7 +1104,7 @@ For performance reasons, the number of packets that can be captured is limited b
                      <string>Take samples for all links/paths at the specified interval size</string>
                     </property>
                     <property name="checked">
-                     <bool>false</bool>
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -1931,8 +1931,8 @@ color: white;</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>1571</width>
+             <height>696</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13"/>

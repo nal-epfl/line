@@ -859,7 +859,7 @@ void updateTimeBox(QLineEdit *txt, bool &accepted, quint64 &value)
 		int pos = txt->cursorPosition();
 		QValidator::State state = validator->validate(text, pos);
 		if (state == QValidator::Acceptable) {
-			txt->setStyleSheet("color:black");
+			txt->setStyleSheet("");
 			value = 0;
 			quint64 multiplier = 1;
 			if (text.endsWith("ns")) {
@@ -1495,7 +1495,7 @@ bool NetGraphEditor::colorEdges(QLineEdit *txtIds, QColor c)
 			continue;
 		graph()->edges[e].color = c.rgba();
 	}
-	txtIds->setStyleSheet("color:black") ;
+	txtIds->setStyleSheet("") ;
 	return true;
 }
 
@@ -1906,14 +1906,18 @@ void NetGraphEditor::on_btnAdjustConnectionImplementation_clicked()
 
 void NetGraphEditor::on_cmbConnectionTypeBase_currentIndexChanged(const QString &)
 {
-    ui->boxTCPParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP");
-	ui->boxTCPPoissonParetoParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto");
+	ui->boxTCPParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP" ||
+									 ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto");
+	ui->boxTCPPoissonParetoParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto" ||
+												  ui->cmbConnectionTypeBase->currentText() == "UDP-CBR-Poisson-Pareto");
     ui->boxTcpDashParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "TCP DASH");
-	ui->boxUDPCBRParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "UDP CBR");
+	ui->boxUDPCBRParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "UDP CBR" ||
+										ui->cmbConnectionTypeBase->currentText() == "UDP-CBR-Poisson-Pareto");
 	ui->boxUDPVCBRParameters->setVisible(ui->cmbConnectionTypeBase->currentText() == "UDP VCBR");
 	updateTxtConnectionType();
     if (ui->cmbConnectionTypeBase->currentText() == "TCP-Poisson-Pareto" ||
-        ui->cmbConnectionTypeBase->currentText() == "TCP DASH") {
+		ui->cmbConnectionTypeBase->currentText() == "TCP DASH" ||
+		ui->cmbConnectionTypeBase->currentText() == "UDP-CBR-Poisson-Pareto") {
 		ui->checkConnectionOnOff->setChecked(false);
 		ui->checkConnectionOnOff->setEnabled(false);
 	} else {
@@ -1933,8 +1937,17 @@ void NetGraphEditor::updateTxtConnectionType()
 									   arg(ui->spinParetoScale->value()).
 									   arg(ui->cmbParetoUnit->currentText()).
                                        arg(ui->checkPoissonSequential->isChecked() ? "sequential" : "").
-                                       arg(ui->cmbTcpParetoCc->currentText()));
-    } else if (ui->cmbConnectionTypeBase->currentText() == "TCP DASH") {
+									   arg(ui->cmbTcpCc->currentText()));
+	} else if (ui->cmbConnectionTypeBase->currentText() == "UDP-CBR-Poisson-Pareto") {
+		ui->txtConnectionType->setText(QString("UDP-CBR-Poisson-Pareto %1 %2 %3%4 %5 %6 %7").
+									   arg(ui->spinPoissonRate->value()).
+									   arg(ui->spinParetoExp->value()).
+									   arg(ui->spinParetoScale->value()).
+									   arg(ui->cmbParetoUnit->currentText()).
+									   arg(ui->checkPoissonSequential->isChecked() ? "sequential" : "").
+									   arg(ui->spinUDPCBRRate->value()).
+									   arg(ui->checkUDPCBRPoisson->isChecked() ? "poisson" : ""));
+	} else if (ui->cmbConnectionTypeBase->currentText() == "TCP DASH") {
         ui->txtConnectionType->setText(QString("TCP-DASH %1 %2 %3 %4 cc %5").
                                        arg(ui->spinTcpDashRate->value()).
                                        arg(ui->spinTcpDashBufferingRate->value()).
@@ -1981,11 +1994,6 @@ void NetGraphEditor::updateTxtConnectionType()
 }
 
 void NetGraphEditor::on_cmbTcpCc_currentIndexChanged(const QString &)
-{
-    updateTxtConnectionType();
-}
-
-void NetGraphEditor::on_cmbTcpParetoCc_currentIndexChanged(const QString &)
 {
     updateTxtConnectionType();
 }
@@ -2881,5 +2889,4 @@ void NetGraphEditor::on_checkRandomDelay_toggled(bool)
 	ui->spinRandomDelayMin->setEnabled(ui->checkRandomDelay->isChecked());
 	ui->spinRandomDelayMax->setEnabled(ui->checkRandomDelay->isChecked());
 }
-
 

@@ -29,6 +29,10 @@
 #include <netinet/in.h>
 #include "compresseddevice.h"
 
+#ifdef QT_GUI_LIB
+#include <QtGui>
+#endif
+
 #ifdef LINE_EMULATOR
 bool comparePacketEvent(const packetEvent &a, const packetEvent &b)
 {
@@ -419,9 +423,14 @@ QRgb NetGraphEdge::getColor()
 		return color;
 	} else {
 		if (!isNeutral()) {
+
 			return qRgb(0xff, 0, 0);
 		} else {
+#ifdef QT_GUI_LIB
+			return QApplication::palette().text().color().rgb();
+#else
 			return qRgb(0, 0, 0);
+#endif
 		}
 	}
 }

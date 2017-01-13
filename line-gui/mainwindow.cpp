@@ -362,7 +362,7 @@ void MainWindow::doLogText(QPlainTextEdit *log, QString message)
 {
 #if 1
 	QTextCharFormat format = log->currentCharFormat();
-	format.setForeground(Qt::black);
+	format.setForeground(QApplication::palette().text().color());
 	format.setFontFamily("Liberation Sans");
 	format.setFontStyleHint(QFont::SansSerif);
 	format.setFontPointSize(10);
@@ -595,7 +595,7 @@ void MainWindow::updateTimeBox(QLineEdit *txt, bool &accepted, quint64 &value)
 		int pos = txt->cursorPosition();
 		QValidator::State state = validator->validate(text, pos);
 		if (state == QValidator::Acceptable) {
-			txt->setStyleSheet("color:black");
+			txt->setStyleSheet("");
 			value = timeFromString(text);
 			accepted = true;
 		} else if (state == QValidator::Intermediate) {

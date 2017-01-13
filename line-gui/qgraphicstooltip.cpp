@@ -18,7 +18,7 @@
 
 #include "qgraphicstooltip.h"
 
-#include <QPainter>
+#include <QtGui>
 
 QGraphicsTooltip::QGraphicsTooltip(QGraphicsItem *parent) :
     QGraphicsTextItem(parent)
@@ -34,7 +34,7 @@ void QGraphicsTooltip::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 {
 	QPen pen = painter->pen();
 	QBrush brush = painter->brush();
-	painter->setPen(QPen(Qt::black, 1));
+	painter->setPen(QPen(QApplication::palette().text().color(), 1));
 	painter->setBrush(QColor("#f5f6ce"));
 	painter->drawRoundedRect(0, 0, boundingRect().width(), boundingRect().height(), 3, 3);
 	painter->setPen(pen);

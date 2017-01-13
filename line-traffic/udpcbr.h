@@ -23,7 +23,7 @@
 
 class UDPCBRSourceArg {
 public:
-	UDPCBRSourceArg(qreal rate_Bps, quint16 frameSize = 1400, bool poisson = false);
+	UDPCBRSourceArg(qreal rate_Bps = 1.0e6, quint16 frameSize = 1400, bool poisson = false);
 	qreal rate_Bps; // UDP payload data rate
 	quint16 frameSize; // UDP payload size
 	bool poisson;

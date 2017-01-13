@@ -130,7 +130,9 @@ HEADERS += \
     evpid.h \
     ../tomo/fastpcap.h \
     ../tomo/pcap-common.h \
-    ../line-gui/traffictrace.h
+    ../line-gui/traffictrace.h \
+    pareto.h \
+    udpparetosource.h
 
 SOURCES += \
     tcpdashsource.cpp \
@@ -141,7 +143,8 @@ SOURCES += \
     ../tomo/fastpcap.cpp \
     ../tomo/pcap-qt.cpp \
     ../tomo/readpacket.cpp \
-    ../line-gui/traffictrace.cpp
+    ../line-gui/traffictrace.cpp \
+    udpparetosource.cpp
 
 OTHER_FILES += \
     virtual-interfaces-howto.txt

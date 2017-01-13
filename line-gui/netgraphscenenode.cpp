@@ -344,16 +344,16 @@ void NetGraphSceneNode::paint(QPainter *painter,
 
 	if (!fastMode) {
 		if (nodeType == NETGRAPH_NODE_SQUARE) {
-            painter->setPen(Qt::black);
+			painter->setPen(QApplication::palette().text().color());
 			painter->setBrush(bgColor);
 			painter->drawRect(boundingRect());
 		} else if (nodeType == NETGRAPH_NODE_ELLIPSE) {
-            painter->setPen(Qt::black);
+			painter->setPen(QApplication::palette().text().color());
 			painter->setBrush(bgColor);
 			painter->drawEllipse(boundingRect());
 		}
 	} else {
-        painter->setPen(Qt::black);
+		painter->setPen(QApplication::palette().text().color());
         if (nodeType == NETGRAPH_NODE_HOST) {
             painter->setBrush(Qt::green);
         } else if (nodeType == NETGRAPH_NODE_GATEWAY) {

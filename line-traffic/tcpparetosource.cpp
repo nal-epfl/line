@@ -24,18 +24,16 @@
 #endif
 #define DEBUG 0
 
-TCPParetoSource::TCPParetoSource(int fd, TCPParetoSourceArg params)
+TCPParetoSource::TCPParetoSource(int fd, ParetoSourceArg params)
 	: TCPClient(fd)
 {
-	// uniform is uniformly distributed in (0, 1]
-	qreal uniform = 1.0 - frandex();
-	transferSize = params.scale / pow(uniform, (1.0/params.alpha));
+	transferSize = params.generateSize();
 	qDebugT() << "Pareto transfer size (bytes): " << transferSize;
 }
 
 TCPClient *TCPParetoSource::makeTCPParetoSource(int fd, void *arg)
 {
-	TCPParetoSourceArg *params = (TCPParetoSourceArg*)arg;
+	ParetoSourceArg *params = (ParetoSourceArg*)arg;
 	return new TCPParetoSource(fd, *params);
 }
 

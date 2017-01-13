@@ -58,7 +58,7 @@
         <x>0</x>
         <y>0</y>
         <width>2204</width>
-        <height>64</height>
+        <height>65</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1107,9 +1107,9 @@
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>-800</y>
+              <y>-3</y>
               <width>356</width>
-              <height>1351</height>
+              <height>1411</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1143,7 +1143,7 @@
                 <string notr="true"/>
                </property>
                <property name="currentIndex">
-                <number>9</number>
+                <number>11</number>
                </property>
                <widget class="QWidget" name="pageAddEditLink">
                 <property name="sizePolicy">
@@ -3955,10 +3955,10 @@ Use the zoom slider to zoom in and out.</string>
                             </sizepolicy>
                            </property>
                            <property name="title">
-                            <string>TCP-Poisson-Pareto parameters</string>
+                            <string>Poisson-Pareto parameters</string>
                            </property>
                            <layout class="QGridLayout" name="gridLayout_16">
-                            <item row="1" column="0">
+                            <item row="0" column="0">
                              <widget class="QLabel" name="label_46">
                               <property name="sizePolicy">
                                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -3971,7 +3971,7 @@ Use the zoom slider to zoom in and out.</string>
                               </property>
                              </widget>
                             </item>
-                            <item row="4" column="1">
+                            <item row="3" column="1">
                              <widget class="QWidget" name="widget_9" native="true">
                               <layout class="QHBoxLayout" name="horizontalLayout_9">
                                <property name="leftMargin">
@@ -4058,7 +4058,7 @@ Use the zoom slider to zoom in and out.</string>
                               </layout>
                              </widget>
                             </item>
-                            <item row="3" column="1">
+                            <item row="2" column="1">
                              <widget class="QDoubleSpinBox" name="spinParetoExp">
                               <property name="toolTip">
                                <string>Smaller values: high range.
@@ -4075,7 +4075,7 @@ Large values: narrow range.</string>
                               </property>
                              </widget>
                             </item>
-                            <item row="1" column="1">
+                            <item row="0" column="1">
                              <widget class="QDoubleSpinBox" name="spinPoissonRate">
                               <property name="toolTip">
                                <string>The rate at which new TCP flows are created.</string>
@@ -4094,7 +4094,7 @@ Large values: narrow range.</string>
                               </property>
                              </widget>
                             </item>
-                            <item row="3" column="0">
+                            <item row="2" column="0">
                              <widget class="QLabel" name="label_47">
                               <property name="sizePolicy">
                                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -4107,7 +4107,7 @@ Large values: narrow range.</string>
                               </property>
                              </widget>
                             </item>
-                            <item row="4" column="0">
+                            <item row="3" column="0">
                              <widget class="QLabel" name="label_48">
                               <property name="sizePolicy">
                                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -4120,7 +4120,7 @@ Large values: narrow range.</string>
                               </property>
                              </widget>
                             </item>
-                            <item row="6" column="0" colspan="2">
+                            <item row="5" column="0" colspan="2">
                              <widget class="QGroupBox" name="groupBox_25">
                               <property name="title">
                                <string>Simulate bottleneck</string>
@@ -4284,7 +4284,7 @@ Large values: narrow range.</string>
                               </layout>
                              </widget>
                             </item>
-                            <item row="2" column="0" colspan="2">
+                            <item row="1" column="0" colspan="2">
                              <widget class="QCheckBox" name="checkPoissonSequential">
                               <property name="text">
                                <string>Sequential</string>
@@ -4292,33 +4292,6 @@ Large values: narrow range.</string>
                               <property name="checked">
                                <bool>true</bool>
                               </property>
-                             </widget>
-                            </item>
-                            <item row="0" column="0">
-                             <widget class="QLabel" name="label_74">
-                              <property name="sizePolicy">
-                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                               </sizepolicy>
-                              </property>
-                              <property name="text">
-                               <string>TCP c.c.</string>
-                              </property>
-                             </widget>
-                            </item>
-                            <item row="0" column="1">
-                             <widget class="QComboBox" name="cmbTcpParetoCc">
-                              <item>
-                               <property name="text">
-                                <string>cubic</string>
-                               </property>
-                              </item>
-                              <item>
-                               <property name="text">
-                                <string>reno</string>
-                               </property>
-                              </item>
                              </widget>
                             </item>
                            </layout>
@@ -4763,6 +4736,11 @@ Large values: narrow range.</string>
                         <item>
                          <property name="text">
                           <string>UDP CBR</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>UDP-CBR-Poisson-Pareto</string>
                          </property>
                         </item>
                        </widget>
@@ -5288,8 +5266,8 @@ The hosts to be used must have the appropriate flags set (e.g. Web etc).</string
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>350</width>
-                      <height>1345</height>
+                      <width>118</width>
+                      <height>681</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_41">

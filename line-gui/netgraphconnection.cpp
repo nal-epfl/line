@@ -105,7 +105,28 @@ bool NetGraphConnection::setParamsFromType()
 			tokens.takeFirst();
 			sequential = true;
 		}
-    } else if (arg == "TCP-DASH") {
+	} else if (arg == "UDP-CBR-Poisson-Pareto") {
+		if (!readDouble(tokens, poissonRate)) {
+			return false;
+		}
+		if (!readDouble(tokens, paretoAlpha)) {
+			return false;
+		}
+		if (!readDataSizeWithUnit2bits(tokens, paretoScale_b)) {
+			return false;
+		}
+		if (!tokens.isEmpty() && tokens.first() == "sequential") {
+			tokens.takeFirst();
+			sequential = true;
+		}
+		if (!readDouble(tokens, rate_Mbps)) {
+			return false;
+		}
+		if (!tokens.isEmpty() && tokens.first() == "poisson") {
+			tokens.takeFirst();
+			poisson = true;
+		}
+	} else if (arg == "TCP-DASH") {
         if (!readDouble(tokens, rate_Mbps)) {
             return false;
         }
@@ -239,7 +260,16 @@ void NetGraphConnection::setTypeFromParams()
 					  .arg(paretoAlpha)
 					  .arg(bits2DataSizeWithUnit(paretoScale_b))
 					  .arg(sequential ? "sequential" : "");
-    } else if (basicType == "TCP-DASH") {
+	} else if (basicType == "UDP-CBR-Poisson-Pareto") {
+		encodedType = QString("%1 %2 %3 %4 %5 %6 %7")
+					  .arg(basicType)
+					  .arg(poissonRate)
+					  .arg(paretoAlpha)
+					  .arg(bits2DataSizeWithUnit(paretoScale_b))
+					  .arg(sequential ? "sequential" : "")
+					  .arg(rate_Mbps)
+					  .arg(poisson ? "poisson" : "");
+	} else if (basicType == "TCP-DASH") {
         encodedType = QString("%1 %2 %3 %4 %5")
                       .arg(basicType)
                       .arg(rate_Mbps)

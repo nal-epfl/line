@@ -74,6 +74,8 @@ void UDPCBRSource::onStop()
 	printUploadStats();
 }
 
+// VBR
+
 UDPVCBRSourceArg::UDPVCBRSourceArg(qreal rate_Bps, quint16 frameSize) :
 	rate_Bps(rate_Bps), frameSize(frameSize)
 {

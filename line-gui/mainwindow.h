@@ -62,8 +62,8 @@ class CustomControls;
 #define TAB_INDEX_EXPERIMENT 6
 
 #define TAB_COLOR_ERROR Qt::red
-#define TAB_COLOR_CHANGED Qt::darkGreen
-#define TAB_COLOR_DEFAULT Qt::black
+#define TAB_COLOR_CHANGED Qt::green
+#define TAB_COLOR_DEFAULT QApplication::palette().text().color()
 
 namespace Ui {
 	class MainWindow;

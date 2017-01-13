@@ -34,6 +34,7 @@ qreal udpRawRate2PayloadRate(qreal rawRate, int frameSize);
 
 class UDPClient;
 typedef UDPClient* (*UDPClientFactoryCallback)(int, void*);
+typedef void (*UDPClientTransferCompletedCallback)(void*, int);
 
 class UDPClient : public ReaderWriter {
 public:
@@ -54,6 +55,10 @@ public:
 	struct ev_loop *loop;
 	struct ev_io *w_read;
 	struct ev_io *w_write;
+
+	// Other parameters
+	UDPClientTransferCompletedCallback transferCompletedCallback;
+	void *transferCompletedCallbackArg;
 };
 
 class UDPServer {
@@ -78,6 +83,7 @@ public:
 void udp_close_all();
 
 void udp_close_client(int fd);
+void udp_deferred_close_client(int fd);
 
 /**
   * Parameters:
@@ -90,7 +96,7 @@ void udp_close_client(int fd);
   * Returns: socket fd.
   */
 qint32 udp_server(struct ev_loop *loop, const char *address, int port,
-                  UDPClientFactoryCallback clientFactoryCallback = UDPClient::makeUDPClient, void *arg = 0);
+				  UDPClientFactoryCallback clientFactoryCallback = UDPClient::makeUDPClient, void *arg = 0);
 
 /**
   * Parameters:
@@ -104,7 +110,10 @@ qint32 udp_server(struct ev_loop *loop, const char *address, int port,
   * Returns: socket fd.
   */
 qint32 udp_client(struct ev_loop *loop, const char *localAddress, const char *address, int port,
-                  int trafficClass, UDPClientFactoryCallback clientFactoryCallback = UDPClient::makeUDPClient, void *arg = 0);
+				  int trafficClass, UDPClientFactoryCallback clientFactoryCallback = UDPClient::makeUDPClient,
+				  void *arg = 0,
+				  UDPClientTransferCompletedCallback transferCompletedCallback = 0,
+				  void *transferCompletedCallbackArg = 0);
 
 
 #endif // EVUDP_H

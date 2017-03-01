@@ -7,7 +7,7 @@ LINE is released under the [GPLv2](http://www.gnu.org/licenses/old-licenses/gpl-
 Get LINE:
 
 ```
-git clone https://git.epfl.ch/repo/line.git
+git clone https://github.com/nal-epfl/line.git
 ```
 
 # Architecture  
@@ -423,13 +423,13 @@ cd build-line-gui
 
 # Using LINE  
 ## Running the first experiment  
-Video: testing-the-setup.webm
+Video: [doc/testing-the-setup.webm](doc/testing-the-setup.webm)
 ## Editing the topology  
-Video: editing-the-topology.webm
+Video: [doc/editing-the-topology.webm](doc/editing-the-topology.webm)
 ## Generating traffic  
-Video: generating-traffic.webm
+Video: [doc/generating-traffic.webm](doc/generating-traffic.webm)
 ## Inspecting the experiment results  
-Video: inspecting-the-results.webm
+Video: [doc/inspecting-the-results.webm](doc/inspecting-the-results.webm)
 
 # Credits  
 LINE uses the following third party libraries/components/applications:

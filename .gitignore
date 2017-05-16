@@ -2,10 +2,8 @@ remote_config.h
 line-topologies
 build-*
 remote-config.sh
-line-gui/customcontrols*
 *.pro.user
 *.pro.user*
-line-runner/result_processing.cpp
 git-log.txt
 git-status.txt
 git-diff.txt

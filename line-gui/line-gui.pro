@@ -124,7 +124,6 @@ SOURCES += main.cpp\
     traffictrace.cpp \
     ../tomo/pcap-qt.cpp \
     ../util/tinyhistogram.cpp \
-	../line-runner/result_processing.cpp \
     customcontrols.cpp \
     customcontrols_qos.cpp \
     ../util/json.cpp \

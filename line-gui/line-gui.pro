@@ -34,9 +34,14 @@ QMAKE_CFLAGS += -Wl,-z,relro,-z,now
 QMAKE_CXXFLAGS += -Wl,-z,relro,-z,now
 QMAKE_LFLAGS += -Wl,-z,relro,-z,now
 
-#QMAKE_CFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
-#QMAKE_CXXFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
-#QMAKE_LFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
+CONFIG(release, debug|release) : {
+}
+CONFIG(debug, debug|release) : {
+  DEFINES += _GLIBCXX_DEBUG DEBUG
+  QMAKE_CFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
+  QMAKE_CXXFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer
+  QMAKE_LFLAGS += -O0 -g3 -fsanitize=address -fno-common -fno-omit-frame-pointer -fuse-ld=gold
+}
 
 exists( /usr/include/glpk ) {
 	INCLUDEPATH += /usr/include/glpk

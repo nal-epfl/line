@@ -345,7 +345,8 @@ void MainWindow::loadSimulation()
                         continue;
 
                     {
-                        const qint64 nelem = timeline.items.count();
+                        const qint64 nelem = qMin(1000, timeline.items.count());
+                        qDebug() << timeline.items.count() << "data points of which we show the first" << nelem;
                         const quint64 tsample = timeline.timelineSamplingPeriod;
 
                         accordion->addLabel(QString("Link timelines for link %1, %2sampling period %3 s").
@@ -542,7 +543,7 @@ void MainWindow::loadSimulation()
 	}
 
 	accordion->addLabel("Path timelines");
-	{
+    if (0) {
         PathTimelines pathTimelines;
         if (readPathTimelines(pathTimelines, editor->graph(), simulations[currentSimulation].dir)) {
 			foreach (qint32 iPath, interestingPaths) {
@@ -749,7 +750,7 @@ void MainWindow::loadSimulation()
 	}
 
 	accordion->addLabel("Flow timelines");
-	{
+    if (0) {
 		const int maxFlows = 200;
 		QString fileName = simulations[currentSimulation].dir + "/" + QString("sampled-path-flows.data");
 		SampledPathFlowEvents sampledPathFlowEvents;

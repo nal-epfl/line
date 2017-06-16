@@ -225,7 +225,7 @@ void NetGraphSceneEdge::setFastMode(bool fastMode)
 {
 	this->fastMode = fastMode;
 	if (fastMode) {
-		offset = 1;
+        offset = 0;
 		tipw = 2;
 		tiph = 3;
 		textSpacing = 2;

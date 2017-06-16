@@ -395,7 +395,6 @@ NetGraphSceneNode *NetGraphScene::addNode(int index)
 	item->setUnusedHidden(unusedHidden);
 	item->setLabel(netGraph->nodes[index].customLabel);
     item->updateSvgPath();
-	item->bgColor = QColor::fromRgb(netGraph->nodes[index].bgColor);
 	item->setVectorGraphics(true);
 	connect(item, SIGNAL(mousePressed(QGraphicsSceneMouseEvent*,NetGraphSceneNode*)), SLOT(nodeMousePressed(QGraphicsSceneMouseEvent*,NetGraphSceneNode*)));
 	connect(item, SIGNAL(mouseMoved(QGraphicsSceneMouseEvent*,NetGraphSceneNode*)), SLOT(nodeMouseMoved(QGraphicsSceneMouseEvent*,NetGraphSceneNode*)));

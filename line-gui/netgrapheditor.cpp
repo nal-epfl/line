@@ -1650,6 +1650,29 @@ void NetGraphEditor::on_btnSaveImage_clicked()
 		scene->render(&painter, viewRect, sceneRect, Qt::IgnoreAspectRatio);
 	}
 	image.save(imageName);
+
+    imageName.replace(".png", ".svg");
+    QSvgGenerator svg;
+    svg.setFileName(imageName);
+    svg.setSize(QSize(ui->graphicsView->width(), ui->graphicsView->height()));
+    svg.setViewBox(QRect(0, 0, ui->graphicsView->width(), ui->graphicsView->height()));
+    QRectF viewRect(0, 0, image.width(), image.height());
+
+    qreal w_screen, h_screen;
+    w_screen = image.width();
+    h_screen = image.height();
+
+    qreal w_world, h_world;
+    w_world = w_screen / scene->graph()->viewportZoom;
+    h_world = h_screen / scene->graph()->viewportZoom;
+
+    qreal left, top;
+    left = scene->graph()->viewportCenter.x() - w_world/2;
+    top = scene->graph()->viewportCenter.y() - h_world/2;
+
+    QRectF sceneRect(left, top, w_world, h_world);
+    QPainter painter(&svg);
+    scene->render(&painter, viewRect, sceneRect, Qt::IgnoreAspectRatio);
 }
 
 void NetGraphEditor::resizeEvent(QResizeEvent *event)

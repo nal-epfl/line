@@ -354,15 +354,8 @@ void NetGraphSceneNode::paint(QPainter *painter,
 		}
 	} else {
 		painter->setPen(QApplication::palette().text().color());
-        if (nodeType == NETGRAPH_NODE_HOST) {
-            painter->setBrush(Qt::green);
-        } else if (nodeType == NETGRAPH_NODE_GATEWAY) {
-            painter->setBrush(Qt::yellow);
-        } else if (nodeType == NETGRAPH_NODE_ROUTER) {
-            painter->setBrush(Qt::blue);
-        } else if (nodeType == NETGRAPH_NODE_BORDER) {
-            painter->setBrush(Qt::gray);
-        } else if (nodeType == NETGRAPH_NODE_SQUARE || nodeType == NETGRAPH_NODE_ELLIPSE) {
+        painter->setBrush(bgColor);
+        if (nodeType == NETGRAPH_NODE_SQUARE || nodeType == NETGRAPH_NODE_ELLIPSE) {
             painter->setBrush(Qt::white);
         }
 		painter->drawEllipse(-NETGRAPH_NODE_RADIUS_FAST, -NETGRAPH_NODE_RADIUS_FAST, 2*NETGRAPH_NODE_RADIUS_FAST, 2*NETGRAPH_NODE_RADIUS_FAST);
@@ -445,49 +438,62 @@ void NetGraphSceneNode::updateSvgPath()
 			if (!server) {
 				svgPath = ":/icons/extra-resources/host-green.svg";
 				pixmap.load(":/icons/extra-resources/host-green_32.png");
+                bgColor = Qt::green;
 			} else {
 				svgPath = ":/icons/extra-resources/host-darkgreen.svg";
 				pixmap.load(":/icons/extra-resources/host-darkgreen_32.png");
+                bgColor = Qt::darkGreen;
 			}
 		} else if (!web && vvoip && !p2p && !iptv && !heavy) {
 			if (!server) {
 				svgPath = ":/icons/extra-resources/host-yellow.svg";
 				pixmap.load(":/icons/extra-resources/host-yellow_32.png");
+                bgColor = Qt::yellow;
 			} else {
 				svgPath = ":/icons/extra-resources/host-darkyellow.svg";
 				pixmap.load(":/icons/extra-resources/host-darkyellow_32.png");
+                bgColor = Qt::darkYellow;
 			}
 		} else if (!web && !vvoip && p2p && !iptv && !heavy) {
 			if (!server) {
 				svgPath = ":/icons/extra-resources/host-blue.svg";
 				pixmap.load(":/icons/extra-resources/host-blue_32.png");
+                bgColor = Qt::yellow;
 			} else {
 				svgPath = ":/icons/extra-resources/host-darkblue.svg";
 				pixmap.load(":/icons/extra-resources/host-darkblue_32.png");
+                bgColor = Qt::darkYellow;
 			}
 		} else if (!web && !vvoip && !p2p && iptv && !heavy) {
 			if (!server) {
 				svgPath = ":/icons/extra-resources/host-purple.svg";
 				pixmap.load(":/icons/extra-resources/host-purple_32.png");
+                bgColor = Qt::magenta;
 			} else {
 				svgPath = ":/icons/extra-resources/host-darkpurple.svg";
 				pixmap.load(":/icons/extra-resources/host-darkpurple_32.png");
+                bgColor = Qt::darkMagenta;
 			}
 		} else {
 			if (heavy) {
 				svgPath = ":/icons/extra-resources/host-red.svg";
 				pixmap.load(":/icons/extra-resources/host-red_32.png");
+                bgColor = QColor::fromHsvF(0./360., 1, 1);
 			} else {
 				svgPath = ":/icons/extra-resources/video-display.svg";
 				pixmap.load(":/icons/extra-resources/video-display-32.png");
+                bgColor = QColor::fromHsvF(0.666667, 1, 1);
 			}
 		}
     } else if (nodeType == NETGRAPH_NODE_GATEWAY) {
         svgPath = ":/icons/extra-resources/juanjo_Router_gateway.svg";
+        bgColor = Qt::gray;
     } else if (nodeType == NETGRAPH_NODE_ROUTER) {
         svgPath = ":/icons/extra-resources/juanjo_Router.svg";
+        bgColor = Qt::gray;
     } else if (nodeType == NETGRAPH_NODE_BORDER) {
         svgPath = ":/icons/extra-resources/juanjo_Router_border.svg";
+        bgColor = Qt::gray;
     }
 
     if (svgItem) {

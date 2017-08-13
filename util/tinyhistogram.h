@@ -24,7 +24,7 @@
 class TinyHistogram
 {
 public:
-	TinyHistogram(int numBins = 16);
+    TinyHistogram(int numBins = 32);
 
 	void recordEvent(quint64 value);
 

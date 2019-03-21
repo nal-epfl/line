@@ -19,4 +19,8 @@
 #ifndef EXPORT_MATLAB_H
 #define EXPORT_MATLAB_H
 
+#include <QtCore>
+
+void dumpData(QString dir);
+
 #endif // EXPORT_MATLAB_H

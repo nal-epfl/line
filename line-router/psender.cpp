@@ -479,7 +479,7 @@ void* packet_sender_thread(void* )
 		exit(EXIT_FAILURE);
 	}
 
-	if (!pd->send && pd->send_ifindex) {
+    if (!pd->send) {
 		printf("if index problem\n");
 		exit(EXIT_FAILURE);
 	}

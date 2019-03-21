@@ -35,6 +35,7 @@ public:
 	QHash<LinkPath, LinkIntervalMeasurement> perPathLinkMeasurements;
 	// The object other must have been initialized with the same routing matrix.
 	GraphIntervalMeasurements& operator+=(GraphIntervalMeasurements other);
+    void dump(QString indent);
 };
 QDataStream& operator>>(QDataStream& s, GraphIntervalMeasurements& d);
 QDataStream& operator<<(QDataStream& s, const GraphIntervalMeasurements& d);
@@ -61,6 +62,7 @@ public:
 
 	void saveToStream(QDataStream &s);
 	void loadFromStream(QDataStream &s);
+    virtual void dump(QString indent);
 
 	// Returns a new ExperimentIntervalMeasurements object resampled at an exact multiple of intervalSize.
     ExperimentIntervalMeasurements resample(int factor, int firstActiveInterval = 0) const;

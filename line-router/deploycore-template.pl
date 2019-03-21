@@ -52,10 +52,10 @@ command "sh -c 'IFS=\"\" cat /proc/interrupts " .
         "| while read -r line ; do " .
         "    echo \$line | grep --quiet \"[0-9][0-9]*:\" && " .
         "      echo -n \$(echo \$line | cut -d : -f 1 | tr -d \" \") && " .
-        "      echo 1 > /proc/irq/\$(echo \$line | cut -d : -f 1 | tr -d \" \")/smp_affinity && " .
+        "      echo 1 > /proc/irq/\$(echo \$line | cut -d : -f 1 | tr -d \" \")/smp_affinity 2>/dev/null && " .
         "      echo -n \" CPU0\" && " .
         "      echo \$line | grep --quiet \"$netdev\" && " .
-        "        echo 10 > /proc/irq/\$(echo \$line | cut -d : -f 1 | tr -d \" \")/smp_affinity && " .
+        "        echo 10 > /proc/irq/\$(echo \$line | cut -d : -f 1 | tr -d \" \")/smp_affinity 2>/dev/null && " .
         "        echo -n \" reassign to CPU1\"; " .
         "    echo \"\" ; " .
         " done'";

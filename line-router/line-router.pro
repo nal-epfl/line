@@ -35,15 +35,15 @@ DEFINES += \'SRCDIR=\"$$_PRO_FILE_PWD_\"\'
 	PF_RING_DIR = ../PF_RING-5.6.1
 	#INCLUDEPATH += $$PF_RING_DIR/userland/c++ $$PF_RING_DIR/kernel $$PF_RING_DIR/kernel/plugins $$PF_RING_DIR/userland/libpcap-1.1.1-ring $$PF_RING_DIR/userland/lib
 	#QMAKE_LIBS += $$PF_RING_DIR/userland/c++/libpfring_cpp.a $$PF_RING_DIR/userland/lib/libpfring.a $$PF_RING_DIR/userland/libpcap-1.1.1-ring/libpcap.a
-  QMAKE_LIBS += /usr/local/lib/libpfring.a /usr/local/lib/libpcap.a -lunwind -lpcap
+  QMAKE_LIBS += /usr/local/lib/libpfring.a /usr/local/lib/libpcap.a -lunwind -lpcap -ldl
 	
 	QMAKE_STRIP = echo
 
   QMAKE_CXXFLAGS += -std=c++0x -Wno-unused-local-typedefs
 
-	system(pkg-config libnl-1) : {
+	system(pkg-config libnl-3.0) : {
 		CONFIG += link_pkgconfig
-		PKGCONFIG += libnl-1
+		PKGCONFIG += libnl-3.0
 	} else {
 		error("You need to install nl (apt-get install libnl-dev (ubuntu), yum install libnl-devel (redhat), or zypper install libnl-devel (suse)).")
 	}

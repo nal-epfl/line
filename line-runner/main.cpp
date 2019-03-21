@@ -241,7 +241,10 @@ int main(int argc, char **argv) {
 			} else if (arg == "--log-dir") {
 				QString logDir = shiftCmdLineArg(argc, argv, arg);
 				setupLogging(logDir);
-			} else if (arg == ";") {
+            } else if (arg == "--dump") {
+                QString dir = shiftCmdLineArg(argc, argv, arg);
+                dumpData(dir);
+            } else if (arg == ";") {
 				break;
 			} else {
 				qDebug() << "Unrecognized command line argument:" << arg;

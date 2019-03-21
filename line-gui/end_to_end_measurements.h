@@ -51,6 +51,7 @@ public:
 	friend bool operator >=(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
 
 	LinkIntervalMeasurement& operator+=(LinkIntervalMeasurement other);
+    void dump(QString indent);
 };
 
 bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b);
@@ -129,6 +130,8 @@ public:
 	QHash<int, quint64> lastSampleBin;
 
 	virtual void recordPathDelay(Path p, Timestamp tsIn, Timestamp tsOut);
+    virtual void dump(QString indent);
+
 protected:
 	int numIntervals;
 

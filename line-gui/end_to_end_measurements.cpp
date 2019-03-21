@@ -127,7 +127,7 @@ LinkIntervalMeasurement& LinkIntervalMeasurement::operator+=(LinkIntervalMeasure
     this->binnedNumPacketsInFlight.append(other.binnedNumPacketsInFlight);
     this->binnedNumPacketsDropped.append(other.binnedNumPacketsDropped);
 #endif
-	return *this;
+    return *this;
 }
 
 bool operator ==(const LinkIntervalMeasurement &a, const LinkIntervalMeasurement &b)
@@ -172,6 +172,16 @@ QDataStream& operator<<(QDataStream& s, const LinkIntervalMeasurement& d) {
 	s << d.maxDelay;
 
 	return s;
+}
+
+void LinkIntervalMeasurement::dump(QString indent)
+{
+    printf("%snumPacketsInFlight: %d\n", indent.toLatin1().constData(), numPacketsInFlight);
+    printf("%snumPacketsDropped: %d\n", indent.toLatin1().constData(), numPacketsDropped);
+    printf("%sminDelay: %d\n", indent.toLatin1().constData(), minDelay);
+    printf("%ssumDelay: %d\n", indent.toLatin1().constData(), sumDelay);
+    printf("%ssumSquaredDelay: %lld\n", indent.toLatin1().constData(), sumSquaredDelay);
+    printf("%smaxDelay: %d\n", indent.toLatin1().constData(), maxDelay);
 }
 
 QDataStream& operator>>(QDataStream& s, LinkIntervalMeasurement& d) {
@@ -500,6 +510,31 @@ QDataStream& operator<<(QDataStream& s, const EndToEndMeasurements& d)
 	s << d.pathDelays;
 
     return s;
+}
+
+void EndToEndMeasurements::dump(QString indent)
+{
+    printf("%stsStart: %llu\n", indent.toLatin1().constData(), tsStart);
+    printf("%stsLast: %llu\n", indent.toLatin1().constData(), tsLast);
+    printf("%sintervalSize: %llu\n", indent.toLatin1().constData(), intervalSize);
+    printf("%snumIntervals: %d\n", indent.toLatin1().constData(), numIntervals);
+    printf("%spacketSizeThreshold: %d\n", indent.toLatin1().constData(), packetSizeThreshold);
+    printf("%snumLinks: %d\n", indent.toLatin1().constData(), numLinks);
+    printf("%snumPaths: %d\n", indent.toLatin1().constData(), numPaths);
+    printf("%ssparseRoutingMatrixTransposed: %d items\n", indent.toLatin1().constData(), sparseRoutingMatrixTransposed.count());
+    foreach (LinkPath ep, sparseRoutingMatrixTransposed) {
+        printf("%s link: %d\n", indent.toLatin1().constData(), ep.first);
+        printf("%s path: %d\n", indent.toLatin1().constData(), ep.second);
+    }
+    printf("%spathDelays: %d paths\n", indent.toLatin1().constData(), pathDelays.count());
+    foreach (Path p, pathDelays.keys()) {
+        printf("%s path: %d\n", indent.toLatin1().constData(), p);
+        printf("%s intervals: %d items\n", indent.toLatin1().constData(), pathDelays[p].count());
+        foreach (int i, pathDelays[p].keys()) {
+            printf("%s  interval: %d\n", indent.toLatin1().constData(), i);
+            printf("%s  delay: %llu\n", indent.toLatin1().constData(), pathDelays[p][i]);
+        }
+    }
 }
 
 QDataStream& operator>>(QDataStream& s, EndToEndMeasurements& d)

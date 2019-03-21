@@ -652,7 +652,7 @@ void generateHostDeploymentScript(NetGraph &g, bool realRouting) {
 	// Allow the reuse of TIME_WAIT sockets for new connections
 	lines << QString("command \"sh -c 'echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse'\";");
 	// This seems dangerous:
-	lines << QString("command \"sh -c 'echo 0 > /proc/sys/net/ipv4/tcp_tw_recycle'\";");
+//	lines << QString("command \"sh -c 'echo 0 > /proc/sys/net/ipv4/tcp_tw_recycle'\";");
 	// You will see many "TCP: too many orphaned sockets" messages in dmesg. Don't worry about it.
 	// Each "orphaned" socket uses 1500 bytes of memory.
 	lines << QString("command \"sh -c 'echo 100000 > /proc/sys/net/ipv4/tcp_max_orphans'\";");

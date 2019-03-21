@@ -17,3 +17,20 @@
 */
 
 #include "export_matlab.h"
+#include "../line-gui/intervalmeasurements.h"
+
+void dumpData(QString dir)
+{
+    ExperimentIntervalMeasurements sampledData;
+    qDebug() << "Loading sampledData...";
+    Q_ASSERT_FORCE(sampledData.load(dir + "/interval-measurements.data"));
+    qDebug() << "Loaded data from a topology with" << sampledData.numLinks << "links";
+    ExperimentIntervalMeasurements rawData;
+    Q_ASSERT_FORCE(rawData.load(dir + "/raw-interval-measurements.data"));
+    qDebug() << "Loaded data from a topology with" << rawData.numLinks << "links";
+
+    printf("sampledData:\n");
+    sampledData.dump(" ");
+    printf("rawData:\n");
+    rawData.dump(" ");
+}

@@ -58,7 +58,7 @@ GraphIntervalMeasurements& GraphIntervalMeasurements::operator+=(GraphIntervalMe
 			this->perPathLinkMeasurements[ep] += other.perPathLinkMeasurements[ep];
 		}
 	}
-	return *this;
+    return *this;
 }
 
 QDataStream& operator<<(QDataStream& s, const GraphIntervalMeasurements& d)
@@ -72,6 +72,26 @@ QDataStream& operator<<(QDataStream& s, const GraphIntervalMeasurements& d)
     s << d.perPathLinkMeasurements;
 
     return s;
+}
+
+void GraphIntervalMeasurements::dump(QString indent)
+{
+    printf("%slinkMeasurements: %d items\n", indent.toLatin1().constData(), linkMeasurements.count());
+    for (int i = 0; i < linkMeasurements.count(); i++) {
+        printf("%s link: %d\n", indent.toLatin1().constData(), i);
+        linkMeasurements[i].dump(indent + "  ");
+    }
+    printf("%spathMeasurements: %d items\n", indent.toLatin1().constData(), pathMeasurements.count());
+    for (int i = 0; i < pathMeasurements.count(); i++) {
+        printf("%s path: %d\n", indent.toLatin1().constData(), i);
+        pathMeasurements[i].dump(indent + "  ");
+    }
+    printf("%sperPathLinkMeasurements: %d items\n", indent.toLatin1().constData(), perPathLinkMeasurements.count());
+    foreach (LinkPath ep, perPathLinkMeasurements.keys()) {
+        printf("%s link: %d\n", indent.toLatin1().constData(), ep.first);
+        printf("%s path: %d\n", indent.toLatin1().constData(), ep.second);
+        perPathLinkMeasurements[ep].dump(indent + "  ");
+    }
 }
 
 QDataStream& operator>>(QDataStream& s, GraphIntervalMeasurements& d)
@@ -184,7 +204,7 @@ void ExperimentIntervalMeasurements::saveToStream(QDataStream &s)
 void ExperimentIntervalMeasurements::loadFromStream(QDataStream &s)
 {
 	EndToEndMeasurements::loadFromStream(s);
-	s >> *this;
+    s >> *this;
 }
 
 void ExperimentIntervalMeasurements::trim()
@@ -229,6 +249,18 @@ QDataStream& operator<<(QDataStream& s, const ExperimentIntervalMeasurements& d)
     s << d.globalMeasurements;
 
     return s;
+}
+
+void ExperimentIntervalMeasurements::dump(QString indent)
+{
+    EndToEndMeasurements::dump(indent);
+    printf("%sintervalMeasurements: %d items\n", indent.toLatin1().constData(), intervalMeasurements.count());
+    for (int i = 0; i < intervalMeasurements.count(); i++) {
+        printf("%s interval: %d\n", indent.toLatin1().constData(), i);
+        intervalMeasurements[i].dump(indent + "  ");
+    }
+    printf("%sglobalMeasurements:\n", indent.toLatin1().constData());
+    globalMeasurements.dump(indent + " ");
 }
 
 QDataStream& operator>>(QDataStream& s, ExperimentIntervalMeasurements& d)

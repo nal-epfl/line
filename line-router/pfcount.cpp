@@ -296,7 +296,8 @@ const char* proto2str(u_short proto) {
 static int32_t thiszone;
 
 void dummyProcesssPacket(const struct pfring_pkthdr *h, const u_char *p, const u_char *user_bytes) {
-	long threadId = (long)user_bytes;
+#if 0
+    long threadId = (long)user_bytes;
 
 	if (verbose) {
 		struct ether_header ehdr;
@@ -378,6 +379,7 @@ void dummyProcesssPacket(const struct pfring_pkthdr *h, const u_char *p, const u
 	}
 
 	numPkts[threadId]++, numBytes[threadId] += h->len;
+#endif
 }
 
 /* *************************************** */
